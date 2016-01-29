@@ -20,11 +20,6 @@ else()
 endif()
 
 find_package(OpenAL REQUIRED)
-find_package(Wt REQUIRED)
-
-if(!Wt_FOUND)
-    message(FATAL_ERROR "Wt couldn't be found. Please install it and try again")
-endif()
 
 if(!OPENAL_FOUND)
     message(FATAL_ERROR "OpenAL couldn't be found. Please install it and try again")
@@ -34,6 +29,7 @@ include_directories(src)
 include_directories(src/engine)
 include_directories(lib/glm/glm)
 include_directories(lib/bullet/src)
+include_directories(lib/wt/src)
 include_directories(${OPENAL_INCLUDE_DIR})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -56,6 +52,7 @@ add_subdirectory(src/utils)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
+add_subdirectory(lib/wt)
 
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath OpenGLWindow gwen)
 set(GAME_LIBRARIES renderer sound input gui wtdbosqlite3)

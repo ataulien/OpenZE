@@ -4,3 +4,6 @@
 [submodule "lib/bullet"]
 	path = lib/bullet
 	url = git@github.com:bulletphysics/bullet3.git
+[submodule "lib/wt"]
+	path = lib/wt
+	url = git@github.com:kdeforche/wt.git
