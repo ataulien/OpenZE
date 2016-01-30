@@ -107,10 +107,11 @@ namespace Math
 		Vector<T, S...> operator+ () const { return *this; }
 		Vector<T, S...> operator- () const { return Vector<T, S...>(-x, -y); }
 
+        //TODO: float = S ;)
 		float length() const { return _glmVector.length(); }
 		float lengthSquared() const { return x * x + y * y; }
 
-		float dot(const Vector<T, S...>& v) const { glm::dot(_glmVector, v._glmVector); }
+        float dot(const Vector<T, S...>& v) const { glm::dot(_glmVector, v._glmVector); } //TODO: Degenerated: no PB style!
 		void cross(const Vector<T, S...>& v, Vector<T, S...>& result) const { glm::cross(_glmVector, v._glmVector); }
 		Vector<T, S...> cross(const Vector<T, S...>& v) const { _glmVector = glm::cross(_glmVector, v._glmVector); return *this; }
 
