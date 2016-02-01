@@ -14,12 +14,6 @@ else()
     set(ZE_RELEASE_BUILD_FLAGS "-O3 -Os -s")
 endif()
 
-find_package(OpenAL REQUIRED)
-
-if(!OPENAL_FOUND)
-    message(FATAL_ERROR "OpenAL not found")
-endif()
-
 include_directories(src)
 include_directories(src/engine)
 include_directories(lib/glm/glm)
@@ -48,8 +42,7 @@ add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
 
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
-set(GAME_LIBRARIES renderer sound input gui)
-set(LIBRARIES debug game_classes network physics storage utils glm ${OPENAL_LIBRARY} ${BULLET_LIBRARIES})
+set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLAGS}")
 
@@ -67,6 +60,23 @@ file(GLOB GAME_SRC
     src/engine/game/*.cpp
     src/engine/game/*.h
 )
+
+
+find_package(SFML 2 REQUIRED system window graphics network audio)
+
+include_directories(${SFML_INCLUDE_DIR})
+
+if(!SFML_FOUND)
+    message(FATAL_ERROR "SFML not found")
+endif()
+
+find_package(OpenAL REQUIRED)
+
+if(!OPENAL_FOUND)
+    message(FATAL_ERROR "OpenAL not found")
+endif()
+
+set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES})
 
 add_executable(openze ${SRC})
 set_target_properties(openze PROPERTIES LINKER_LANGUAGE C)

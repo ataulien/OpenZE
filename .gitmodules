@@ -7,3 +7,6 @@
 [submodule "lib/wt"]
 	path = lib/wt
 	url = git@github.com:kdeforche/wt.git
+[submodule "lib/sfml"]
+	path = lib/sfml
+	url = git@github.com:SFML/SFML.git
