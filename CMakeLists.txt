@@ -40,6 +40,7 @@ add_subdirectory(src/utils)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
+add_subdirectory(lib/rapi)
 
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
 set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
@@ -62,7 +63,7 @@ file(GLOB GAME_SRC
 )
 
 
-find_package(SFML 2 REQUIRED system window graphics network audio)
+find_package(SFML 2 REQUIRED window graphics)
 
 include_directories(${SFML_INCLUDE_DIR})
 

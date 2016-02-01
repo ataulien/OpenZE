@@ -10,3 +10,6 @@
 [submodule "lib/sfml"]
 	path = lib/sfml
 	url = git@github.com:SFML/SFML.git
+[submodule "lib/rapi"]
+	path = lib/rapi
+	url = https://github.com/Degenerated1123/RAPI.git
