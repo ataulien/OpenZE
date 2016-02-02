@@ -49,12 +49,6 @@
 #define LogWarnBox() Utils::Log("Warning",__FILE__, __LINE__, FUNCTION_SIGNATURE, true, Utils::Log::EMessageType::MT_Warning)
 #define LogErrorBox() Utils::Log("Error",__FILE__, __LINE__, FUNCTION_SIGNATURE, true, Utils::Log::EMessageType::MT_Error)
 
-#define STRINGX(x) #x
-#define STRING(x) STRINGX(x)
-
-// Builds a string that can be read by visual studio to jump directly to the sourcecode
-#define VS_LOG(file, line, function, msg) (file"(" STRING(line) "): [" function "] ")
-
 namespace Utils
 {
 #ifdef USE_LOG
@@ -69,7 +63,7 @@ namespace Utils
 			MT_Error
 		};
 
-		// Append starting information here and wait for more messages using the <<-operator
+		/** Append starting information here and wait for more messages using the <<-operator */
 		Log(const char* type, const  char* file, int line, const  char* function, bool includeInfo = false, EMessageType typeID = MT_Info, bool messageBox = false)
 		{
 			if(includeInfo)
@@ -81,7 +75,7 @@ namespace Utils
 			m_MessageBox = messageBox;
 		}
 
-		// Flush the log message to wherever we need to
+		/** Flush the log message to wherever we need to */
 		~Log()
 		{
 			Flush();
