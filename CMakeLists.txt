@@ -5,7 +5,7 @@ include(ExternalProject)
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "")
 
 if(";${CMAKE_GENERATOR};" MATCHES ";Visual Studio;")
-    set(ZE_BUILD_FLAGS "")
+    set(ZE_BUILD_FLAGS "-D_CRT_SECURE_NO_WARNINGS")
     set(ZE_DEBUG_BUILD_FLAGS "")
     set(ZE_RELEASE_BUILD_FLAGS "")
 else()
