@@ -1,32 +1,6 @@
 #include <iostream>
 #include <string>
-
-#include <Wt/Dbo/Dbo>
-
-namespace dbo = Wt::Dbo;
-
-class User {
-public:
-  enum Role {
-    Visitor = 0,
-    Admin = 1,
-    Alien = 42
-  };
-
-  std::string name;
-  std::string password;
-  Role        role;
-  int         karma;
-
-  template<class Action>
-  void persist(Action& a)
-  {
-    dbo::field(a, name,     "name");
-    dbo::field(a, password, "password");
-    dbo::field(a, role,     "role");
-    dbo::field(a, karma,    "karma");
-  }
-};
+#include <utils/SFML_window.h>
 
 int main(int argc, char *argv[])
 {
@@ -39,5 +13,26 @@ int main(int argc, char *argv[])
 #ifdef ZE_DEBUG
     std::cerr << "Da is was kaputt" << std::endl;
 #endif
+
+	Utils::SFML_Window wnd(200,200, 800, 600, "OpenZE");
+
+	bool isRunning = true;
+	while(isRunning)
+	{
+		wnd.pollEvent([&](Utils::Window::EEvent ev)
+		{
+			switch(ev)
+			{
+			case Utils::Window::EEvent::E_Closed:
+				isRunning = false;
+				break;
+
+			case Utils::Window::E_Resized:
+				std::cout << "Resized window!";
+				break;
+			}
+		});
+	}
+
     return 0;
 }
