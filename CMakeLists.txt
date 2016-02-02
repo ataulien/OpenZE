@@ -65,11 +65,11 @@ file(GLOB GAME_SRC
 
 find_package(SFML 2 REQUIRED window graphics)
 
-include_directories(${SFML_INCLUDE_DIR})
-
 if(!SFML_FOUND)
     message(FATAL_ERROR "SFML not found")
 endif()
+
+include_directories(${SFML_INCLUDE_DIR})
 
 find_package(OpenAL REQUIRED)
 
