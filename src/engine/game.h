@@ -29,11 +29,13 @@ namespace Engine
          */
         void update(const Duration &dt);
 
+#ifdef ZE_GAME
         /**
          * @brief render
          * @param alpha
          */
         void render(float alpha);
+#endif
 
         /**
          * @brief main game loop

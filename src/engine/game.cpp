@@ -18,10 +18,12 @@ void Engine::Game::update(const Duration &dt)
     std::cout << __PRETTY_FUNCTION__ << dt.count() << std::endl;
 }
 
+#ifdef ZE_GAME
 void Engine::Game::render(float alpha)
 {
     std::cout << __PRETTY_FUNCTION__ << alpha << std::endl;
 }
+#endif
 
 void Engine::Game::mainLoop()
 {
@@ -50,9 +52,11 @@ void Engine::Game::mainLoop()
             accumulator -= dt;
         }
 
+#ifdef ZE_GAME
         const float alpha = accumulator / dt;
 
         render(alpha);
+#endif
     }
 }
 

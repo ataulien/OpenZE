@@ -63,7 +63,7 @@ file(GLOB GAME_SRC
 )
 
 
-find_package(SFML 2 REQUIRED window graphics)
+find_package(SFML 2 REQUIRED system window graphics)
 
 if(!SFML_FOUND)
     message(FATAL_ERROR "SFML not found")
