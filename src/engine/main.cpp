@@ -3,23 +3,19 @@
 #include <functional>
 
 #include <utils/SFML_window.h>
+#include <utils/logger.h>
 
 #include "game.h"
 
 int main(int argc, char *argv[])
 {
 #ifdef ZE_GAME
-    std::cout << "Hello OpenZE!" << std::endl;
-#elif ZE_SERVER
-    std::cout << "Hello OZerver!" << std::endl;
-#endif
-
-#ifdef ZE_DEBUG
-    std::cerr << "Da is was kaputt" << std::endl;
-#endif
-
-#ifdef ZE_GAME
     //Test
+	Utils::Log::Clear();
+	LogInfo() << "Hello log!";
+	LogWarn() << "Hello warning!";
+	LogError() << "Hello error!";
+
 	Utils::SFML_Window wnd(200,200, 800, 600, "OpenZE");
 
 	bool isRunning = true;
