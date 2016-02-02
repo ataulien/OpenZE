@@ -1,6 +1,6 @@
 #pragma once
 #include "window.h"
-#include <SFML\Graphics.hpp>
+#include <SFML/Graphics.hpp>
 
 namespace Utils
 {
@@ -30,6 +30,7 @@ namespace Utils
 		*/
 		virtual void* getNativeHandle() override;
 	private:
+
 		/**
 		 * @brief Window-Handle of this object 
 		 */

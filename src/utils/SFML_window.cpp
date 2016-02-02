@@ -1,5 +1,5 @@
-#include "SFML_Window.h"
-#include <SFML\Graphics.hpp>
+#include "SFML_window.h"
+#include <SFML/Graphics.hpp>
 
 using namespace Utils;
 
