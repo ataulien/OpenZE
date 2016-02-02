@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <utils/SFML_window.h>
+#include <utils/logger.h>
 
 int main(int argc, char *argv[])
 {
@@ -13,6 +14,11 @@ int main(int argc, char *argv[])
 #ifdef ZE_DEBUG
     std::cerr << "Da is was kaputt" << std::endl;
 #endif
+
+	Utils::Log::Clear();
+	LogInfo() << "Hello log!";
+	LogWarn() << "Hello warning!";
+	LogError() << "Hello error!";
 
 	Utils::SFML_Window wnd(200,200, 800, 600, "OpenZE");
 
