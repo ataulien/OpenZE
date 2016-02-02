@@ -1,4 +1,1 @@
-
-void tmp()
-{
-}
+#include "player.h"

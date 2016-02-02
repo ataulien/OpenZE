@@ -18,6 +18,11 @@ include_directories(src)
 include_directories(src/engine)
 include_directories(lib/glm/glm)
 include_directories(lib/bullet/src)
+
+find_package(SFML 2 REQUIRED window graphics system)
+
+include_directories(${SFML_INCLUDE_DIR})
+
 include_directories(${OPENAL_INCLUDE_DIR})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -61,7 +66,6 @@ file(GLOB GAME_SRC
     src/engine/game/*.cpp
     src/engine/game/*.h
 )
-
 
 find_package(SFML 2 REQUIRED system window graphics)
 
