@@ -16,3 +16,6 @@
 [submodule "lib/gainput"]
 	path = lib/gainput
 	url = git@github.com:jkuhlmann/gainput.git
+[submodule "lib/glfw"]
+	path = lib/glfw
+	url = https://github.com/glfw/glfw
