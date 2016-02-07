@@ -5,7 +5,7 @@
 #include <utils/SFML_window.h>
 #include <utils/logger.h>
 
-#include "game.h"
+#include "engine.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 	LogWarn() << "Hello warning!";
 	LogError() << "Hello error!";
 
-	Utils::SFML_Window wnd(200,200, 800, 600, "OpenZE");
+    Utils::SFML_Window wnd(200, 200, 800, 600, "OpenZE");
 
 	bool isRunning = true;
 	while(isRunning)
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    Engine::Game game(argc, argv);
+    Engine::Engine game(argc, argv);
     game.mainLoop();
 
     return 0;

@@ -91,7 +91,7 @@ namespace Utils
 			s_LogFile = s_LogFile.substr(0, s_LogFile.find_last_of('\\') + 1);
 			s_LogFile += "Log.txt";
 #else
-			s_LogFile = "./Log.txt";
+            s_LogFile = std::string("./Log.txt");
 #endif
 
 			FILE* f;
@@ -142,7 +142,7 @@ namespace Utils
 			{
 			case MT_Info:
 				std::cout << m_Info.str() << m_Message.str() << std::endl;
-				if(m_MessageBox) InfoBox(m_Message.str().c_str());
+                if(m_MessageBox) InfoBox(m_Message.str().c_str());
 				break;
 
 			case MT_Warning:
@@ -166,7 +166,7 @@ namespace Utils
 	private:
 
 		static std::function<void(const std::string&)> s_LogCallback;
-		static std::string s_LogFile;
+    public: static std::string s_LogFile;
 
 		std::stringstream m_Info; // Contains an information like "Info", "Warning" or "Error"
 		std::stringstream m_Message; // Text to write into the logfile

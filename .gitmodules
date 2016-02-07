@@ -13,3 +13,6 @@
 [submodule "lib/rapi"]
 	path = lib/rapi
 	url = https://github.com/Degenerated1123/RAPI.git
+[submodule "lib/gainput"]
+	path = lib/gainput
+	url = git@github.com:jkuhlmann/gainput.git
