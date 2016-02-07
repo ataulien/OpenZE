@@ -4,6 +4,14 @@
 
 namespace Math
 {
+	/**
+	 * @brief Converson of degrees to radians 
+	 */
+	static float DegToRad(float deg)
+	{
+		return glm::radians(deg);
+	}
+
 	struct t_float2
 	{
 		t_float2(){}
@@ -21,7 +29,7 @@ namespace Math
 				float y;
 			};
 
-			glm::vec2 _glmVector;
+			glm::vec2 _glmt_vector;
 		};
 	};
 
@@ -44,7 +52,7 @@ namespace Math
 				float z;
 			};
 
-			glm::vec3 _glmVector;
+			glm::vec3 _glmt_vector;
 		};
 	};
 
@@ -69,90 +77,90 @@ namespace Math
 				float w;
 			};
 
-			glm::vec4 _glmVector;
+			glm::vec4 _glmt_vector;
 		};
 	};
 
 	template<typename T, typename... S>
-	struct Vector : public T
+	struct t_vector : public T
 	{
-		Vector(S... x) : T(x...){}
-		Vector(){}
+		t_vector(S... x) : T(x...){}
+		t_vector(){}
 
-		Vector(const T& v)
+		t_vector(const T& v)
 		{
-			_glmVector = v._glmVector;
+			_glmt_vector = v._glmt_vector;
 		}
 
 		// Comparision operators
-		bool operator == (const Vector<T, S...>& v) const
+		bool operator == (const t_vector<T, S...>& v) const
 		{
-			return _glmVector == v;
+			return _glmt_vector == v;
 		}
 
-		bool operator != (const Vector<T, S...>& v) const
+		bool operator != (const t_vector<T, S...>& v) const
 		{
-			return _glmVector != v;
+			return _glmt_vector != v;
 		}
 
 		// Assignment operators
-		Vector<T, S...>& operator= (const Vector<T, S...>& v) { _glmVector = v._glmVector; return *this; }
-		Vector<T, S...>& operator+= (const Vector<T, S...>& v) { _glmVector += v._glmVector; return *this; }
-		Vector<T, S...>& operator-= (const Vector<T, S...>& v) { _glmVector -= v._glmVector; return *this; }
-		Vector<T, S...>& operator*= (const Vector<T, S...>& v) { _glmVector *= v._glmVector; return *this; }
-		Vector<T, S...>& operator*= (float s) { _glmVector *= s; return *this; }
-		Vector<T, S...>& operator/= (float s) { _glmVector *= s; return *this; }
+		t_vector<T, S...>& operator= (const t_vector<T, S...>& v) { _glmt_vector = v._glmt_vector; return *this; }
+		t_vector<T, S...>& operator+= (const t_vector<T, S...>& v) { _glmt_vector += v._glmt_vector; return *this; }
+		t_vector<T, S...>& operator-= (const t_vector<T, S...>& v) { _glmt_vector -= v._glmt_vector; return *this; }
+		t_vector<T, S...>& operator*= (const t_vector<T, S...>& v) { _glmt_vector *= v._glmt_vector; return *this; }
+		t_vector<T, S...>& operator*= (float s) { _glmt_vector *= s; return *this; }
+		t_vector<T, S...>& operator/= (float s) { _glmt_vector *= s; return *this; }
 
 		// Urnary operators
-		Vector<T, S...> operator+ () const { return *this; }
-		Vector<T, S...> operator- () const { return Vector<T, S...>(-x, -y); }
+		t_vector<T, S...> operator+ () const { return *this; }
+		t_vector<T, S...> operator- () const { return t_vector<T, S...>(-x, -y); }
 
         //TODO: float = S ;)
-		float length() const { return _glmVector.length(); }
+		float length() const { return _glmt_vector.length(); }
 		float lengthSquared() const { return x * x + y * y; }
 
-        float dot(const Vector<T, S...>& v) const { glm::dot(_glmVector, v._glmVector); } //TODO: Degenerated: no PB style!
-		void cross(const Vector<T, S...>& v, Vector<T, S...>& result) const { glm::cross(_glmVector, v._glmVector); }
-		Vector<T, S...> cross(const Vector<T, S...>& v) const { _glmVector = glm::cross(_glmVector, v._glmVector); return *this; }
+        float dot(const t_vector<T, S...>& v) const { glm::dot(_glmt_vector, v._glmt_vector); } //TODO: Degenerated: no PB style!
+		void cross(const t_vector<T, S...>& v, t_vector<T, S...>& result) const { glm::cross(_glmt_vector, v._glmt_vector); }
+		t_vector<T, S...> cross(const t_vector<T, S...>& v) const { _glmt_vector = glm::cross(_glmt_vector, v._glmt_vector); return *this; }
 
-		void normalize() { _glmVector = glm::normalize(_glmVector); }
+		void normalize() { _glmt_vector = glm::normalize(_glmt_vector); }
 
 		// Static functions
-		static float distance(const Vector<T, S...>& v1, const Vector<T, S...>& v2) { return (v2 - v1).length(); }
-		static float distanceSquared(const Vector<T, S...>& v1, const Vector<T, S...>& v2) { return (v2 - v1).lengthSquared(); };
+		static float distance(const t_vector<T, S...>& v1, const t_vector<T, S...>& v2) { return (v2 - v1).length(); }
+		static float distanceSquared(const t_vector<T, S...>& v1, const t_vector<T, S...>& v2) { return (v2 - v1).lengthSquared(); };
 	};
 
-	template<typename T, typename... S> Vector<T, S...> operator+ (const Vector<T, S...>& v1, const Vector<T, S...>& v2)
+	template<typename T, typename... S> t_vector<T, S...> operator+ (const t_vector<T, S...>& v1, const t_vector<T, S...>& v2)
 	{
-		Vector<T, S...> r;
-		r._glmVector = v1._glmVector + v2._glmVector;
+		t_vector<T, S...> r;
+		r._glmt_vector = v1._glmt_vector + v2._glmt_vector;
 		return r;
 	}
 
-	template<typename T, typename... S> Vector<T, S...> operator- (const Vector<T, S...>& v1, const Vector<T, S...>& v2)
+	template<typename T, typename... S> t_vector<T, S...> operator- (const t_vector<T, S...>& v1, const t_vector<T, S...>& v2)
 	{
-		Vector<T, S...> r;
-		r._glmVector = v1._glmVector + v2._glmVector;
+		t_vector<T, S...> r;
+		r._glmt_vector = v1._glmt_vector + v2._glmt_vector;
 		return r;
 	}
 
-	template<typename T, typename... S> Vector<T, S...> operator* (const Vector<T, S...>& V, float s)
+	template<typename T, typename... S> t_vector<T, S...> operator* (const t_vector<T, S...>& V, float s)
 	{
-		Vector<T, S...> r;
-		r._glmVector = v1._glmVector * s;
+		t_vector<T, S...> r;
+		r._glmt_vector = v1._glmt_vector * s;
 		return r;
 	}
 
-	template<typename T, typename... S> Vector<T, S...> operator* (float s, const Vector<T, S...>& V)
+	template<typename T, typename... S> t_vector<T, S...> operator* (float s, const t_vector<T, S...>& V)
 	{
-		Vector<T, S...> r;
-		r._glmVector = s * v2._glmVector;
+		t_vector<T, S...> r;
+		r._glmt_vector = s * v2._glmt_vector;
 		return r;
 	}
 
-	typedef Vector<t_float2, float, float> float2;
-	typedef Vector<t_float3, float, float, float> float3;
-	typedef Vector<t_float4, float, float, float, float> float4;
+	typedef t_vector<t_float2, float, float> float2;
+	typedef t_vector<t_float3, float, float, float> float3;
+	typedef t_vector<t_float4, float, float, float, float> float4;
 	
 	//------------------------------------------------------------------------------
 	// 4x4 Matrix (assumes right-handed cooordinates)
@@ -231,10 +239,10 @@ namespace Math
 
 		float Determinant() const  {return glm::determinant(_glmMatrix); }
 
-		static Matrix CreateTranslation( const float3& position ){return Matrix(glm::translate(glm::mat4x4(), position._glmVector)); }
+		static Matrix CreateTranslation( const float3& position ){return Matrix(glm::translate(glm::mat4x4(), position._glmt_vector)); }
 		static Matrix CreateTranslation( float x, float y, float z ){return Matrix(glm::translate(glm::mat4x4(), glm::vec3(x,y,z))); }
 
-		static Matrix CreateScale( const float3& scales ) {return Matrix(glm::scale(glm::mat4x4(), scales._glmVector)); }
+		static Matrix CreateScale( const float3& scales ) {return Matrix(glm::scale(glm::mat4x4(), scales._glmt_vector)); }
 		static Matrix CreateScale( float xs, float ys, float zs ) {return Matrix(glm::scale(glm::mat4x4(), glm::vec3(xs,ys,zs))); }
 		static Matrix CreateScale( float scale ) {return Matrix(glm::scale(glm::mat4x4(), glm::vec3(scale,scale,scale))); }
 
@@ -242,13 +250,36 @@ namespace Math
 		static Matrix CreateRotationY( float radians ){return Matrix(glm::rotate(glm::mat4x4(), radians, glm::vec3(0,1,0))); }
 		static Matrix CreateRotationZ( float radians ){return Matrix(glm::rotate(glm::mat4x4(), radians, glm::vec3(0,0,1))); }
 
-		static Matrix CreateFromAxisAngle( const float3& axis, float angle ) {return Matrix(glm::rotate(glm::mat4x4(), angle, axis._glmVector)); }
+		static Matrix CreateFromAxisAngle( const float3& axis, float angle ) {return Matrix(glm::rotate(glm::mat4x4(), angle, axis._glmt_vector)); }
 
-		static Matrix CreatePerspectiveFieldOfView( float fov, float width, float height, float nearPlane, float farPlane ) {return Matrix(glm::perspectiveFovRH(fov, width, height, nearPlane, farPlane)); }
+		static Matrix CreatePerspectiveGL( float fov_rad, float width, float height, float nearPlane, float farPlane ) 
+		{
+			return Matrix(glm::perspective(fov_rad, width / height, nearPlane, farPlane)); 
+		}
+
+		static Matrix CreatePerspectiveDX( float fov_deg, float width, float height, float nearPlane, float farPlane ) 
+		{
+			const float fov_rad = glm::radians<float>(fov_deg);
+			const float aspectRatio = width / height;
+			const float yScale = 1 / tan(fov_rad / 2.0f);
+			const float xScale = yScale / aspectRatio;
+
+			glm::mat4x4 ret(0.0f);
+
+			ret[0][0] = xScale;
+			ret[1][1] = yScale;
+			ret[2][2] = farPlane / (nearPlane - farPlane);
+			ret[2][3] = -1;
+			ret[3][2] = nearPlane * farPlane / (nearPlane - farPlane);
+
+
+			return Matrix(ret);
+		}
+
 
 		static Matrix CreateOrthographic( float left, float right, float bottom, float top ) {return Matrix(glm::ortho(left, right, bottom, top)); }
 
-		static Matrix CreateLookAt( const float3& position, const float3& target, const float3& up ) {return Matrix(glm::lookAtRH(target._glmVector, position._glmVector, up._glmVector)); }
+		static Matrix CreateLookAt( const float3& position, const float3& target, const float3& up ) {return Matrix(glm::lookAt(position._glmt_vector, target._glmt_vector, up._glmt_vector)); }
 
 		// TODO: Implement this
 		static Matrix CreateFromQuaternion( const float4& quat );

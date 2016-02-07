@@ -13,3 +13,6 @@
 [submodule "lib/rapi"]
 	path = lib/rapi
 	url = https://github.com/Degenerated1123/RAPI.git
+[submodule "lib/glfw"]
+	path = lib/glfw
+	url = https://github.com/glfw/glfw

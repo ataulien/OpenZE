@@ -18,6 +18,9 @@ include_directories(src)
 include_directories(src/engine)
 include_directories(lib/glm/glm)
 include_directories(lib/bullet/src)
+include_directories(lib/glfw/include)
+include_directories(lib/rapi/renderer/include)
+include_directories(lib/rapi/include)
 
 find_package(SFML 2 REQUIRED window graphics system)
 
@@ -46,6 +49,9 @@ add_subdirectory(src/utils)
 add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
 add_subdirectory(lib/rapi)
+add_subdirectory(lib/glfw)
+
+
 
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
 set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
@@ -77,11 +83,14 @@ include_directories(${SFML_INCLUDE_DIR})
 
 find_package(OpenAL REQUIRED)
 
+
+
+
 if(!OPENAL_FOUND)
     message(FATAL_ERROR "OpenAL not found")
 endif()
 
-set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES})
+set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES} ${GLFW_STATIC_LIBRARIES})
 
 add_executable(openze ${SRC})
 set_target_properties(openze PROPERTIES LINKER_LANGUAGE C)

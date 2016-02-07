@@ -2,7 +2,7 @@
 #include <string>
 #include <functional>
 
-#include <utils/SFML_window.h>
+#include <utils/GLFW_window.h>
 #include <utils/logger.h>
 
 #include "game.h"
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 	LogWarn() << "Hello warning!";
 	LogError() << "Hello error!";
 
-	Utils::SFML_Window wnd(200,200, 800, 600, "OpenZE");
+	Utils::GLFW_Window wnd(200,200, 800, 600, "OpenZE");
 
 	bool isRunning = true;
 	while(isRunning)
