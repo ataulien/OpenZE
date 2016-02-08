@@ -2,9 +2,11 @@
 #include <REngine.h>
 #include <GLFW/glfw3.h>
 
+#ifdef RND_D3D11
 #define GLFW_EXPOSE_NATIVE_WGL
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#endif
 
 #include <RTools.h>
 #include <RBuffer.h>
@@ -15,9 +17,10 @@
 #include <RVertexShader.h>
 
 #include <RInputLayout.h>
-#include "logger.h"
+#include "utils/logger.h"
 #include "utils/mathlib.h"
 
+using namespace Utils;
 using namespace std;
 using namespace RAPI;
 
@@ -86,9 +89,7 @@ void Update()
 	static float s_t = 0;
 	s_t += 0.01f;
 
-	Sleep(1);
-
-	Math::Matrix model = Math::Matrix::CreateRotationY(s_t) * Math::Matrix::CreateTranslation(0, sinf(s_t), 0);
+    Math::Matrix model = Math::Matrix::CreateRotationY(s_t) * Math::Matrix::CreateTranslation(0, sinf(s_t), 0);
 	Math::Matrix view = Math::Matrix::CreateLookAt(Math::float3(4,3,3), Math::float3(0,0,0), Math::float3(0,1,0));
 
 	RInt2 res = REngine::RenderingDevice->GetOutputResolution();
@@ -165,7 +166,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 int main(int argc, char** argv)
 #endif
 {
-	Log::Clear();
+    //Log::Clear();
 
 	//Window wnd;
 	//wnd.Create("--- Test ---", 20, 20, 1280, 720, hInstance, WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);

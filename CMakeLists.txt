@@ -51,8 +51,6 @@ add_subdirectory(lib/bullet)
 add_subdirectory(lib/rapi)
 add_subdirectory(lib/glfw)
 
-
-
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
 set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
 
@@ -61,6 +59,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLA
 file(GLOB SRC
     src/engine/*.cpp
     src/engine/*.h
+    src/engine/components/*.cpp
+    src/engine/components/*.h
 )
 
 file(GLOB SERVER_SRC
@@ -83,21 +83,23 @@ include_directories(${SFML_INCLUDE_DIR})
 
 find_package(OpenAL REQUIRED)
 
-
-
-
 if(!OPENAL_FOUND)
     message(FATAL_ERROR "OpenAL not found")
 endif()
 
-set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES} ${GLFW_STATIC_LIBRARIES})
+set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES} ${GLFW_STATIC_LIBRARIES} RAPI_GL)
 
-add_executable(openze ${SRC})
-set_target_properties(openze PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(openze PROPERTIES COMPILE_FLAGS -DZE_GAME)
-target_link_libraries(openze ${GAME_LIBRARIES} ${LIBRARIES})
+add_executable(render_test_GL src/renderer/renderer_test.cpp)
+set_target_properties(render_test_GL PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(render_test_GL PROPERTIES COMPILE_FLAGS -DZE_SERVER)
+target_link_libraries(render_test_GL ${LIBRARIES} ${GAME_LIBRARIES})
 
 add_executable(ozerver ${SRC})
 set_target_properties(ozerver PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(ozerver PROPERTIES COMPILE_FLAGS -DZE_SERVER)
 target_link_libraries(ozerver ${SERVER_LIBRARIES} ${LIBRARIES})
+
+add_executable(openze ${SRC} ${GAME_SRC})
+set_target_properties(openze PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(openze PROPERTIES COMPILE_FLAGS -DZE_GAME)
+target_link_libraries(openze ${GAME_LIBRARIES} ${LIBRARIES} glfw)

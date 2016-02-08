@@ -98,11 +98,7 @@ if(WIN32)
 	
 	target_compile_options(renderer_test_DX PUBLIC -DRND_D3D11)
 else()
-	add_executable(renderer_test_GL ${SRC})
 endif()
-
-target_link_libraries(renderer_test_GL RAPI_GL)
-target_compile_options(renderer_test_GL PUBLIC -DRND_GL)
 
 add_library(renderer STATIC ${SRC})
 set_target_properties(renderer PROPERTIES LINKER_LANGUAGE C)

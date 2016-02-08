@@ -1,47 +1,25 @@
+#include "utils/logger.h"
+
 #include <iostream>
 #include <string>
 #include <functional>
 
-#include <utils/GLFW_window.h>
-#include <utils/logger.h>
-
+#ifdef ZE_GAME
+#include "game/gameengine.h"
+#elif ZE_SERVER
 #include "engine.h"
+#endif
 
 int main(int argc, char *argv[])
 {
+    Utils::Log::Clear();
+
 #ifdef ZE_GAME
-    //Test
-	Utils::Log::Clear();
-	LogInfo() << "Hello log!";
-	LogWarn() << "Hello warning!";
-	LogError() << "Hello error!";
-
-<<<<<<< HEAD
-    Utils::SFML_Window wnd(200, 200, 800, 600, "OpenZE");
-=======
-	Utils::GLFW_Window wnd(200,200, 800, 600, "OpenZE");
->>>>>>> 22bd7a036a5487131824eb3bb4b3b5f9132bc46a
-
-	bool isRunning = true;
-	while(isRunning)
-	{
-		wnd.pollEvent([&](Utils::Window::EEvent ev)
-		{
-			switch(ev)
-			{
-			case Utils::Window::EEvent::E_Closed:
-				isRunning = false;
-				break;
-
-			case Utils::Window::E_Resized:
-				std::cout << "Resized window!";
-				break;
-			}
-		});
-    }
-#endif
-
+    Engine::GameEngine game(argc, argv);
+#elif defined(ZE_SERVER)
     Engine::Engine game(argc, argv);
+#endif
+    game.init();
     game.mainLoop();
 
     return 0;
