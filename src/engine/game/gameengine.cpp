@@ -42,7 +42,7 @@ static const char* fragment_shader =
         "out vec4 frag_colour;"
 		"in vec3 f_nrm;\n"
         "void main () {"
-		"  frag_colour = vec4 (1.0, 0.5, 0.0, 1.0) * max(0.2, dot(f_nrm, vec3(0.333,0.333,0.333)));"
+		"  frag_colour = vec4 (1.0, 0.7, 0.0, 1.0) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
         "}";
 #else
 const char* vertex_shader =
@@ -149,7 +149,9 @@ RAPI::RBuffer* MakeBox(float extends)
 
 Engine::GameEngine::GameEngine(int argc, char *argv[]) :
     Engine(argc, argv),
-    m_Window(200, 200, 800, 600, "OpenZE")
+    m_Window(200, 200, 800, 600, "OpenZE"),
+	m_CameraFovMod(1.0f),
+	m_CameraAngle(0.0f)
 {
 }
 
@@ -180,9 +182,12 @@ bool Engine::GameEngine::render(float alpha)
 	}
 
 	// Grab window-events
-    m_Window.pollEvent([&](Utils::Window::EEvent ev)
+	// TODO: Do this in an update-function, not the render-one!
+	const float MOVEMENT_SPEED = 30.0f;
+	const float ZOOM_SPEED = 2.0f;
+    m_Window.pollEvent([&](Utils::Window::Event ev)
     {
-        switch(ev)
+        switch(ev.EventType)
         {
         case Utils::Window::EEvent::E_Closed:
             retVal = false;
@@ -191,6 +196,27 @@ bool Engine::GameEngine::render(float alpha)
         case Utils::Window::E_Resized:
             LogInfo() << "Resized window!";
             break;
+
+		case Utils::Window::EEvent::E_KeyEvent:
+			switch(ev.KeyboardEvent.key)
+			{
+			case Utils::EKey::KEY_LEFT:
+				m_CameraAngle -= m_MainLoopTimer.getAvgDelta().count() * MOVEMENT_SPEED;
+				break;
+
+			case Utils::EKey::KEY_RIGHT:
+				m_CameraAngle += m_MainLoopTimer.getAvgDelta().count() * MOVEMENT_SPEED;
+				break;
+
+			case Utils::EKey::KEY_UP:
+				m_CameraFovMod -= m_MainLoopTimer.getAvgDelta().count() * ZOOM_SPEED;
+				break;
+
+			case Utils::EKey::KEY_DOWN:
+				m_CameraFovMod += m_MainLoopTimer.getAvgDelta().count() * ZOOM_SPEED;
+				break;
+			}
+			break;
         }
     });
 
@@ -206,12 +232,12 @@ bool Engine::GameEngine::render(float alpha)
 
             Math::Matrix model;
             trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
-            Math::Matrix view = Math::Matrix::CreateLookAt(Math::float3(50,100,40), Math::float3(0,0,0), Math::float3(0,1,0));
+            Math::Matrix view = Math::Matrix::CreateLookAt(Math::float3(50 * sinf(m_CameraAngle),100,50 * cosf(m_CameraAngle)), Math::float3(0,0,0), Math::float3(0,1,0));
 
             RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
 
         #ifdef RND_GL
-            Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f, res.x, res.y, 0.1f, 1000.0f);
+            Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f * m_CameraFovMod, res.x, res.y, 0.1f, 1000.0f);
         #else
             Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 1000.0f);
         #endif
