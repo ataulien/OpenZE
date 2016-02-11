@@ -184,7 +184,7 @@ bool Engine::GameEngine::render(float alpha)
 	// Grab window-events
 	// TODO: Do this in an update-function, not the render-one!
 	const float MOVEMENT_SPEED = 30.0f;
-	const float ZOOM_SPEED = 2.0f;
+	const float ZOOM_SPEED = 0.2f;
     m_Window.pollEvent([&](Utils::Window::Event ev)
     {
         switch(ev.EventType)
