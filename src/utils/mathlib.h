@@ -122,13 +122,19 @@ namespace Math
 
         float dot(const t_vector<T, S...>& v) const { glm::dot(T::_glmt_vector, v._glmt_vector); } //TODO: Degenerated: no PB style!
         void cross(const t_vector<T, S...>& v, t_vector<T, S...>& result) const { glm::cross(T::_glmt_vector, v._glmt_vector); }
-        t_vector<T, S...> cross(const t_vector<T, S...>& v) const { T::_glmt_vector = glm::cross(T::_glmt_vector, v._glmt_vector); return *this; }
+        //t_vector<T, S...> cross(const t_vector<T, S...>& v) { T::_glmt_vector = glm::cross(T::_glmt_vector, v._glmt_vector); return *this; }
 
-        void normalize() { T::_glmt_vector = glm::normalize(T::_glmt_vector); }
+		t_vector<T, S...> normalize() { T::_glmt_vector = glm::normalize(T::_glmt_vector); return *this; }
 
         // Static functions
         static float distance(const t_vector<T, S...>& v1, const t_vector<T, S...>& v2) { return (v2 - v1).length(); }
         static float distanceSquared(const t_vector<T, S...>& v1, const t_vector<T, S...>& v2) { return (v2 - v1).lengthSquared(); };
+		static t_vector<T, S...> cross(const t_vector<T, S...>& v1, const t_vector<T, S...>& v2) 
+		{ 
+			t_vector<T, S...> r;
+			r._glmt_vector = glm::cross(v1._glmt_vector, v2._glmt_vector);
+			return r; 
+		}
     };
 
     template<typename T, typename... S> t_vector<T, S...> operator+ (const t_vector<T, S...>& v1, const t_vector<T, S...>& v2)
@@ -141,7 +147,7 @@ namespace Math
     template<typename T, typename... S> t_vector<T, S...> operator- (const t_vector<T, S...>& v1, const t_vector<T, S...>& v2)
     {
         t_vector<T, S...> r;
-        r._glmt_vector = v1._glmt_vector + v2._glmt_vector;
+        r._glmt_vector = v1._glmt_vector - v2._glmt_vector;
         return r;
     }
 

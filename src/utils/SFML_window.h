@@ -23,7 +23,7 @@ namespace Utils
 		/**
 		* @brief Polls the window for events and calls the given callback function for each event
 		*/
-        virtual void pollEvent(const std::function<void(EEvent)>& callback) override;
+        virtual void pollEvent(const std::function<void(Event)>& callback) override;
 
 		/**
 		* @brief Returns the OS-Specific handle to this window as a void*

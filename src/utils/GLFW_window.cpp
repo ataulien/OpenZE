@@ -2,6 +2,12 @@
 #include <GLFW/glfw3.h>
 #include "logger.h"
 
+#ifdef WIN32
+#define GLFW_EXPOSE_NATIVE_WGL
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#endif
+
 using namespace Utils;
 
 /**
@@ -23,6 +29,9 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bott
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 	m_pWindowHandle = glfwCreateWindow(1280, 720, "--- Test ---", nullptr, nullptr);
 
+	// Turn off vsync
+	glfwSwapInterval(0);
+
 	if(!m_pWindowHandle)
 	{
 		LogError() << "glfwCreateWindow() failed!";
@@ -43,9 +52,30 @@ GLFW_Window::~GLFW_Window()
 /**
 * @brief Polls the window for events and calls the given callback function for each event
 */
-void GLFW_Window::pollEvent(const std::function<void(EEvent)>& callback)
+void GLFW_Window::pollEvent(const std::function<void(Event)>& callback)
 {
+	// Set our callback function as userdata so we can access it from the glfw callbacks
+	std::function<void(Event)> fn = callback;
+	glfwSetWindowUserPointer(m_pWindowHandle, &fn);
+
+	// Assign callbacks
+	glfwSetKeyCallback(m_pWindowHandle, [](GLFWwindow* wnd, int key, int scancode, int action, int mods)
+	{
+		// Get our callback funktion back
+		std::function<void(Event)> fn = *reinterpret_cast<std::function<void(Event)>*>(glfwGetWindowUserPointer(wnd));
+
+		Event e(EEvent::E_KeyEvent);
+		e.KeyboardEvent.action = (EKeyAction)action;
+		e.KeyboardEvent.key = (EKey)key;
+		e.KeyboardEvent.scancode = scancode;
+
+		fn(e);
+	});
+
 	glfwPollEvents();
+
+	glfwSetWindowUserPointer(m_pWindowHandle, nullptr);
+	glfwSetKeyCallback(m_pWindowHandle, nullptr);
 
     //TODO: while?
 	if(glfwWindowShouldClose(m_pWindowHandle))
@@ -69,9 +99,32 @@ void GLFW_Window::pollEvent(const std::function<void(EEvent)>& callback)
 }
 
 /**
+* @brief Returns the GLFW-handle of this window
+*/
+GLFWwindow* GLFW_Window::getGLFWwindow()
+{
+	return m_pWindowHandle;
+}
+
+/**
 * @brief Returns the OS-Specific handle to this window as a void*
 */
 void* GLFW_Window::getNativeHandle()
 {
+#ifdef WIN32
+	//return m_pWindowHandle;
+	// TODO: OpenGL under Windows is broken because of this!
+	return glfwGetWin32Window(m_pWindowHandle);
+#else
     return m_pWindowHandle;
+#endif
+}
+
+
+/**
+* @brief Sets the title of the window
+*/
+void GLFW_Window::setWindowTitle(const std::string& title)
+{
+	glfwSetWindowTitle(m_pWindowHandle, title.c_str());
 }

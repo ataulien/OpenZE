@@ -29,16 +29,20 @@ static const char* vertex_shader =
         "}; \n "
         "\n "
         "\n "
-        "in vec3 vp;\n"
+		"in vec3 vp;\n"
+		"in vec3 vnorm;\n"
+		"out vec3 f_nrm;\n"
         "void main () {\n"
-        "	gl_Position = V_Transform * vec4(vp, 1.0);\n"
+		"	gl_Position = V_Transform * vec4(vp, 1.0);\n"
+		"	f_nrm = mat3(V_Transform) * vnorm;"
         "}\n";
 
 static const char* fragment_shader =
         "#version 420\n"
         "out vec4 frag_colour;"
+		"in vec3 f_nrm;\n"
         "void main () {"
-        "  frag_colour = vec4 (0.5, 0.0, 0.5, 1.0);"
+		"  frag_colour = vec4 (1.0, 0.7, 0.0, 1.0) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
         "}";
 #else
 const char* vertex_shader =
@@ -46,60 +50,94 @@ const char* vertex_shader =
         "{"
         "Matrix V_Transform;"
         "};"
-        "float4 VSMain (float3 vp : POSITION) : SV_POSITION {"
-        "  return mul(V_Transform, float4(vp, 1.0));"
+		"struct VS_INPUT"
+		"{"
+		"	float3 vp : POSITION;"
+		"	float3 normal : NORMAL;"
+		"};"
+		"struct VS_OUTPUT"
+		"{"		
+		"	float3 normal : TEXCOORD0;"
+		"	float4 position : SV_POSITION;"
+		"};"
+        "VS_OUTPUT VSMain (VS_INPUT input) {"
+		"  VS_OUTPUT output = (VS_OUTPUT)0;"	
+        "  output.position = mul(V_Transform, float4(input.vp, 1.0));"
+		"  output.normal = mul((float3x3)V_Transform, input.normal);"
+		"  return output;"
         "}";
 
 const char* fragment_shader =
-        "float4 PSMain () : SV_TARGET {"
-        "  return float4 (0.5, 0.5, 0.0, 1.0);"
+		"struct VS_OUTPUT"
+		"{"
+		"	float3 normal : TEXCOORD0;"
+		"};"
+        "float4 PSMain (VS_OUTPUT input) : SV_TARGET {"
+	"  return float4 (0.5, 0.5, 0.0, 1.0) * max(0.2f, dot(input.normal, -float3(-0.3333f,0.3333f,-0.3333f)));"
         "}";
 #endif
 
 RAPI::RBuffer* MakeBox(float extends)
 {
-    Renderer::SimpleVertex vx[36];
+	const int n = 36;
+    Renderer::SimpleVertex vx[n];
     int i=0;
 
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,-1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,-1.0f,1.0f);
-    vx[i++].Position = Math::float3(1.0f,1.0f,1.0f);
-    vx[i++].Position = Math::float3(-1.0f,1.0f,1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f,-1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f,-1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(-1.0f, 1.0f, 1.0f);
+	vx[i++].Position = Math::float3(1.0f,-1.0f, 1.0f );
+
+	// Generate normals
+	for(i = 0; i < n; i += 3)
+	{
+		std::swap(vx[i+2].Position, vx[i+1].Position);
+
+		Math::float3 v0 = vx[i].Position;
+		Math::float3 v1 = vx[i + 1].Position;
+		Math::float3 v2 = vx[i + 2].Position;
+
+		Math::float3 nrm = Math::float3::cross(v1 - v0, v2 - v0).normalize();
+
+		vx[i+0].Normal = nrm;
+		vx[i+1].Normal = nrm;
+		vx[i+2].Normal = nrm;
+	}
 
     // Loop through all vertices and apply the extends
-    for(i = 0; i < 36; i++)
+    for(i = 0; i < n; i++)
     {
         vx[i].Position *= extends;
     }
@@ -111,7 +149,9 @@ RAPI::RBuffer* MakeBox(float extends)
 
 Engine::GameEngine::GameEngine(int argc, char *argv[]) :
     Engine(argc, argv),
-    m_Window(200, 200, 800, 600, "OpenZE")
+    m_Window(200, 200, 800, 600, "OpenZE"),
+	m_CameraFovMod(1.0f),
+	m_CameraAngle(0.0f)
 {
 }
 
@@ -122,23 +162,65 @@ Engine::GameEngine::~GameEngine()
 
 bool Engine::GameEngine::render(float alpha)
 {
+	(void) alpha;
+
     bool retVal = true;
 
-    (void) alpha;
-    m_Window.pollEvent([&](Utils::Window::EEvent ev)
+	// Update window-title every N seconds
+	static double s_TitleUpdateMod = 0;
+	const double TITLE_UPDATE_DELAY = 0.1;
+	s_TitleUpdateMod += m_MainLoopTimer.getAvgDelta().count();
+
+	if(s_TitleUpdateMod > TITLE_UPDATE_DELAY)
+	{
+		// Update header
+		double frameDeltaSec = m_MainLoopTimer.getAvgDelta().count();
+		double frameDeltaMS = m_MainLoopTimer.getAvgDelta().count() * 1000.0f;
+		m_Window.setWindowTitle("openZE - FPS: " + std::to_string(1.0 / frameDeltaSec) + " (" + std::to_string(frameDeltaMS) + "ms)");
+
+		s_TitleUpdateMod = 0.0;
+	}
+
+	// Grab window-events
+	// TODO: Do this in an update-function, not the render-one!
+    const float MOVEMENT_SPEED = 5.0f;
+    const float ZOOM_SPEED = 0.2f;
+    m_Window.pollEvent([&](Utils::Window::Event ev)
     {
-        switch(ev)
+        switch(ev.EventType)
         {
         case Utils::Window::EEvent::E_Closed:
             retVal = false;
             break;
 
         case Utils::Window::E_Resized:
-            std::cout << "Resized window!";
+            LogInfo() << "Resized window!";
             break;
+
+		case Utils::Window::EEvent::E_KeyEvent:
+			switch(ev.KeyboardEvent.key)
+			{
+			case Utils::EKey::KEY_LEFT:
+				m_CameraAngle -= m_MainLoopTimer.getAvgDelta().count() * MOVEMENT_SPEED;
+				break;
+
+			case Utils::EKey::KEY_RIGHT:
+				m_CameraAngle += m_MainLoopTimer.getAvgDelta().count() * MOVEMENT_SPEED;
+				break;
+
+			case Utils::EKey::KEY_UP:
+				m_CameraFovMod -= m_MainLoopTimer.getAvgDelta().count() * ZOOM_SPEED;
+				break;
+
+			case Utils::EKey::KEY_DOWN:
+				m_CameraFovMod += m_MainLoopTimer.getAvgDelta().count() * ZOOM_SPEED;
+				break;
+			}
+			break;
         }
     });
 
+	// Draw frame
     RAPI::REngine::RenderingDevice->OnFrameStart();
     RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue();
     for(int i = 0; i < m_Factory.getMasks().size(); ++i)
@@ -150,14 +232,14 @@ bool Engine::GameEngine::render(float alpha)
 
             Math::Matrix model;
             trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
-            Math::Matrix view = Math::Matrix::CreateLookAt(Math::float3(50,100,40), Math::float3(0,0,0), Math::float3(0,1,0));
+            Math::Matrix view = Math::Matrix::CreateLookAt(Math::float3(50 * sinf(m_CameraAngle),100,50 * cosf(m_CameraAngle)), Math::float3(0,0,0), Math::float3(0,1,0));
 
             RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
 
         #ifdef RND_GL
-            Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f, res.x, res.y, 0.1f, 1000.0f);
+            Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f * m_CameraFovMod, res.x, res.y, 0.1f, 1000.0f);
         #else
-            Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 100.0f);
+            Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 1000.0f);
         #endif
             Math::Matrix viewProj = projection * view * model;
             Components::Visual &visual = m_Factory.getVisual(i);
@@ -167,6 +249,8 @@ bool Engine::GameEngine::render(float alpha)
         }
     }
     RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
+
+	// Process frame
     RAPI::REngine::RenderingDevice->OnFrameEnd();
     RAPI::REngine::RenderingDevice->Present();
 
@@ -181,10 +265,11 @@ void Engine::GameEngine::init()
     RAPI::REngine::RenderingDevice->CreateDevice();
 
 #ifdef RND_GL
-    RAPI::REngine::RenderingDevice->SetWindow(reinterpret_cast<WindowHandle>(m_Window.getNativeHandle()));
+    RAPI::REngine::RenderingDevice->SetWindow(reinterpret_cast<WindowHandle>(m_Window.getGLFWwindow()));
 #else
-    RAPI::REngine::RenderingDevice->SetWindow(glfwGetWin32Window(wnd));
+    RAPI::REngine::RenderingDevice->SetWindow(reinterpret_cast<WindowHandle>(m_Window.getNativeHandle()));
 #endif
+
     RAPI::RPixelShader* ps = RAPI::RTools::LoadShaderFromString<RAPI::RPixelShader>(fragment_shader, "simplePS");
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 

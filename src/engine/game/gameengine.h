@@ -27,5 +27,12 @@ namespace Engine
          * @brief Main game window
          */
         Utils::GLFW_Window m_Window;
+
+
+		/**
+		 * @brief testing only
+		 */
+		float m_CameraAngle;
+		float m_CameraFovMod;
     };
 }
