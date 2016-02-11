@@ -2,6 +2,12 @@
 #include <GLFW/glfw3.h>
 #include "logger.h"
 
+#ifdef WIN32
+#define GLFW_EXPOSE_NATIVE_WGL
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#endif
+
 using namespace Utils;
 
 /**
@@ -22,6 +28,9 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bott
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 	m_pWindowHandle = glfwCreateWindow(1280, 720, "--- Test ---", nullptr, nullptr);
+
+	// Turn off vsync
+	glfwSwapInterval(0);
 
 	if(!m_pWindowHandle)
 	{
@@ -69,9 +78,32 @@ void GLFW_Window::pollEvent(const std::function<void(EEvent)>& callback)
 }
 
 /**
+* @brief Returns the GLFW-handle of this window
+*/
+GLFWwindow* GLFW_Window::getGLFWwindow()
+{
+	return m_pWindowHandle;
+}
+
+/**
 * @brief Returns the OS-Specific handle to this window as a void*
 */
 void* GLFW_Window::getNativeHandle()
 {
+#ifdef WIN32
+	//return m_pWindowHandle;
+	// TODO: OpenGL under Windows is broken because of this!
+	return glfwGetWin32Window(m_pWindowHandle);
+#else
     return m_pWindowHandle;
+#endif
+}
+
+
+/**
+* @brief Sets the title of the window
+*/
+void GLFW_Window::setWindowTitle(const std::string& title)
+{
+	glfwSetWindowTitle(m_pWindowHandle, title.c_str());
 }

@@ -29,6 +29,16 @@ namespace Utils
 		* @brief Returns the OS-Specific handle to this window as a void*
 		*/
 		virtual void* getNativeHandle() override;
+
+		/**
+		* @brief Returns the GLFW-handle of this window
+		*/
+		GLFWwindow* getGLFWwindow();
+
+		/**
+		* @brief Sets the title of the window
+		*/
+		virtual void setWindowTitle(const std::string& title) override;
 	private:
 
 		/**
