@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
 #include <functional>
+#include "keys.h"
 
 namespace Utils
 {
+
 	/**
 	 * @brief Small utility to create and handle windows platform independently
 	 */
@@ -18,6 +20,47 @@ namespace Utils
 		{
 			E_Closed,           // Window was closed
 			E_Resized,			// Window was resized
+			E_KeyEvent			// Key was pressed/released
+		};
+
+		/**
+		 * @brief Key actions
+		 */
+		enum EKeyAction
+		{
+			EA_Pressed = 1,
+			EA_Released = 0,
+			EA_Repeated = 2
+		};
+
+		/**
+		 * @brief Information about all possible events 
+		 */
+		struct Event
+		{
+			Event(){}
+			Event(EEvent evt)
+			{
+				EventType = evt;
+			}
+
+			struct
+			{
+				// Scroll offsets
+				double xOffset; 
+				double yOffset;
+			}ScrollEvent;
+
+			struct
+			{
+				EKeyAction action;
+				EKey key; // virtual key
+				int scancode; // System specific key scancode
+				int mods; // GLFW-like bitfield for key-flags
+
+			}KeyboardEvent;
+
+			EEvent EventType;
 		};
 
 		/**
@@ -33,7 +76,7 @@ namespace Utils
 		/**
 		 * @brief Polls the window for events and calls the given callback function for each event
 		 */
-        virtual void pollEvent(const std::function<void(EEvent)>& callback) = 0;
+        virtual void pollEvent(const std::function<void(Event)>& callback) = 0;
 
 		/**
 		 * @brief Returns the OS-Specific handle to this window as a void*

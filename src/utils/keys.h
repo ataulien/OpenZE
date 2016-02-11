@@ -1,11 +1,11 @@
 #pragma once
 
-namespace utils
+namespace Utils
 {
 	/**
 	 * @brief Key constants (GLFW-like)
 	 */
-	enum EKeys
+	enum EKey
 	{
 		KEY_UNKNOWN = -1,
 		KEY_SPACE = 32,
@@ -129,5 +129,5 @@ namespace utils
 		KEY_RIGHT_SUPER = 347,
 		KEY_MENU = 348,
 		KEY_LAST = KEY_MENU,
-	}
+	};
 }

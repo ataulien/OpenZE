@@ -52,9 +52,30 @@ GLFW_Window::~GLFW_Window()
 /**
 * @brief Polls the window for events and calls the given callback function for each event
 */
-void GLFW_Window::pollEvent(const std::function<void(EEvent)>& callback)
+void GLFW_Window::pollEvent(const std::function<void(Event)>& callback)
 {
+	// Set our callback function as userdata so we can access it from the glfw callbacks
+	std::function<void(Event)> fn = callback;
+	glfwSetWindowUserPointer(m_pWindowHandle, &fn);
+
+	// Assign callbacks
+	glfwSetKeyCallback(m_pWindowHandle, [](GLFWwindow* wnd, int key, int scancode, int action, int mods)
+	{
+		// Get our callback funktion back
+		std::function<void(Event)> fn = *reinterpret_cast<std::function<void(Event)>*>(glfwGetWindowUserPointer(wnd));
+
+		Event e(EEvent::E_KeyEvent);
+		e.KeyboardEvent.action = (EKeyAction)action;
+		e.KeyboardEvent.key = (EKey)key;
+		e.KeyboardEvent.scancode = scancode;
+
+		fn(e);
+	});
+
 	glfwPollEvents();
+
+	glfwSetWindowUserPointer(m_pWindowHandle, nullptr);
+	glfwSetKeyCallback(m_pWindowHandle, nullptr);
 
     //TODO: while?
 	if(glfwWindowShouldClose(m_pWindowHandle))

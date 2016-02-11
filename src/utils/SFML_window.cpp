@@ -23,7 +23,7 @@ SFML_Window::~SFML_Window()
 /**
 * @brief Polls the window for events and calls the given callback function for each event
 */
-void SFML_Window::pollEvent(const std::function<void(EEvent)>& callback)
+void SFML_Window::pollEvent(const std::function<void(Event)>& callback)
 {
 	sf::Event e;
 	m_WindowHandle.pollEvent(e);
