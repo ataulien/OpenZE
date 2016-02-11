@@ -65,21 +65,22 @@ uint32_t Engine::ObjectFactory::createObject()
     m_Collision[entity].pMotionState = new btDefaultMotionState(btTransform(btTransform(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f), btVector3(0.0f, -1.0f, 0.0f))));
     m_Collision[entity].pRigidBody = new btRigidBody(0.0f, m_Collision[entity].pMotionState, m_Collision[entity].pCollisionShape);
     m_pEngine->physicsSystem()->addRigidBody(m_Collision[entity].pRigidBody);
-    m_Collision[entity].pRigidBody->setRestitution(1.0f);
-    m_Collision[entity].pRigidBody->setFriction(0.8f);
+    m_Collision[entity].pRigidBody->setRestitution(0.4f);
+    m_Collision[entity].pRigidBody->setFriction(1.0f);
 
 #ifdef ZE_GAME
-    for(int i = 0; i < 100; i++)
+    for(int i = 0; i < 4000; i++)
     {
         entity = createEntity();
         m_Mask[entity] = static_cast<EComponents>(C_COLLISION | C_VISUAL);
         m_Collision[entity].pCollisionShape = new btBoxShape(btVector3(1.0f, 1.0f, 1.0f));
-        m_Collision[entity].pMotionState = new btDefaultMotionState(btTransform(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f), btVector3(0.0f + static_cast<float>(i), 50.0f + static_cast<float>(i), 0.0f)));
+        m_Collision[entity].pMotionState = new btDefaultMotionState(btTransform(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f), btVector3(-100.0f + static_cast<float>(i), 50.0f + static_cast<float>(i), 0.0f)));
         btVector3 inertia;
         m_Collision[entity].pCollisionShape->calculateLocalInertia(1.0f, inertia);
         m_Collision[entity].pRigidBody = new btRigidBody(1.0f, m_Collision[entity].pMotionState,
                                                          m_Collision[entity].pCollisionShape, inertia);
-        m_Collision[entity].pRigidBody->setRestitution(0.2f);
+        m_Collision[entity].pRigidBody->setRestitution(0.8f);
+        m_Collision[entity].pRigidBody->setFriction(0.2);
         m_pEngine->physicsSystem()->addRigidBody(m_Collision[entity].pRigidBody);
 
         RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");

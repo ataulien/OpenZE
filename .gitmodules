@@ -4,18 +4,15 @@
 [submodule "lib/bullet"]
 	path = lib/bullet
 	url = git@github.com:bulletphysics/bullet3.git
-[submodule "lib/wt"]
-	path = lib/wt
-	url = git@github.com:kdeforche/wt.git
 [submodule "lib/sfml"]
 	path = lib/sfml
 	url = git@github.com:SFML/SFML.git
 [submodule "lib/rapi"]
 	path = lib/rapi
 	url = https://github.com/Degenerated1123/RAPI.git
-[submodule "lib/gainput"]
-	path = lib/gainput
-	url = git@github.com:jkuhlmann/gainput.git
 [submodule "lib/glfw"]
 	path = lib/glfw
 	url = https://github.com/glfw/glfw
+[submodule "lib/gainput"]
+	path = lib/gainput
+	url = git@github.com:jkuhlmann/gainput.git

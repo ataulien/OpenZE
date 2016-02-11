@@ -11,7 +11,7 @@ if(";${CMAKE_GENERATOR};" MATCHES ";Visual Studio;")
 else()
     set(ZE_BUILD_FLAGS " -std=c++17 -Wextra -Wall -H ")
     set(ZE_DEBUG_BUILD_FLAGS "-g")
-    set(ZE_RELEASE_BUILD_FLAGS "-O3 -Os -s")
+    set(ZE_RELEASE_BUILD_FLAGS "-O3 -Os -s -g")
 endif()
 
 include_directories(src)
@@ -73,6 +73,11 @@ file(GLOB GAME_SRC
     src/engine/game/*.h
 )
 
+file(GLOB ZEN_CONVERT
+    src/zenconvert/*.cpp
+    src/zenconvert/*.h
+)
+
 find_package(SFML 2 REQUIRED system window graphics)
 
 if(!SFML_FOUND)
@@ -88,6 +93,8 @@ if(!OPENAL_FOUND)
 endif()
 
 set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES} ${GLFW_STATIC_LIBRARIES} RAPI_GL)
+
+add_executable(zenconvert ${ZEN_CONVERT})
 
 add_executable(render_test_GL src/renderer/renderer_test.cpp)
 set_target_properties(render_test_GL PROPERTIES LINKER_LANGUAGE C)
