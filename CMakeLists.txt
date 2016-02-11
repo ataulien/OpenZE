@@ -5,9 +5,10 @@ include(ExternalProject)
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "")
 
 if(";${CMAKE_GENERATOR};" MATCHES ";Visual Studio;")
-    set(ZE_BUILD_FLAGS "-D_CRT_SECURE_NO_WARNINGS")
+    set(ZE_BUILD_FLAGS "")
     set(ZE_DEBUG_BUILD_FLAGS "")
     set(ZE_RELEASE_BUILD_FLAGS "")
+	add_definitions("/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
 else()
     set(ZE_BUILD_FLAGS " -std=c++17 -Wextra -Wall -H ")
     set(ZE_DEBUG_BUILD_FLAGS "-g")
@@ -92,7 +93,7 @@ if(!OPENAL_FOUND)
     message(FATAL_ERROR "OpenAL not found")
 endif()
 
-set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES} ${GLFW_STATIC_LIBRARIES} RAPI_GL)
+set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES} ${GLFW_STATIC_LIBRARIES})
 
 add_executable(zenconvert ${ZEN_CONVERT})
 
@@ -106,7 +107,81 @@ set_target_properties(ozerver PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(ozerver PROPERTIES COMPILE_FLAGS -DZE_SERVER)
 target_link_libraries(ozerver ${SERVER_LIBRARIES} ${LIBRARIES})
 
+if(WIN32)
+
+	IF( WIN32 )
+	
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /DL")
+		SET( PSDK_PATH "C:/Program Files/Microsoft Platform SDK/Bin" )
+		SET( PSDK_INC "C:/Program Files/Microsoft Platform SDK/Include" )
+
+	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+		link_directories("lib/glew/x64")
+		link_directories("lib/glfw/x64")
+	else()
+		link_directories("lib/glew/Win32")
+		link_directories("lib/glfw/Win32")
+	endif()
+		
+	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+		FIND_PATH(DX_INCLUDE_PATH d3d11.h
+			PATHS
+				"$ENV{DXSDK_DIR}/Include"
+				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Include"
+			DOC "The directory where D3D11.h resides")
+
+
+		FIND_LIBRARY(D3D11_LIBRARY d3d11.lib
+			PATHS
+				"$ENV{DXSDK_DIR}/Lib/x64"
+				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x64"
+			DOC "The directory where d3d11.lib resides")
+
+		FIND_LIBRARY(D3DX11_LIBRARY d3dx11.lib
+			PATHS
+				"$ENV{DXSDK_DIR}/Lib/x64"
+				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x64"
+			DOC "The directory where d3dx11.lib resides")
+	else()
+		FIND_PATH(DX_INCLUDE_PATH d3d11.h
+			PATHS
+				"$ENV{DXSDK_DIR}/Include"
+				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Include"
+			DOC "The directory where D3D11.h resides")
+
+
+		FIND_LIBRARY(D3D11_LIBRARY d3d11.lib
+			PATHS
+				"$ENV{DXSDK_DIR}/Lib/x86"
+				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x86"
+			DOC "The directory where d3d11.lib resides")
+
+		FIND_LIBRARY(D3DX11_LIBRARY d3dx11.lib
+			PATHS
+				"$ENV{DXSDK_DIR}/Lib/x86"
+				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x86"
+			DOC "The directory where d3dx11.lib resides")
+	endif()
+			
+		SET( DX11_LIBRARIES ${D3D11_LIBRARY} ${D3DX11_LIBRARY} )
+		
+		include_directories(${DX_INCLUDE_PATH})
+	ELSE()
+		
+	ENDIF() 
+
+	add_executable(openze_dx ${SRC} ${GAME_SRC})
+	set_target_properties(openze_dx PROPERTIES LINKER_LANGUAGE C)
+	set_target_properties(openze_dx PROPERTIES COMPILE_FLAGS "-DZE_GAME -DRND_D3D11")
+	target_link_libraries(openze_dx ${GAME_LIBRARIES} ${LIBRARIES} RAPI_DX glfw)
+endif()
+
 add_executable(openze ${SRC} ${GAME_SRC})
 set_target_properties(openze PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(openze PROPERTIES COMPILE_FLAGS -DZE_GAME)
-target_link_libraries(openze ${GAME_LIBRARIES} ${LIBRARIES} glfw)
+set_target_properties(openze PROPERTIES COMPILE_FLAGS "-DZE_GAME -DRND_GL")
+target_link_libraries(openze ${GAME_LIBRARIES} ${LIBRARIES} RAPI_GL glfw)
+
+
+
+
+

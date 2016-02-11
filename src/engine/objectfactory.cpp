@@ -76,7 +76,11 @@ uint32_t Engine::ObjectFactory::createObject()
 
 	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
 
+<<<<<<< HEAD
     const int n = 2000;
+=======
+	const int n = 2000;
+>>>>>>> f6c1618e1df065b66567d7a163c93f2015968d88
 	const float turns = 5;
 	const float radius = 4.0f;
 	const float heightmod = 0.7f;
