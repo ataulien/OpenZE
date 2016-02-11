@@ -39,5 +39,10 @@ namespace Utils
 		 * @brief Returns the OS-Specific handle to this window as a void*
 		 */
 		virtual void* getNativeHandle() = 0;
+
+		/**
+		 * @brief Sets the title of the window
+		 */
+		virtual void setWindowTitle(const std::string& title){}
     };
 }
