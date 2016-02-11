@@ -17,7 +17,7 @@ namespace Physics
          * @brief update
          * @param dt
          */
-        void update(float dt);
+        void update(double dt);
 
         /**
          * @brief init

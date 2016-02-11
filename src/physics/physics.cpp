@@ -8,9 +8,9 @@ Physics::Physics::Physics(float gravity) :
     m_DynamicsWorld.setGravity(btVector3(0, gravity, 0));
 }
 
-void Physics::Physics::update(float dt)
+void Physics::Physics::update(double dt)
 {
-    m_DynamicsWorld.stepSimulation(dt);
+    m_DynamicsWorld.stepSimulation((btScalar)dt);
 }
 
 void Physics::Physics::init()
