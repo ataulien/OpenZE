@@ -14,7 +14,7 @@ Engine::Engine::~Engine()
     delete m_pSettings;
 }
 
-void Engine::Engine::updatePhysics(const Duration &dt)
+void Engine::Engine::updatePhysics(const std::chrono::duration<double> &dt)
 {
     m_PhysicsSystem.update(dt.count());
 }
@@ -32,34 +32,35 @@ bool Engine::Engine::render(float alpha)
 void Engine::Engine::mainLoop()
 {
     m_Factory.createObject();
-    typedef std::chrono::high_resolution_clock Time;
 
-    const float fps = 100;
-    const Duration dt = Duration(1 / fps);
-    Duration accumulator = Duration::zero();
+	// Define the updaterate for the game-logic
+    const float update_fps = 100;
+    auto update_dt = std::chrono::duration<double>(1 / update_fps);
+	auto max_dt_seconds = std::chrono::duration<double>(0.2f);
+	std::chrono::duration<double> accumulator = std::chrono::duration<double>::zero();
 
-    auto frameStart = Time::now();
+	// Start the timer
+	m_MainLoopTimer.update();
 
     bool isRunning = true;
     while(isRunning)
     {
-        auto currentTime = Time::now();
+        accumulator += m_MainLoopTimer.update();
 
-        accumulator += currentTime - frameStart;
+        if(accumulator > max_dt_seconds)
+            accumulator = max_dt_seconds;
 
-        frameStart = currentTime;
-
-        if(accumulator > Duration(0.2f))
-            accumulator = Duration(0.2f);
-
-        while(accumulator > dt)
+		// Update the physics as often as we have to
+        while(accumulator > update_dt)
         {
-            updatePhysics(dt);
-            accumulator -= dt;
+            updatePhysics(update_dt);
+            accumulator -= update_dt;
         }
 
-        const float alpha = accumulator / dt;
+		// Generate interpolation value for the renderer
+        const float alpha = static_cast<float>(accumulator / update_dt);
 
+		// Draw the current frame
         isRunning = render(alpha);
     }
 }

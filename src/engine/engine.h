@@ -6,8 +6,9 @@
 
 #include "objectfactory.h"
 #include "physics/physics.h"
+#include "utils/timer.h"
 
-typedef std::chrono::duration<float> Duration;
+
 
 namespace Engine
 {
@@ -31,7 +32,7 @@ namespace Engine
          * @brief updates the physics
          * @param delta time
          */
-        void updatePhysics(const Duration &dt);
+        void updatePhysics(const std::chrono::duration<double> &dt);
 
         /**
          * @brief render
@@ -62,12 +63,20 @@ namespace Engine
          */
         ObjectFactory m_Factory;
 
-    private:
+    protected:
         /**
          * @brief Global game settings
          */
         Settings *m_pSettings;
 
+		/**
+		 * @brief Main physics system
+		 */
         Physics::Physics m_PhysicsSystem;
+
+		/**
+		 * @brief Timer for the mainloop
+		 */
+		Utils::Timer<double, 20> m_MainLoopTimer;
     };
 }
