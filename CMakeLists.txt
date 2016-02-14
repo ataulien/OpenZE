@@ -12,7 +12,7 @@ if(MSVC)
 else()
     set(ZE_BUILD_FLAGS " -std=c++17 -Wextra -Wall -H ")
     set(ZE_DEBUG_BUILD_FLAGS "-g")
-    set(ZE_RELEASE_BUILD_FLAGS "-O3 -Os -s")
+    set(ZE_RELEASE_BUILD_FLAGS "-O3 -s ")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -36,6 +36,11 @@ include_directories(${OPENAL_INCLUDE_DIR})
 
 
 
+set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
+set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLAGS}")
+
 add_subdirectory(src/debug)
 add_subdirectory(src/game_classes)
 add_subdirectory(src/gui)
@@ -51,10 +56,6 @@ add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
 add_subdirectory(lib/rapi)
 add_subdirectory(lib/glfw)
-
-set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
-set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
-
 
 
 file(GLOB SRC
@@ -74,6 +75,10 @@ file(GLOB GAME_SRC
     src/engine/game/*.h
 )
 
+file(GLOB ZEN_CONVERT
+    src/zenconvert/*.cpp
+    src/zenconvert/*.h
+)
 find_package(OpenAL REQUIRED)
 
 if(!OPENAL_FOUND)
@@ -81,6 +86,9 @@ if(!OPENAL_FOUND)
 endif()
 
 set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
+
+add_executable(zenconvert ${ZEN_CONVERT})
+target_link_libraries(zenconvert utils)
 
 add_executable(render_test_GL src/renderer/renderer_test.cpp)
 set_target_properties(render_test_GL PROPERTIES LINKER_LANGUAGE C)
