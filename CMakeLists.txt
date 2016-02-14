@@ -4,16 +4,25 @@ include(ExternalProject)
 
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "")
 
-if(";${CMAKE_GENERATOR};" MATCHES ";Visual Studio;")
+if(MSVC)
     set(ZE_BUILD_FLAGS "")
     set(ZE_DEBUG_BUILD_FLAGS "")
-    set(ZE_RELEASE_BUILD_FLAGS "")
-	add_definitions("/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
+    set(ZE_RELEASE_BUILD_FLAGS "/arch:SSE2 /Ox /Ob2 /Oi /Ot /Oy /fp:fast /GF /FD /MT /GS-")
+	#add_definitions("/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
 else()
     set(ZE_BUILD_FLAGS " -std=c++17 -Wextra -Wall -H ")
     set(ZE_DEBUG_BUILD_FLAGS "-g")
     set(ZE_RELEASE_BUILD_FLAGS "-O3 -Os -s")
 endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(ADDITIONAL_BUILD_FLAGS ${ZE_DEBUG_BUILD_FLAGS})
+    add_definitions(-DZE_DEBUG)
+else()
+    set(ADDITIONAL_BUILD_FLAGS ${ZE_RELEASE_BUILD_FLAGS})
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLAGS}")
 
 include_directories(src)
 include_directories(src/engine)
@@ -23,18 +32,9 @@ include_directories(lib/glfw/include)
 include_directories(lib/rapi/renderer/include)
 include_directories(lib/rapi/include)
 
-find_package(SFML 2 REQUIRED window graphics system)
-
-include_directories(${SFML_INCLUDE_DIR})
-
 include_directories(${OPENAL_INCLUDE_DIR})
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(ADDITIONAL_BUILD_FLAGS ${ZE_DEBUG_BUILD_FLAGS})
-    add_definitions(-DZE_DEBUG)
-else()
-    set(ADDITIONAL_BUILD_FLAGS ${ZE_RELEASE_BUILD_FLAGS})
-endif()
+
 
 add_subdirectory(src/debug)
 add_subdirectory(src/game_classes)
@@ -55,7 +55,7 @@ add_subdirectory(lib/glfw)
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
 set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLAGS}")
+
 
 file(GLOB SRC
     src/engine/*.cpp
@@ -74,21 +74,13 @@ file(GLOB GAME_SRC
     src/engine/game/*.h
 )
 
-find_package(SFML 2 REQUIRED system window graphics)
-
-if(!SFML_FOUND)
-    message(FATAL_ERROR "SFML not found")
-endif()
-
-include_directories(${SFML_INCLUDE_DIR})
-
 find_package(OpenAL REQUIRED)
 
 if(!OPENAL_FOUND)
     message(FATAL_ERROR "OpenAL not found")
 endif()
 
-set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${SFML_LIBRARIES} ${GLFW_STATIC_LIBRARIES})
+set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
 
 add_executable(render_test_GL src/renderer/renderer_test.cpp)
 set_target_properties(render_test_GL PROPERTIES LINKER_LANGUAGE C)
