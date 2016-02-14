@@ -1,5 +1,4 @@
 #include "window.h"
-#include <SFML/Graphics.hpp>
 
 using namespace Utils;
 
@@ -8,7 +7,6 @@ using namespace Utils;
 */
 Window::Window(unsigned int topX, unsigned int topY, unsigned int bottomX, unsigned int bottomY, const std::string& title)
 {
-	sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
 }
 
 /**
