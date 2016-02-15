@@ -2,6 +2,7 @@
 
 #include "parser.h"
 #include "vob.h"
+#include "zCMesh.h"
 
 void dumpVob(ZenConvert::Vob *pVob, uint32_t indent = 0)
 {
@@ -25,9 +26,11 @@ int main(int argc, char *argv[])
     }
 
     ZenConvert::Vob *pParentVob = new ZenConvert::Vob("parent", "", 0);
-    try
+	ZenConvert::zCMesh worldMesh;
+
+	try
     {
-        ZenConvert::Parser parser(argv[1], pParentVob);
+        ZenConvert::Parser parser(argv[1], pParentVob, &worldMesh);
         parser.parse();
         dumpVob(pParentVob);
     }

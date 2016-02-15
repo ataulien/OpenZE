@@ -2,6 +2,7 @@
 
 #include "engine.h"
 #include "utils/GLFW_window.h"
+#include "utils/mathlib.h"
 
 namespace Engine
 {
@@ -33,6 +34,7 @@ namespace Engine
 		 * @brief testing only
 		 */
 		float m_CameraAngle;
-		float m_CameraFovMod;
+		float m_CameraZoom;
+		Math::float3 m_CameraCenter;
     };
 }

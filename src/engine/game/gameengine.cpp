@@ -14,8 +14,11 @@
 #include "components.h"
 #include "components/collision.h"
 #include "components/visual.h"
+#include "zenconvert/parser.h"
+#include "zenconvert/vob.h"
+#include "zenconvert/zCMesh.h"
 
-#define RENDER_MASK (::Engine::C_COLLISION | ::Engine::C_VISUAL)
+#define RENDER_MASK (::Engine::C_VISUAL)
 
 #ifdef RND_GL
 static const char* vertex_shader =
@@ -76,6 +79,64 @@ const char* fragment_shader =
 	"  return float4 (0.5, 0.5, 0.0, 1.0) * max(0.2f, dot(input.normal, -float3(-0.3333f,0.3333f,-0.3333f)));"
         "}";
 #endif
+
+RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices)
+{
+	ZenConvert::Vob parentVob("parent", "", 0);
+	ZenConvert::zCMesh worldMesh;
+
+	try
+	{
+		ZenConvert::Parser parser(file, &parentVob, &worldMesh);
+		parser.parse();
+	}
+	catch(std::exception &e)
+	{
+		LogError() << e.what();
+		return nullptr;
+	}
+
+	std::vector<Renderer::SimpleVertex> vx;
+	vx.resize(worldMesh.getIndices().size());
+
+	for(auto& v : worldMesh.getVertices())
+	{
+		zenVertices.emplace_back(v * scale);
+	}
+
+	// Get vertices
+	for(size_t i = 0, end = vx.size(); i < end; i++)
+	{
+		uint32_t idx = worldMesh.getIndices()[i];
+
+		if(idx >= worldMesh.getVertices().size())
+			LogError() << "asdasd";
+
+		// get vertex and scale
+		vx[i].Position = worldMesh.getVertices()[idx];
+		vx[i].Position *= scale;
+
+		zenIndices.emplace_back(idx);
+	}
+
+	// Compute normals and resize
+	for(size_t i = 0, end = vx.size(); i < end; i += 3)
+	{
+		Math::float3 v0 = vx[i].Position;
+		Math::float3 v1 = vx[i + 1].Position;
+		Math::float3 v2 = vx[i + 2].Position;
+
+		Math::float3 nrm = Math::float3::cross(v1 - v0, v2 - v0).normalize();
+
+		vx[i+0].Normal = nrm;
+		vx[i+1].Normal = nrm;
+		vx[i+2].Normal = nrm;			
+	}
+
+	RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
+	buffer->Init(&vx[0], sizeof(Renderer::SimpleVertex) * vx.size(), sizeof(Renderer::SimpleVertex));
+	return buffer;
+}
 
 RAPI::RBuffer* MakeBox(float extends)
 {
@@ -150,7 +211,7 @@ RAPI::RBuffer* MakeBox(float extends)
 Engine::GameEngine::GameEngine(int argc, char *argv[]) :
     Engine(argc, argv),
     m_Window(200, 200, 800, 600, "OpenZE"),
-	m_CameraFovMod(1.0f),
+	m_CameraZoom(1.0f),
 	m_CameraAngle(0.0f)
 {
 }
@@ -183,8 +244,11 @@ bool Engine::GameEngine::render(float alpha)
 
 	// Grab window-events
     // TODO: Do this in an update-function, not the render-one!
-    const float MOVEMENT_SPEED = 5.0f;
-    const float ZOOM_SPEED = 0.2f;
+    const float MOVEMENT_SPEED = 140.0f;
+    const float ZOOM_SPEED = 40.0f;
+	const float TURN_SPEED = Math::DegToRad(70);
+	float movement = MOVEMENT_SPEED * m_MainLoopTimer.getAvgDelta().count();
+	float turn  = TURN_SPEED * m_MainLoopTimer.getAvgDelta().count();
     m_Window.pollEvent([&](Utils::Window::Event ev)
     {
         switch(ev.EventType)
@@ -201,24 +265,66 @@ bool Engine::GameEngine::render(float alpha)
 			switch(ev.KeyboardEvent.key)
 			{
 			case Utils::EKey::KEY_LEFT:
-				m_CameraAngle -= m_MainLoopTimer.getAvgDelta().count() * MOVEMENT_SPEED;
+				m_CameraAngle += turn;
 				break;
 
 			case Utils::EKey::KEY_RIGHT:
-				m_CameraAngle += m_MainLoopTimer.getAvgDelta().count() * MOVEMENT_SPEED;
+				m_CameraAngle -= turn;
 				break;
 
 			case Utils::EKey::KEY_UP:
-				m_CameraFovMod -= m_MainLoopTimer.getAvgDelta().count() * ZOOM_SPEED;
+				m_CameraZoom -= m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
 				break;
 
 			case Utils::EKey::KEY_DOWN:
-				m_CameraFovMod += m_MainLoopTimer.getAvgDelta().count() * ZOOM_SPEED;
+				m_CameraZoom += m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
+				break;
+
+			case Utils::EKey::KEY_W:
+				m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+				break;
+
+			case Utils::EKey::KEY_A:
+				m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
+				break;
+
+			case Utils::EKey::KEY_S:
+				m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+				break;
+
+			case Utils::EKey::KEY_D:
+				m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
+				break;
+
+			case Utils::EKey::KEY_Q:
+				m_CameraCenter.y += movement;
+				break;
+
+			case Utils::EKey::KEY_Y:
+				m_CameraCenter.y -= movement;
+				break;
+
+			case Utils::EKey::KEY_SPACE:
+				{
+					Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
+					Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
+				m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+				}
 				break;
 			}
 			break;
         }
     });
+
+	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), m_CameraCenter, Math::float3(0,1,0));
+
+	RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
+
+#ifdef RND_GL
+	Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f, res.x, res.y, 0.1f, 1000.0f);
+#else
+	Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 1000.0f);
+#endif
 
 	// Draw frame
     RAPI::REngine::RenderingDevice->OnFrameStart();
@@ -227,20 +333,16 @@ bool Engine::GameEngine::render(float alpha)
     {
         if((m_Factory.getMasks().m_Data[i] & RENDER_MASK) == RENDER_MASK)
         {
-            btTransform trans;
-            m_Factory.getCollision(i).pMotionState->getWorldTransform(trans);
+			Math::Matrix model = Math::Matrix::CreateIdentity();
 
-            Math::Matrix model;
-            trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
-            Math::Matrix view = Math::Matrix::CreateLookAt(Math::float3(50 * sinf(m_CameraAngle),100,50 * cosf(m_CameraAngle)), Math::float3(0,0,0), Math::float3(0,1,0));
+			if((m_Factory.getMasks().m_Data[i] & C_COLLISION) == C_COLLISION)
+			{
+				btTransform trans;
+				m_Factory.getCollision(i).pMotionState->getWorldTransform(trans);
+				trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
+			}
 
-            RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
-
-        #ifdef RND_GL
-            Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f * m_CameraFovMod, res.x, res.y, 0.1f, 1000.0f);
-        #else
-            Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 1000.0f);
-        #endif
+           
             Math::Matrix viewProj = projection * view * model;
             Components::Visual &visual = m_Factory.getVisual(i);
             visual.pObjectBuffer->UpdateData(&viewProj);
@@ -249,6 +351,9 @@ bool Engine::GameEngine::render(float alpha)
         }
     }
     RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
+
+	//Math::Matrix viewProj = projection * view;
+	//RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
 
 	// Process frame
     RAPI::REngine::RenderingDevice->OnFrameEnd();

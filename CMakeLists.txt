@@ -5,7 +5,7 @@ include(ExternalProject)
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "")
 
 if(MSVC)
-    set(ZE_BUILD_FLAGS "")
+    set(ZE_BUILD_FLAGS "/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
     set(ZE_DEBUG_BUILD_FLAGS "")
     set(ZE_RELEASE_BUILD_FLAGS "/arch:SSE2 /Ox /Ob2 /Oi /Ot /Oy /fp:fast /GF /FD /MT /GS-")
 	#add_definitions("/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
@@ -37,7 +37,7 @@ include_directories(${OPENAL_INCLUDE_DIR})
 
 
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
-set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
+set(LIBRARIES debug game_classes network physics storage utils glm zenconvert ${BULLET_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLAGS}")
 
@@ -51,6 +51,7 @@ add_subdirectory(src/renderer)
 add_subdirectory(src/sound)
 add_subdirectory(src/storage)
 add_subdirectory(src/utils)
+add_subdirectory(src/zenconvert)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
@@ -87,8 +88,8 @@ endif()
 
 set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
 
-add_executable(zenconvert ${ZEN_CONVERT})
-target_link_libraries(zenconvert utils)
+add_executable(convertzen ${ZEN_CONVERT})
+target_link_libraries(convertzen utils)
 
 add_executable(render_test_GL src/renderer/renderer_test.cpp)
 set_target_properties(render_test_GL PROPERTIES LINKER_LANGUAGE C)
@@ -104,7 +105,7 @@ if(WIN32)
 
 	IF( WIN32 )
 	
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /DL")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 		SET( PSDK_PATH "C:/Program Files/Microsoft Platform SDK/Bin" )
 		SET( PSDK_INC "C:/Program Files/Microsoft Platform SDK/Include" )
 

@@ -7,6 +7,7 @@
 #include "components/visual.h"
 #include "utils/vector.h"
 #include "utils/logger.h"
+#include "utils/mathlib.h"
 
 namespace Engine
 {
@@ -22,6 +23,8 @@ namespace Engine
         ObjectFactory(Engine *pEngine, uint32_t objCount = 0);
 
         uint32_t createEntity();
+
+		uint32_t test_createPhysicsEntity(const Math::float3& position, const Math::float3& impulse);
 
         void destroyEntity(uint32_t entity);
 
