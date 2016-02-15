@@ -8,7 +8,7 @@
 
 const std::string ZenConvert::Parser::s_FileFormat = "ZenGin Archive";
 
-ZenConvert::Parser::Parser(const std::string &fileName, Vob *pVob) :
+ZenConvert::Parser::Parser(const std::string &fileName, Chunk *pVob) :
     m_Seek(0),
     m_pVob(pVob)
 {
@@ -23,8 +23,7 @@ ZenConvert::Parser::Parser(const std::string &fileName, Vob *pVob) :
         throw std::runtime_error("File does not exist");
 
     m_Data.resize(size);
-    if(!file.read(reinterpret_cast<char *>(m_Data.data()), size))
-        throw std::runtime_error("Did not work");
+    file.read(reinterpret_cast<char *>(m_Data.data()), size);
 }
 
 ZenConvert::Parser::~Parser()
@@ -164,7 +163,7 @@ void ZenConvert::Parser::readWorldMesh()
     skipBinaryChunk();
 }
 
-void ZenConvert::Parser::readChunk(Vob *pParent)
+void ZenConvert::Parser::readChunk(Chunk *pParent)
 {
     skipSpaces();
     if(m_Data[m_Seek] != '[')
@@ -249,14 +248,14 @@ void ZenConvert::Parser::readChunk(Vob *pParent)
     if(state != S_FINISHED)
         throw std::runtime_error("Parser did not finish");
 
-    Vob *pRef = nullptr;
+    Chunk *pRef = nullptr;
     if(!createObject)
     {
         if(m_Vobs.find(objectID) == m_Vobs.end())
             throw std::runtime_error("Reference to unknown object: " + std::to_string(objectID));
         pRef = m_Vobs[objectID];
     }
-    Vob *pVob = pParent->addVob(name, className, classVersion, objectID, pRef);
+    Chunk *pVob = pParent->addVob(name, className, classVersion, objectID, pRef);
     m_Vobs.emplace(objectID, pVob);
 
     if(!pVob)
@@ -293,7 +292,7 @@ void ZenConvert::Parser::readChunk(Vob *pParent)
     }
 }
 
-void ZenConvert::Parser::readBinaryChunk(ZenConvert::Vob *pParent)
+void ZenConvert::Parser::readBinaryChunk(ZenConvert::Chunk *pParent)
 {
     uint32_t version = readBinaryDword();
     (void)version;//nvm
@@ -391,7 +390,7 @@ void ZenConvert::Parser::checkArraySize()
         throw std::logic_error("Out of range");
 }
 
-ZenConvert::Parser::Parser(ZenConvert::Vob *pVob, const std::vector<uint8_t> &data) :
+ZenConvert::Parser::Parser(ZenConvert::Chunk *pVob, const std::vector<uint8_t> &data) :
     m_Data(data),
     m_Seek(0),
     m_pVob(pVob)

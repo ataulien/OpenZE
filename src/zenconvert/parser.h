@@ -6,7 +6,7 @@
 
 namespace ZenConvert
 {
-    class Vob;
+    class Chunk;
 
     class Parser
     {
@@ -28,7 +28,7 @@ namespace ZenConvert
         } m_Header;
 
     public:
-        Parser(const std::string &fileName, Vob *pVob = nullptr);
+        Parser(const std::string &fileName, Chunk *pVob = nullptr);
         ~Parser();
         void parse();
 
@@ -39,8 +39,8 @@ namespace ZenConvert
 
         void readHeader();
         void readWorldMesh();
-        void readChunk(Vob *pParent);
-        void readBinaryChunk(Vob *pParent);
+        void readChunk(Chunk *pParent);
+        void readBinaryChunk(Chunk *pParent);
         std::string readString(bool skipSpaces = true);
         std::string readLine();
         int32_t readInt();
@@ -55,11 +55,11 @@ namespace ZenConvert
         void checkArraySize();
 
     private:
-        Parser(Vob *pVob, const std::vector<uint8_t> &data);
+        Parser(Chunk *pVob, const std::vector<uint8_t> &data);
         std::vector<uint8_t> m_Data;
-        std::unordered_map<uint32_t, Vob*> m_Vobs;
+        std::unordered_map<uint32_t, Chunk*> m_Vobs;
         size_t m_Seek;
-        Vob *m_pVob;
+        Chunk *m_pVob;
 
         static const std::string s_FileFormat;
     };

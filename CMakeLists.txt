@@ -34,8 +34,6 @@ include_directories(lib/rapi/include)
 
 include_directories(${OPENAL_INCLUDE_DIR})
 
-
-
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
 set(LIBRARIES debug game_classes network physics storage utils glm ${BULLET_LIBRARIES})
 
@@ -78,6 +76,8 @@ file(GLOB GAME_SRC
 file(GLOB ZEN_CONVERT
     src/zenconvert/*.cpp
     src/zenconvert/*.h
+    src/zenconvert/exporter/*.cpp
+    src/zenconvert/exporter/*.h
 )
 find_package(OpenAL REQUIRED)
 
