@@ -246,6 +246,8 @@ namespace Math
 
         float Determinant() const  {return glm::determinant(_glmMatrix); }
 
+		static Matrix CreateIdentity(){return Matrix(glm::mat4(1.0)); }
+
         static Matrix CreateTranslation( const float3& position ){return Matrix(glm::translate(glm::mat4x4(), position._glmt_vector)); }
         static Matrix CreateTranslation( float x, float y, float z ){return Matrix(glm::translate(glm::mat4x4(), glm::vec3(x,y,z))); }
 

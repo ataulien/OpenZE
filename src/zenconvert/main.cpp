@@ -3,6 +3,8 @@
 #include "parser.h"
 #include "vob.h"
 #include "exporter/jsonexport.h"
+#include "zCMesh.h"
+#include "utils/split.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,12 +15,14 @@ int main(int argc, char *argv[])
     }
 
     ZenConvert::Chunk *pParentVob = new ZenConvert::Chunk("parent", "", 0);
+	ZenConvert::zCMesh worldMesh;
+
     try
     {
-        ZenConvert::Parser parser(argv[1], pParentVob);
+        ZenConvert::Parser parser(argv[1], pParentVob, &worldMesh);
         parser.parse();
 
-        ZenConvert::JsonExport exporter;
+        ZenConvert::JsonExport exporter(Utils::split(argv[1], '.')[0]);
         exporter.exportVobTree(pParentVob);
     }
     catch(std::exception &e)

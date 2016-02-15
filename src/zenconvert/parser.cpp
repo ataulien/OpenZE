@@ -1,21 +1,25 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <cctype>
 
 #include "parser.h"
 #include "vob.h"
+#include "zCMesh.h"
 #include "utils/split.h"
+#include "utils/logger.h"
 
 const std::string ZenConvert::Parser::s_FileFormat = "ZenGin Archive";
 
-ZenConvert::Parser::Parser(const std::string &fileName, Chunk *pVob) :
+ZenConvert::Parser::Parser(const std::string &fileName, Chunk *pVob, zCMesh* pWorldMesh) :
     m_Seek(0),
-    m_pVob(pVob)
+    m_pVob(pVob),
+	m_pWorldMesh(pWorldMesh)
 {
     if(!pVob)
         throw std::runtime_error("Parent vob not set");
 
-    std::ifstream file(fileName, std::ios::in | std::ios::ate);
+    std::ifstream file(fileName, std::ios::in | std::ios::ate | std::ios::binary);
     size_t size = file.tellg();
     file.seekg(0, std::ios::beg);
 
@@ -160,7 +164,11 @@ void ZenConvert::Parser::readHeader()
 
 void ZenConvert::Parser::readWorldMesh()
 {
-    skipBinaryChunk();
+	// Read worldmesh, if needed
+    if(m_pWorldMesh)
+		m_pWorldMesh->readObjectData(*this);
+	else
+		skipBinaryChunk();
 }
 
 void ZenConvert::Parser::readChunk(Chunk *pParent)
@@ -314,7 +322,7 @@ std::string ZenConvert::Parser::readString(bool skip)
     return str;
 }
 
-std::string ZenConvert::Parser::readLine()
+std::string ZenConvert::Parser::readLine(bool skip)
 {
     std::string retVal;
     while(m_Data[m_Seek] != '\r' && m_Data[m_Seek] != '\n')
@@ -322,7 +330,8 @@ std::string ZenConvert::Parser::readLine()
         checkArraySize();
         retVal += m_Data[m_Seek++];
     }
-    skipSpaces();
+    if(skip)
+		skipSpaces();
     return retVal;
 }
 
@@ -341,7 +350,7 @@ int32_t ZenConvert::Parser::readInt()
 float ZenConvert::Parser::readFloat()
 {
     //Todo;
-    throw std::runtime_error("Not implemented: " + (__PRETTY_FUNCTION__ + std::to_string(__LINE__)));
+    throw std::runtime_error("Not implemented: " + (FUNCTION_SIGNATURE + std::to_string(__LINE__)));
     return 0.0f;
 }
 
@@ -363,6 +372,13 @@ uint32_t ZenConvert::Parser::readBinaryDword()
     uint32_t retVal = *reinterpret_cast<uint32_t *>(&m_Data[m_Seek]);
     m_Seek += sizeof(uint32_t);
     return retVal;
+}
+
+uint16_t ZenConvert::Parser::readBinaryWord()
+{
+	uint16_t retVal = *reinterpret_cast<uint16_t *>(&m_Data[m_Seek]);
+	m_Seek += sizeof(uint16_t);
+	return retVal;
 }
 
 bool ZenConvert::Parser::isNumber()

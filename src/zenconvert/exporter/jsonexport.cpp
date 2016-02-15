@@ -4,10 +4,14 @@
 
 #include <iostream>
 
+ZenConvert::JsonExport::JsonExport(const std::string &dirName) :
+    Export(dirName)
+{
+}
+
 void ZenConvert::JsonExport::exportWayNet(ZenConvert::Chunk *pVob, std::ostream &stream)
 {
     stream << "{\n";
-    uint32_t chunkCount;
     pVob = pVob->child(0);
     bool first = true;
     for(uint32_t i = 0, chunkCount = pVob->childCount(); i < chunkCount; ++i)
@@ -44,4 +48,12 @@ void ZenConvert::JsonExport::exportWayNet(ZenConvert::Chunk *pVob, std::ostream 
 
 void ZenConvert::JsonExport::exportVobs(ZenConvert::Chunk *pVob, std::ostream &stream)
 {
+    stream << "{\n";
+
+    for(uint32_t i = 0, chunkCount = pVob->childCount(); i < chunkCount; ++i)
+    {
+        stream << "\t" << pVob->child(i)->name() << "(" << pVob->child(i)->className() << ")" << std::endl;
+    }
+
+    stream << "}\n";
 }

@@ -166,7 +166,7 @@ namespace Utils
 	private:
 
 		static std::function<void(const std::string&)> s_LogCallback;
-    public: static std::string s_LogFile;
+		static std::string s_LogFile;
 
 		std::stringstream m_Info; // Contains an information like "Info", "Warning" or "Error"
 		std::stringstream m_Message; // Text to write into the logfile

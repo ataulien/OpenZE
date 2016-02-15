@@ -5,8 +5,8 @@
 #include "utils/system.h"
 #include "utils/logger.h"
 
-ZenConvert::Export::Export() :
-    m_Indent(0)
+ZenConvert::Export::Export(const std::string &dirName) :
+    m_DirectoryName(dirName)
 {
 }
 
@@ -28,25 +28,25 @@ void ZenConvert::Export::exportVobTree(Chunk *pVob)
     pVob = pVob->child(0);
     std::cout << pVob->name() << "(" << pVob->className() << ")" << std::endl;
 
-    SYS::mkdir("output");
+    SYS::mkdir(m_DirectoryName.c_str());
+
+    std::ofstream vobTreeStream(m_DirectoryName + "/vobtree.json");
+    std::ofstream wayNetStream(m_DirectoryName + "/waypoints.json");
     for(int i = 0; i < pVob->childCount(); ++i)
     {
         Chunk *pChild = pVob->child(i);
         if(pChild->name() == "MeshAndBsp")
         {
-            std::ofstream of;
-            exportMaterials(pChild, of);
-            exportWorld(pChild, of);
+            exportMaterials(pChild, std::cout);
+            exportWorld(pChild, std::cout);
         }
         else if(pChild->name() == "VobTree")
         {
-            std::ofstream of;
-            exportVobs(pChild, of);
+            exportVobs(pChild, vobTreeStream);
         }
         else if(pChild->name() == "WayNet")
         {
-            std::ofstream of("output/waynet.json");
-            exportWayNet(pChild, of);
+            exportWayNet(pChild, wayNetStream);
         }
         else if(pChild->name() == "EndMarker")
             LogInfo() << "EOF";
@@ -57,24 +57,20 @@ void ZenConvert::Export::exportVobTree(Chunk *pVob)
 
 void ZenConvert::Export::exportWayNet(ZenConvert::Chunk *pVob, std::ostream &stream)
 {
-    (void)stream;
-    std::cout << pVob->name() << std::endl;
+    stream << pVob->name() << std::endl;
 }
 
 void ZenConvert::Export::exportMaterials(ZenConvert::Chunk *pVob, std::ostream &stream)
 {
-    (void)stream;
-    std::cout << pVob->name() << std::endl;
+    stream << pVob->name() << std::endl;
 }
 
 void ZenConvert::Export::exportWorld(ZenConvert::Chunk *pVob, std::ostream &stream)
 {
-    (void)stream;
-    std::cout << pVob->name() << std::endl;
+    stream << pVob->name() << std::endl;
 }
 
 void ZenConvert::Export::exportVobs(ZenConvert::Chunk *pVob, std::ostream &stream)
 {
-    (void)stream;
-    std::cout << pVob->name() << std::endl;
+    stream << pVob->name() << std::endl;
 }

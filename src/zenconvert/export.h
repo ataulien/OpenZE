@@ -10,14 +10,14 @@ namespace ZenConvert
     class Export
     {
     public:
-        Export();
+        Export(const std::string &dirName);
         virtual void exportVobTree(Chunk *pVob);
         virtual void exportWayNet(Chunk *pVob, std::ostream &stream);
         virtual void exportMaterials(Chunk *pVob, std::ostream &stream);
         virtual void exportWorld(Chunk *pVob, std::ostream &stream);
         virtual void exportVobs(Chunk *pVob, std::ostream &stream);
 
-    private:
-        uint32_t m_Indent;
+    protected:
+        std::string m_DirectoryName;
     };
 }
