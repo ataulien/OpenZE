@@ -1,6 +1,8 @@
 #include "archive_virtual.h"
 #include "utils/logger.h"
 #include "fileIndex.h"
+#include <stack>
+#include <functional>
 
 /**
  * Quick format rundown:
@@ -97,8 +99,11 @@ bool ArchiveVirtual::UpdateFileCatalog()
 		return false;
 	}
 
-	for(auto& e : m_EntryCatalog)
+	// Fix filenames. They're missing a terminating 0.
+	for(size_t total = 0; total < m_EntryCatalog.size(); total++)
 	{
+		auto& e = m_EntryCatalog[total];
+
 		// Fill the name-buffer with 0 until we reach a non-empty character, as
 		// these are not 0 terminated
 		// FIXME: This could give trouble with names which are actually 64 chars long!
@@ -109,7 +114,32 @@ bool ArchiveVirtual::UpdateFileCatalog()
 
 			e.Name[i] = 0;
 		}
-
-		LogInfo() << "Entry: " << e.Name;
 	}
+
+	// List all folders and files to console
+	std::function<void(int,int,bool)> f = [&](int idx, int level, bool dirsOnly) {
+		auto& e = m_EntryCatalog[idx];
+
+		// List files in directory
+		do
+		{
+			std::string tabs = std::string(level, '|');
+
+			if(!dirsOnly || m_EntryCatalog[idx].Type & VDF_ENTRY_DIR)
+				LogInfo() << "Entry: " << tabs << m_EntryCatalog[idx].Name;
+
+			if(m_EntryCatalog[idx].Type & VDF_ENTRY_DIR)
+			{
+				f(m_EntryCatalog[idx].JumpTo, level + 1, dirsOnly);
+				LogInfo() << "Entry: " << tabs << "END " << m_EntryCatalog[idx].Name;
+			}
+			idx++;
+		}while(!(m_EntryCatalog[idx-1].Type & VDF_ENTRY_LAST));
+	};
+
+	// List everything
+	f(0, 0, false);
+
+	// Print only directory structure
+	f(0, 0, true);
 }

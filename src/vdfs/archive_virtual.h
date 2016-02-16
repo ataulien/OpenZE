@@ -9,6 +9,10 @@ namespace VDFS
 
 	// Some of these are gracefully taken from the GothicFix-Teams VDFS implementation.
 
+	// File attributes
+	const uint32_t VDF_ENTRY_DIR = 0x80000000; // Directory
+	const uint32_t VDF_ENTRY_LAST = 0x40000000; // Last file in the archive seems to have this set
+
 	/**
 	* @brief Timestamp-bitfield for vdfs-files
 	*/
@@ -46,7 +50,7 @@ namespace VDFS
 		uint32_t JumpTo; // Dirs = child entry's number, Files = data offset
 		uint32_t Size;
 		uint32_t Type; // = 0x00000000 for files or VDFS_ENTRY_DIR, may be bitmasked by VDFS_ENTRY_LAST
-		uint32_t Attributes; // 20 = A;
+		uint32_t Attributes; // Always 20 = A;
 	};
 #pragma pack(pop)
 
