@@ -82,7 +82,7 @@ const char* fragment_shader =
 
 RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices)
 {
-	ZenConvert::Vob parentVob("parent", "", 0);
+    ZenConvert::Chunk parentVob("parent", "", 0);
 	ZenConvert::zCMesh worldMesh;
 
 	try

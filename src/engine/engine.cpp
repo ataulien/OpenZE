@@ -57,8 +57,8 @@ void Engine::Engine::mainLoop()
             accumulator -= update_dt;
         }
 
-		// Let bullet do it's own fixed timestamp
-		updatePhysics(delta);
+        // Let bullet do it's own fixed timestamp
+        updatePhysics(delta);
 
 		//updatePhysics(accumulator);
 		//accumulator = std::chrono::duration<double>::zero();

@@ -6,8 +6,8 @@
 
 namespace ZenConvert
 {
-    class Vob;
-	class zCMesh;
+    class Chunk;
+    class zCMesh;
 
     class Parser
     {
@@ -29,7 +29,7 @@ namespace ZenConvert
         } m_Header;
 
     public:
-        Parser(const std::string &fileName, Vob *pVob = nullptr, zCMesh* pWorldMesh = nullptr);
+        Parser(const std::string &fileName, Chunk *pVob = nullptr, zCMesh* pWorldMesh = nullptr);
         ~Parser();
         void parse();
 
@@ -40,12 +40,12 @@ namespace ZenConvert
 
         void readHeader();
         void readWorldMesh();
-        void readChunk(Vob *pParent);
-        void readBinaryChunk(Vob *pParent);
+        void readChunk(Chunk *pParent);
+        void readBinaryChunk(Chunk *pParent);
 
 		/**
 		* @brief Reads a string until \r, \n or a space is found
-		*/
+        */
         std::string readString(bool skipSpaces = true);
 
 		/**
@@ -102,12 +102,12 @@ namespace ZenConvert
 		 */
 		const zCMesh* getWorldMesh(){ return m_pWorldMesh; }
     private:
-        Parser(Vob *pVob, const std::vector<uint8_t> &data);
+        Parser(Chunk *pVob, const std::vector<uint8_t> &data);
         std::vector<uint8_t> m_Data;
-        std::unordered_map<uint32_t, Vob*> m_Vobs;
+        std::unordered_map<uint32_t, Chunk*> m_Vobs;
         size_t m_Seek;
-        Vob *m_pVob;
-		zCMesh* m_pWorldMesh;
+        Chunk *m_pVob;
+        zCMesh* m_pWorldMesh;
 
         static const std::string s_FileFormat;
     };

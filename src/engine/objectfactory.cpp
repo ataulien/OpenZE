@@ -160,12 +160,13 @@ uint32_t Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3& pos
 {
 	uint32_t entity = createEntity();
 
+#ifdef ZE_GAME
 	RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");
 	RAPI::RVertexShader* vs = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RVertexShader>("simpleVS");
 	RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 	RAPI::RBuffer *b = MakeBox(1.0f);
 
-	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
 
 	btVector3 s = btVector3(position.x, position.y, position.z);
 
@@ -194,5 +195,6 @@ uint32_t Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3& pos
 
 	m_Visual[entity].pPipelineState = sm.MakeDrawCall(b->GetSizeInBytes() / b->GetStructuredByteSize());
 
-	return entity;
+#endif
+    return entity;
 }
