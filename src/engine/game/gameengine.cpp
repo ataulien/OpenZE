@@ -321,9 +321,9 @@ bool Engine::GameEngine::render(float alpha)
 	RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
 
 #ifdef RND_GL
-	Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f, res.x, res.y, 0.1f, 1000.0f);
+	Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f, res.x, res.y, 0.1f, 10000.0f);
 #else
-	Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 1000.0f);
+	Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 10000.0f);
 #endif
 
 	// Draw frame

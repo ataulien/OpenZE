@@ -83,7 +83,7 @@ uint32_t Engine::ObjectFactory::createObject()
 
 	std::vector<Math::float3> zenVertices;
 	std::vector<uint32_t> zenIndices;
-	RAPI::RBuffer* worldMesh = loadZENMesh("DRAGONISLAND_ASCII.zen", 1.0f / 50.0f, zenVertices, zenIndices);
+	RAPI::RBuffer* worldMesh = loadZENMesh("NEWWORLD_ASCII.zen", 1.0f / 50.0f, zenVertices, zenIndices);
 
 	btTriangleMesh* wm = new btTriangleMesh;
 
@@ -115,7 +115,7 @@ uint32_t Engine::ObjectFactory::createObject()
 
 	m_Visual[entity].pPipelineState = sm.MakeDrawCall(worldMesh->GetSizeInBytes() / worldMesh->GetStructuredByteSize());
 
-    const int n = 1000;
+    const int n = 1;
 	const float turns = 5;
 	const float radius = 4.0f;
 	const float heightmod = 0.7f;
