@@ -83,7 +83,7 @@ uint32_t Engine::ObjectFactory::createObject()
 
 	std::vector<Math::float3> zenVertices;
 	std::vector<uint32_t> zenIndices;
-	RAPI::RBuffer* worldMesh = loadZENMesh("DRAGONISLAND_ASCII.zen", 1.0f / 50.0f, zenVertices, zenIndices);
+    RAPI::RBuffer* worldMesh = loadZENMesh("newworld.zen", 1.0f / 50.0f, zenVertices, zenIndices);
 
 	btTriangleMesh* wm = new btTriangleMesh;
 
