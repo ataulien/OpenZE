@@ -54,6 +54,7 @@ add_subdirectory(src/sound)
 add_subdirectory(src/storage)
 add_subdirectory(src/utils)
 add_subdirectory(src/zenconvert)
+add_subdirectory(src/vdfs)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
@@ -90,6 +91,7 @@ set_target_properties (renderer PROPERTIES FOLDER openZE)
 set_target_properties (storage PROPERTIES FOLDER openZE)
 set_target_properties (utils PROPERTIES FOLDER openZE)
 set_target_properties (zenconvert PROPERTIES FOLDER openZE)
+set_target_properties (vdfs PROPERTIES FOLDER openZE)
 
 # source files
 file(GLOB SRC
