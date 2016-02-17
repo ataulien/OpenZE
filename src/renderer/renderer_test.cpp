@@ -160,7 +160,7 @@ void RunApp(GLFWwindow* window)
 	REngine::ResourceCache->DeleteResource(b);
 }
 
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 #else
 int main(int argc, char** argv)
