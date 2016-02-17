@@ -4,7 +4,7 @@
 
 namespace Utils
 {
-    class SystemLinux
+    class System
     {
     public:
         static void mkdir(const char *path)
