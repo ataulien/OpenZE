@@ -97,8 +97,8 @@ const char* fragment_shader =
 		"Texture2D	TX_Texture0 : register( t0 );"
 		"SamplerState SS_Linear : register( s0 );"
         "float4 PSMain (VS_OUTPUT input) : SV_TARGET {"
-		"  float4 tx = TX_Texture0.Sample(SS_Linear, input.texCoord);"
-		"  return float4 (tx.rgb, 1.0) * max(0.2f, dot(input.normal, -float3(-0.3333f,0.3333f,-0.3333f)));"
+		"  float4 tx = TX_Texture0.Sample(SS_Linear, frac(input.texCoord));"
+		"  return float4(tx.rgb, 1.0);"
         "}";
 #endif
 
@@ -109,7 +109,7 @@ RAPI::RTexture* loadVDFTexture(const std::string& file)
 	idx.loadVDF("Textures.vdf");
 
 	std::vector<uint8_t> testData;
-	idx.getFileData("NW_DUNGEON_WALL_01-C.TEX", testData);
+	idx.getFileData("CHAPTER5_PAL-C.TEX", testData);
 
 	std::vector<uint8_t> ddsData;
 	ZenConvert::convertZTEX2DDS(testData, ddsData);
@@ -117,6 +117,7 @@ RAPI::RTexture* loadVDFTexture(const std::string& file)
 	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->CreateResource<RAPI::RTexture>();
 	tx->CreateTexture(ddsData.data(), ddsData.size(), RAPI::RInt2(0,0), 0, RAPI::TF_FORMAT_UNKNOWN_DXT);
 	
+	RAPI::REngine::ResourceCache->AddToCache("testtexture", tx);
 	return nullptr;
 }
 
@@ -148,6 +149,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 	for(size_t i = 0, end = vx.size(); i < end; i++)
 	{
 		uint32_t idx = worldMesh.getIndices()[i];
+		uint32_t featidx = worldMesh.getFeatureIndices()[i];
 
 		if(idx >= worldMesh.getVertices().size())
 			LogError() << "asdasd";
@@ -159,7 +161,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		if(idx < worldMesh.getFeatures().size())
 		{
 			vx[i].Color = worldMesh.getFeatures()[idx].lightStat;
-			vx[i].TexCoord = worldMesh.getFeatures()[idx].uv;
+			vx[i].TexCoord = Math::float2(worldMesh.getFeatures()[featidx].uv[0], worldMesh.getFeatures()[featidx].uv[1]);
 			vx[i].Normal = worldMesh.getFeatures()[idx].vertNormal;
 		}
 
@@ -180,7 +182,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		vx[i+2].Normal = nrm;			
 	}
 
-	//loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
+	loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
 
 	RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
 	buffer->Init(&vx[0], sizeof(Renderer::WorldVertex) * vx.size(), sizeof(Renderer::WorldVertex));
@@ -249,7 +251,7 @@ RAPI::RBuffer* MakeBox(float extends)
     // Loop through all vertices and apply the extends
     for(i = 0; i < n; i++)
     {
-		vx[i].Color = 0x00FF0000;
+		vx[i].Color = 0xFFFF0000;
 		vx[i].TexCoord = Math::float2(0,0);
         vx[i].Position *= extends;
     }

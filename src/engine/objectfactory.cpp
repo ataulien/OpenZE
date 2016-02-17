@@ -13,6 +13,7 @@
 #include <RPixelShader.h>
 #include <RInputLayout.h>
 #include <RTools.h>
+#include <RTexture.h>
 
 #include "renderer/vertextypes.h"
 
@@ -76,7 +77,8 @@ uint32_t Engine::ObjectFactory::createObject()
 	RAPI::RBuffer *b = MakeBox(1.0f);
 
 	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
-
+	RAPI::RSamplerState* ss;
+	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
 
 	entity = createEntity();
 	m_Mask[entity] = static_cast<EComponents>(C_COLLISION | C_VISUAL);
@@ -84,6 +86,10 @@ uint32_t Engine::ObjectFactory::createObject()
 	std::vector<Math::float3> zenVertices;
     std::vector<uint32_t> zenIndices;
     RAPI::RBuffer* worldMesh = loadZENMesh("newworld.zen", 1.0f / 50.0f, zenVertices, zenIndices);
+
+	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RTexture>("testtexture");
+	sm.SetTexture(0, tx, RAPI::ST_PIXEL);
+	sm.SetSamplerState(ss);
 
 	btTriangleMesh* wm = new btTriangleMesh;
 

@@ -33,7 +33,7 @@ namespace ZenConvert
 
 	struct zTMSH_FeatureChunk 
 	{
-		Math::float2	uv;
+		float			uv[2];
 		uint32_t		lightStat;
 		Math::float3	vertNormal;
 	};

@@ -3,7 +3,7 @@
 #include "engine.h"
 #include "utils/GLFW_window.h"
 #include "utils/mathlib.h"
-#include "sound/soundmanager.h"
+//#include "sound/soundmanager.h"
 
 namespace Engine
 {
@@ -33,7 +33,7 @@ namespace Engine
         /**
          * @brief m_SoundManager
          */
-        Sound::SoundManager m_SoundManager;
+        //Sound::SoundManager m_SoundManager;
 
 		/**
 		 * @brief testing only

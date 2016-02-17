@@ -157,7 +157,8 @@ void zCMesh::readObjectData(Parser& parser)
 						// Write indices directly to a vector
 						for(int v = 0; v < p->polyNumVertices; v++)
 						{
-							m_Indices.push_back(p->indices[v].VertexIndex);
+							m_Indices.emplace_back(p->indices[v].VertexIndex);
+							m_FeatureIndices.emplace_back(p->indices[v].FeatIndex);
 						}
 					}
 					else
@@ -165,9 +166,13 @@ void zCMesh::readObjectData(Parser& parser)
 						// Triangulate a triangle-fan
 						for (unsigned int i = 1; i < p->polyNumVertices - 1; i++)
 						{
-							m_Indices.push_back(p->indices[0].VertexIndex);
-							m_Indices.push_back(p->indices[i + 1].VertexIndex);
-							m_Indices.push_back(p->indices[i].VertexIndex);
+							m_Indices.emplace_back(p->indices[0].VertexIndex);
+							m_Indices.emplace_back(p->indices[i + 1].VertexIndex);
+							m_Indices.emplace_back(p->indices[i].VertexIndex);
+
+							m_FeatureIndices.emplace_back(p->indices[0].FeatIndex);
+							m_FeatureIndices.emplace_back(p->indices[i + 1].FeatIndex);
+							m_FeatureIndices.emplace_back(p->indices[i].FeatIndex);
 						}
 					}
 

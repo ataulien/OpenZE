@@ -9,7 +9,7 @@ option(OPENZE_OPENAL "Enable OpenAL-Build" OFF)
 
 if(MSVC)
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-    set(ZE_BUILD_FLAGS "/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX /MD")
+    set(ZE_BUILD_FLAGS "/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX /MD /MP")
     set(ZE_DEBUG_BUILD_FLAGS "")
     set(ZE_RELEASE_BUILD_FLAGS "/arch:SSE2 /Ox /Ob2 /Oi /Ot /Oy /fp:fast /GF /FD /MT /GS-")
 	#add_definitions("/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
@@ -127,7 +127,7 @@ if(OPENZE_OPENAL)
     message(FATAL_ERROR "OpenAL not found")
 endif()
 
-set(GAME_LIBRARIES alut renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
+set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
 
 add_executable(convertzen ${ZEN_CONVERT})
 target_link_libraries(convertzen utils)

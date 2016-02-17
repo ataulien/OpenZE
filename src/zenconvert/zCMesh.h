@@ -30,6 +30,11 @@ namespace ZenConvert
 		*/
 		const std::vector<uint32_t>& getIndices() { return m_Indices; }
 
+		/**
+		@ brief returns the vector of triangle-indices
+		*/
+		const std::vector<uint32_t>& getFeatureIndices() { return m_FeatureIndices; }
+
 	private:
 
 		/**
@@ -43,8 +48,13 @@ namespace ZenConvert
 		std::vector<zTMSH_FeatureChunk> m_Features;
 
 		/**
-		 * @brief indices for the triangles of the mesh
-		 */
+		* @brief indices for the triangles of the mesh
+		*/
 		std::vector<uint32_t> m_Indices;
+
+		/**
+		* @brief indices for the triangles of the mesh
+		*/
+		std::vector<uint32_t> m_FeatureIndices;
 	};
 }
