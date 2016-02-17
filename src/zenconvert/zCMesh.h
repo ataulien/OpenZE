@@ -1,6 +1,7 @@
 #pragma once 
 #include <vector>
 #include "utils/mathlib.h"
+#include "zTypes.h"
 
 namespace ZenConvert
 {
@@ -18,6 +19,11 @@ namespace ZenConvert
 		*/
 		const std::vector<Math::float3>& getVertices() { return m_Vertices; }
 
+		/**
+		@ brief returns the vector of features
+		*/
+		const std::vector<zTMSH_FeatureChunk>& getFeatures() { return m_Features; }
+
 
 		/**
 		@ brief returns the vector of triangle-indices
@@ -30,6 +36,11 @@ namespace ZenConvert
 		 * @brief vector of vertex-positions for this mesh
 		 */
 		std::vector<Math::float3> m_Vertices;
+
+		/** 
+		 * @brief Featues for the vertices with the corresponding index
+		 */
+		std::vector<zTMSH_FeatureChunk> m_Features;
 
 		/**
 		 * @brief indices for the triangles of the mesh

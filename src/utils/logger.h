@@ -12,6 +12,7 @@
 #ifndef WIN32
 #define FAILED(x) (x != 0)
 #else
+#define NOMINMAX
 #include <windows.h>
 #endif
 

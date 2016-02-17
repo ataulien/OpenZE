@@ -30,6 +30,14 @@ namespace ZenConvert
 		uint8_t			noDynLightNear		: 1;		
 		uint16_t		sectorIndex			: 16;
 	};
+
+	struct zTMSH_FeatureChunk 
+	{
+		Math::float2	uv;
+		uint32_t		lightStat;
+		Math::float3	vertNormal;
+	};
+
 #pragma pack(pop)
 
 #pragma pack(push, 4)

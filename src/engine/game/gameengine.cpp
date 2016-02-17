@@ -17,6 +17,9 @@
 #include "zenconvert/parser.h"
 #include "zenconvert/vob.h"
 #include "zenconvert/zCMesh.h"
+#include "vdfs/fileIndex.h"
+#include "zenconvert/ztex2dds.h"
+#include <RTexture.h>
 
 #define RENDER_MASK (::Engine::C_VISUAL)
 
@@ -34,18 +37,26 @@ static const char* vertex_shader =
         "\n "
 		"in vec3 vp;\n"
 		"in vec3 vnorm;\n"
+		"in vec2 vuv;\n"
+		"in vec4 vcolor;\n"
 		"out vec3 f_nrm;\n"
+		"out vec2 f_uv;\n"
+		"out vec4 f_color;\n"
         "void main () {\n"
 		"	gl_Position = V_Transform * vec4(vp, 1.0);\n"
 		"	f_nrm = mat3(V_Transform) * vnorm;"
+		"	f_uv = vuv;"
+		"	f_color = vcolor;"
         "}\n";
 
 static const char* fragment_shader =
         "#version 420\n"
         "out vec4 frag_colour;"
 		"in vec3 f_nrm;\n"
+		"in vec2 f_uv;\n"
+		"in vec4 f_color;\n"
         "void main () {"
-		"  frag_colour = vec4 (1.0, 0.7, 0.0, 1.0) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
+		"  frag_colour = vec4 (f_uv, 0.0, 1.0) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
         "}";
 #else
 const char* vertex_shader =
@@ -57,16 +68,22 @@ const char* vertex_shader =
 		"{"
 		"	float3 vp : POSITION;"
 		"	float3 normal : NORMAL;"
+		"	float2 texCoord : TEXCOORD;"
+		"	float4 color : COLOR;"
 		"};"
 		"struct VS_OUTPUT"
 		"{"		
 		"	float3 normal : TEXCOORD0;"
+		"	float2 texCoord : TEXCOORD1;"
+		"	float4 color : TEXCOORD2;"
 		"	float4 position : SV_POSITION;"
 		"};"
         "VS_OUTPUT VSMain (VS_INPUT input) {"
 		"  VS_OUTPUT output = (VS_OUTPUT)0;"	
         "  output.position = mul(V_Transform, float4(input.vp, 1.0));"
 		"  output.normal = mul((float3x3)V_Transform, input.normal);"
+		"  output.color = input.color;"
+		"  output.texCoord = input.texCoord;"
 		"  return output;"
         "}";
 
@@ -74,11 +91,34 @@ const char* fragment_shader =
 		"struct VS_OUTPUT"
 		"{"
 		"	float3 normal : TEXCOORD0;"
+		"	float2 texCoord : TEXCOORD1;"
+		"	float4 color : TEXCOORD2;"
 		"};"
+		"Texture2D	TX_Texture0 : register( t0 );"
+		"SamplerState SS_Linear : register( s0 );"
         "float4 PSMain (VS_OUTPUT input) : SV_TARGET {"
-	"  return float4 (0.5, 0.5, 0.0, 1.0) * max(0.2f, dot(input.normal, -float3(-0.3333f,0.3333f,-0.3333f)));"
+		"  float4 tx = TX_Texture0.Sample(SS_Linear, input.texCoord);"
+		"  return float4 (tx.rgb, 1.0) * max(0.2f, dot(input.normal, -float3(-0.3333f,0.3333f,-0.3333f)));"
         "}";
 #endif
+
+RAPI::RTexture* loadVDFTexture(const std::string& file)
+{
+	VDFS::FileIndex idx;
+
+	idx.loadVDF("Textures.vdf");
+
+	std::vector<uint8_t> testData;
+	idx.getFileData("NW_DUNGEON_WALL_01-C.TEX", testData);
+
+	std::vector<uint8_t> ddsData;
+	ZenConvert::convertZTEX2DDS(testData, ddsData);
+
+	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->CreateResource<RAPI::RTexture>();
+	tx->CreateTexture(ddsData.data(), ddsData.size(), RAPI::RInt2(0,0), 0, RAPI::TF_FORMAT_UNKNOWN_DXT);
+	
+	return nullptr;
+}
 
 RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices)
 {
@@ -96,7 +136,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		return nullptr;
 	}
 
-	std::vector<Renderer::SimpleVertex> vx;
+	std::vector<Renderer::WorldVertex> vx;
 	vx.resize(worldMesh.getIndices().size());
 
 	for(auto& v : worldMesh.getVertices())
@@ -116,6 +156,13 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		vx[i].Position = worldMesh.getVertices()[idx];
 		vx[i].Position *= scale;
 
+		if(idx < worldMesh.getFeatures().size())
+		{
+			vx[i].Color = worldMesh.getFeatures()[idx].lightStat;
+			vx[i].TexCoord = worldMesh.getFeatures()[idx].uv;
+			vx[i].Normal = worldMesh.getFeatures()[idx].vertNormal;
+		}
+
 		zenIndices.emplace_back(idx);
 	}
 
@@ -133,15 +180,17 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		vx[i+2].Normal = nrm;			
 	}
 
+	//loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
+
 	RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-	buffer->Init(&vx[0], sizeof(Renderer::SimpleVertex) * vx.size(), sizeof(Renderer::SimpleVertex));
+	buffer->Init(&vx[0], sizeof(Renderer::WorldVertex) * vx.size(), sizeof(Renderer::WorldVertex));
 	return buffer;
 }
 
 RAPI::RBuffer* MakeBox(float extends)
 {
 	const int n = 36;
-    Renderer::SimpleVertex vx[n];
+    Renderer::WorldVertex vx[n];
     int i=0;
 
 	vx[i++].Position = Math::float3(-1.0f,-1.0f,-1.0f);
@@ -200,11 +249,13 @@ RAPI::RBuffer* MakeBox(float extends)
     // Loop through all vertices and apply the extends
     for(i = 0; i < n; i++)
     {
+		vx[i].Color = 0x00FF0000;
+		vx[i].TexCoord = Math::float2(0,0);
         vx[i].Position *= extends;
     }
 
     RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-    buffer->Init(&vx[0], sizeof(vx), sizeof(Renderer::SimpleVertex));
+    buffer->Init(&vx[0], sizeof(vx), sizeof(Renderer::WorldVertex));
     return buffer;
 }
 
@@ -379,5 +430,5 @@ void Engine::GameEngine::init()
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 
     RAPI::RVertexShader* vs = RAPI::RTools::LoadShaderFromString<RAPI::RVertexShader>(vertex_shader, "simpleVS");
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 }

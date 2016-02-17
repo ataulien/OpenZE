@@ -1,5 +1,6 @@
 #include "fileIndex.h"
 #include "utils/logger.h"
+#include "zenconvert/ztex2dds.h"
 
 int main(int argc, char** argv)
 {
@@ -16,7 +17,15 @@ int main(int argc, char** argv)
 	idx.loadVDF("testmod.mod");
 
 	std::vector<uint8_t> testData;
-	idx.getFileData("test.hlsl", testData);
+	idx.getFileData("NW_DUNGEON_WALL_01-C.TEX", testData);
+
+	std::vector<uint8_t> ddsData;
+	ZenConvert::convertZTEX2DDS(testData, ddsData);
+
+	FILE* f = fopen("NW_DUNGEON_WALL_01.dds", "wb");
+	fwrite(ddsData.data(), ddsData.size(), 1, f);
+
+	fclose(f);
 
 	return 0;
 }

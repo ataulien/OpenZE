@@ -75,7 +75,7 @@ uint32_t Engine::ObjectFactory::createObject()
 	RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 	RAPI::RBuffer *b = MakeBox(1.0f);
 
-	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
+	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 
 
 	entity = createEntity();
@@ -166,7 +166,7 @@ uint32_t Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3& pos
 	RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 	RAPI::RBuffer *b = MakeBox(1.0f);
 
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 
 	btVector3 s = btVector3(position.x, position.y, position.z);
 
