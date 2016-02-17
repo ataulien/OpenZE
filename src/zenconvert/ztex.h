@@ -156,5 +156,17 @@ namespace ZenConvert
 		uint32_t dwReserved2;
 	} DDSURFACEDESC2;
 
+	typedef struct tagRGBQUAD {
+		BYTE    rgbBlue;
+		BYTE    rgbGreen;
+		BYTE    rgbRed;
+		BYTE    rgbReserved;
+	} RGBQUAD;
+
+	typedef struct tagRGBTRIPLE {
+		BYTE    rgbtBlue;
+		BYTE    rgbtGreen;
+		BYTE    rgbtRed;
+	} RGBTRIPLE;
 }
 #endif /* ZTEX_H_INCLUDE_GUARD */
