@@ -1,5 +1,8 @@
 #include "fileIndex.h"
 #include "utils/logger.h"
+#include "archive_virtual.h"
+#include <locale>
+#include <algorithm>
 
 using namespace VDFS;
 
@@ -9,18 +12,55 @@ FileIndex::FileIndex()
 
 FileIndex::~FileIndex()
 {
+	for(auto& a : m_LoadedVirtualArchives)
+		delete a;
 
+	m_LoadedVirtualArchives.clear();
+}
+
+/**
+* @brief Loads a VDF-File and initializes everything
+*/
+bool FileIndex::loadVDF(const std::string& vdf, uint32_t priority)
+{
+	ArchiveVirtual* a = new ArchiveVirtual();
+
+	// Load the archive
+	if(!a->loadVDF(vdf, priority))
+	{
+		delete a;
+		return false;
+	}
+
+	// Grab files and handle load-priority
+	a->insertFilesIntoIndex(*this);
+
+	LogInfo() << "Successfully loaded VDF-Archive: " << vdf;
+
+	// Put into list of archives
+	m_LoadedVirtualArchives.emplace_back(a);
+
+	return true;
 }
 
 /**
 * @brief Places a file into the index
 * @return True if the file was new, false otherwise
 */
-bool FileIndex::AddFile(const FileInfo& inf)
+bool FileIndex::addFile(const FileInfo& inf)
 {
 	// Already exists?
-	if(m_FileIndicesByName.find(inf.fileName) != m_FileIndicesByName.end())
-		return false;
+	auto it = m_FileIndicesByName.find(inf.fileName);
+	if(it != m_FileIndicesByName.end())
+	{
+		// Check priority
+		if(inf.priority <= m_KnownFiles[(*it).second].priority)
+			return false;
+
+		// Overwrite if new priority is greater
+		m_KnownFiles[(*it).second] = inf;
+		return true;
+	}
 
 	// Add to known files and register in the index-map
 	m_KnownFiles.push_back(inf);
@@ -33,14 +73,14 @@ bool FileIndex::AddFile(const FileInfo& inf)
 * @brief Replaces a file matching the same name
 * @return True, if the file was actually replaced. False if it was just added because it didn't exist
 */
-bool FileIndex::ReplaceFileByName(const FileInfo& inf)
+bool FileIndex::replaceFileByName(const FileInfo& inf)
 {
 	// Check if the file even exists first
 	auto it = m_FileIndicesByName.find(inf.fileName);
 	if(it == m_FileIndicesByName.end())
 	{
 		// It doesn't, just add it
-		AddFile(inf);
+		addFile(inf);
 		return false;
 	}
 
@@ -53,10 +93,13 @@ bool FileIndex::ReplaceFileByName(const FileInfo& inf)
 * @brief Fills the given pointer with the information about the provided filename.
 * @return False, if the file was not found
 */
-bool FileIndex::GetFileByName(const std::string& name, FileInfo* outinf)
+bool FileIndex::getFileByName(const std::string& name, FileInfo* outinf)
 {
 	// Does the file even exist?
-	auto it = m_FileIndicesByName.find(name);
+	std::string upper = name;
+	std::transform(upper.begin(), upper.end(),upper.begin(), ::toupper);
+
+	auto it = m_FileIndicesByName.find(upper);
 	if(it == m_FileIndicesByName.end())
 		return false;
 
@@ -69,8 +112,30 @@ bool FileIndex::GetFileByName(const std::string& name, FileInfo* outinf)
 /**
 * @brief Clears the complete index and all registered files
 */
-void FileIndex::ClearIndex()
+void FileIndex::clearIndex()
 {
 	m_FileIndicesByName.clear();
 	m_KnownFiles.clear();
+}
+
+/**
+* @brief Fills a vector with the data of the given file
+*/
+bool FileIndex::getFileData(const FileInfo& inf, std::vector<uint8_t>& data)
+{
+	return inf.targetArchive->extractFile(inf, data);
+}
+
+bool FileIndex::getFileData(const std::string& file, std::vector<uint8_t>& data)
+{
+	std::string upper = file;
+	std::transform(upper.begin(), upper.end(),upper.begin(), ::toupper);
+
+	FileInfo inf;
+	if(getFileByName(upper, &inf))
+		return inf.targetArchive->extractFile(inf, data);
+
+	LogError() << "File not found: " << file;
+
+	return false;
 }

@@ -1,9 +1,12 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace VDFS
 {
+	struct FileInfo;
+
 	// These files are written on 32-bit, no packing
 #pragma pack(push, 1)
 
@@ -54,6 +57,7 @@ namespace VDFS
 	};
 #pragma pack(pop)
 
+	class FileIndex;
 	class ArchiveVirtual
 	{
 	public:
@@ -63,14 +67,38 @@ namespace VDFS
 		/**
 		 * @brief Loads the given VDFS-File and initializes the index
 		 */
-		bool LoadVDF(const std::string& file);
+		bool loadVDF(const std::string& file, uint32_t priority = 0);
 
 		/**
-		 * @brief Updates the file catalog of this archive
+		 * @brief Updates the file catalog of this archive.
+		 *		  Note: Called internally by loadVDF().	
 		 */
-		bool UpdateFileCatalog();
+		bool updateFileCatalog();
+
+		/**
+		 * @brief Puts all files into the index, if the priority is right
+		 * @return number of files actually added to the index
+		 */
+		size_t insertFilesIntoIndex(FileIndex& index);
+
+		/** 
+		 * @brief Extracts the vdfs to disc
+		 */
+		bool extractArchiveToDisk(const std::string& baseDirectory);
+
+		/**
+		 * @brief Fills a vector with the data of a file
+		 */
+		bool extractFile(size_t idx, std::vector<uint8_t>& fileData);
+		bool extractFile(const FileInfo& inf, std::vector<uint8_t>& fileData);
 
 	protected:
+
+		/**
+		 * @brief Lists every file with its path and calls a callback containing the file information
+		 */
+		bool iterateFiles(std::function<void(int,const std::string&)> callback);
+
 		/**
 		 * @brief File-Stream for this archive
 		 */
@@ -94,6 +122,11 @@ namespace VDFS
 		 * @brief File catalog of files of this archive
 		 */
 		std::vector<VdfEntryInfo> m_EntryCatalog;
+
+		/**
+		 * @brief Priority for files of this archive
+		 */
+		uint32_t m_ArchivePriority;
 	};
 
 	// TODO: Make an archive-type for physical as well. Then use virtual functions to simplyfy access

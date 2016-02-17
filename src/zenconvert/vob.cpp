@@ -34,3 +34,8 @@ void ZenConvert::Chunk::addAttribute(const std::string &name, const std::string 
 
     m_Attributes.emplace(name, value);
 }
+
+int ZenConvert::Chunk::objectID()
+{
+    return m_ObjectID;
+}
