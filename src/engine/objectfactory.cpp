@@ -82,8 +82,8 @@ uint32_t Engine::ObjectFactory::createObject()
 	m_Mask[entity] = static_cast<EComponents>(C_COLLISION | C_VISUAL);
 
 	std::vector<Math::float3> zenVertices;
-	std::vector<uint32_t> zenIndices;
-	RAPI::RBuffer* worldMesh = loadZENMesh("NEWWORLD_ASCII.zen", 1.0f / 50.0f, zenVertices, zenIndices);
+    std::vector<uint32_t> zenIndices;
+    RAPI::RBuffer* worldMesh = loadZENMesh("newworld.zen", 1.0f / 50.0f, zenVertices, zenIndices);
 
 	btTriangleMesh* wm = new btTriangleMesh;
 

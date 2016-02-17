@@ -46,14 +46,80 @@ void ZenConvert::JsonExport::exportWayNet(ZenConvert::Chunk *pVob, std::ostream 
     stream << "\n}\n";
 }
 
+std::string getString(const std::string &str)
+{
+    std::string newString = str;
+    size_t s = newString.find(":") + 1;
+    newString.erase(0,  s);
+    return newString;
+}
+
+std::string getMat4(const std::string &mat)
+{
+    if(mat.length() / 8 != 9)
+        throw std::runtime_error("Invalid matrix");
+
+    std::string matrix;
+    bool first = true;
+    for(uint8_t i = 0; i < 9; ++i)
+    {
+        if(first)
+            first = false;
+        else
+            matrix += ", ";
+
+        float f;
+        std::stringstream stream;
+        stream << mat.substr(i * 8, 8);
+        stream >> std::hex >> f;
+        matrix += std::to_string(f);
+    }
+
+    return matrix;
+}
+
 void ZenConvert::JsonExport::exportVobs(ZenConvert::Chunk *pVob, std::ostream &stream)
 {
     stream << "{\n";
 
+    bool firstLoop = true;
     for(uint32_t i = 0, chunkCount = pVob->childCount(); i < chunkCount; ++i)
     {
-        stream << "\t" << pVob->child(i)->name() << "(" << pVob->child(i)->className() << ")" << std::endl;
-    }
+        if(firstLoop)
+            firstLoop = false;
+        else
+            stream << ",\n";
 
-    stream << "}\n";
+        stream << "\t\"" << std::to_string(pVob->child(i)->objectID()) << "\": {\n";
+        bool first = true;
+        bool edited = false;
+        std::string term = "\t\t";
+        for(auto &attribute : pVob->child(i)->attributes())
+        {
+            if(attribute.first == "visual")
+            {
+                std::string visual = getString(attribute.second);
+                if(!visual.empty())
+                {
+                    edited = true;
+                    stream << term << "\"visual\": \"" << visual << "\"\n";
+                }
+            }
+            else if(attribute.first == "trafoOSToWSRot")
+            {
+                edited = true;
+                stream << term << "\"transform\": [ " << getMat4(getString(attribute.second)) << " ]\n";
+            }
+            else
+                std::cout << "unhandled attribute: " << attribute.first << ": " << attribute.second << std::endl;
+
+            if(first && edited)
+            {
+                first = false;
+                term = "," + term;
+            }
+        }
+        stream << "\t}";
+    }
+    stream << "\n}\n";
 }

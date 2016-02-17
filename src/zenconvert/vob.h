@@ -17,6 +17,7 @@ namespace ZenConvert
 
         const std::string &name() const { return m_Name; }
         const std::string &className() const { return m_ClassName; }
+        int objectID();
         std::unordered_map<std::string, std::string> &attributes() { return m_Attributes; }
         const Chunk *reference() const { return m_pReference; }
 

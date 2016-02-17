@@ -127,7 +127,7 @@ if(OPENZE_OPENAL)
     message(FATAL_ERROR "OpenAL not found")
 endif()
 
-set(GAME_LIBRARIES renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
+set(GAME_LIBRARIES alut renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
 
 add_executable(convertzen ${ZEN_CONVERT})
 target_link_libraries(convertzen utils)
@@ -209,9 +209,5 @@ add_executable(openze ${SRC} ${GAME_SRC})
 set_target_properties(openze PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(openze PROPERTIES COMPILE_FLAGS "-DZE_GAME -DRND_GL")
 target_link_libraries(openze ${GAME_LIBRARIES} ${LIBRARIES} RAPI_GL glfw)
+
 set_target_properties (openze PROPERTIES FOLDER openZE)
-
-
-
-
-

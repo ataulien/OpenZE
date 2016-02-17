@@ -3,6 +3,7 @@
 #include "fileIndex.h"
 #include <stack>
 #include <functional>
+#include <string.h>
 #include "utils/system.h"
 #include <locale>
 #include <algorithm>
@@ -120,8 +121,9 @@ bool ArchiveVirtual::updateFileCatalog()
 
 		// Fill the name-buffer with 0 until we reach a non-empty character, as
 		// these are not 0 terminated
-		// FIXME: This could give trouble with names which are actually 64 chars long!
-		for(size_t i = 63; i >= 0; i--)
+        // FIXME: This could give trouble with names which are actually 64 chars long!
+        e.Name[63] = '\0';
+        for(size_t i = 63; i >= 0; i--)
 		{
 			if(e.Name[i] != ' ')
 				break;
@@ -133,7 +135,7 @@ bool ArchiveVirtual::updateFileCatalog()
 		std::string n = std::string(e.Name);
 		std::transform(n.begin(), n.end(), n.begin(), ::toupper);
 
-		strncpy(e.Name, n.c_str(), std::min(63u, n.size()));
+        strncpy(e.Name, n.c_str(), std::min<size_t>(63u, n.size()));
 	}
 
 	// List all folders and files to console
@@ -160,7 +162,9 @@ bool ArchiveVirtual::updateFileCatalog()
 	// List everything
 	//f(0, 0, false);
 
-	// Print only directory structure
+    // Print only directory structure
+	f(0, 0, true);
+}
 	//f(0, 0, true);*/
 
 	//extractArchiveToDisk("test");

@@ -4,4 +4,5 @@
 #include "systemwindows.h"
 #else
 #include "systemlinux.h"
+#define SYS Utils::System
 #endif
