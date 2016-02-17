@@ -1,23 +1,22 @@
-#include "archive_virtual.h"
+#include "fileIndex.h"
 #include "utils/logger.h"
 
 int main(int argc, char** argv)
 {
-	if(argc != 2)
+	/*if(argc != 2)
 	{
 		LogError() << "Pass the VDF as argument!";
 		return 0;
-	}
+	}*/
 
-	VDFS::ArchiveVirtual v;
-	bool r = v.LoadVDF(argv[1]);
+	VDFS::FileIndex idx;
 
-	if(r)
-		LogInfo() << "Successfully read archive.";
-	else
-		LogError() << "Failed to read archive.";
+	idx.loadVDF("Textures.vdf");
+	idx.loadVDF("Meshes_Addon.vdf");
+	idx.loadVDF("testmod.mod");
 
-	v.UpdateFileCatalog();
+	std::vector<uint8_t> testData;
+	idx.getFileData("test.hlsl", testData);
 
 	return 0;
 }

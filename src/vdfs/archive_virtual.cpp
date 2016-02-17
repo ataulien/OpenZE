@@ -3,6 +3,9 @@
 #include "fileIndex.h"
 #include <stack>
 #include <functional>
+#include "utils/system.h"
+#include <locale>
+#include <algorithm>
 
 /**
  * Quick format rundown:
@@ -21,7 +24,8 @@ const char* VDF_SIGNATURE_G1 = "PSVDSC_V2.00\r\n\r\n";
 const char* VDF_SIGNATURE_G2 = "PSVDSC_V2.00\n\r\n\r";
 
 ArchiveVirtual::ArchiveVirtual() : 
-	m_pStream(nullptr)
+	m_pStream(nullptr),
+	m_ArchivePriority(0)
 {
 }
 
@@ -34,7 +38,7 @@ ArchiveVirtual::~ArchiveVirtual()
 /**
 * @brief Loads the given VDFS-File and initializes the index
 */
-bool ArchiveVirtual::LoadVDF(const std::string& file)
+bool ArchiveVirtual::loadVDF(const std::string& file, uint32_t priority)
 {
 	if(m_pStream)
 	{
@@ -46,7 +50,10 @@ bool ArchiveVirtual::LoadVDF(const std::string& file)
 	m_pStream = fopen(file.c_str(), "rb");
 
 	if(!m_pStream)
+	{
+		LogError() << "Failed to open file for reading: " << file;
 		return false;
+	}
 
 	// Read and verify header
 	fread(&m_VdfHeader, sizeof(m_VdfHeader), 1, m_pStream);
@@ -71,13 +78,20 @@ bool ArchiveVirtual::LoadVDF(const std::string& file)
 		return false;
 	}
 
+	// Assign priority
+	// TODO: Use file data as a base, if priority was set to 0!
+	m_ArchivePriority = priority;
+
+	// Create list of all files we have here
+	updateFileCatalog();
+
 	return true;
 }
 
 /**
 * @brief Updates the file catalog of this archive
 */
-bool ArchiveVirtual::UpdateFileCatalog()
+bool ArchiveVirtual::updateFileCatalog()
 {
 	if(!m_pStream)
 	{
@@ -107,17 +121,23 @@ bool ArchiveVirtual::UpdateFileCatalog()
 		// Fill the name-buffer with 0 until we reach a non-empty character, as
 		// these are not 0 terminated
 		// FIXME: This could give trouble with names which are actually 64 chars long!
-		for(size_t i = 63; i >= 0; i++)
+		for(size_t i = 63; i >= 0; i--)
 		{
 			if(e.Name[i] != ' ')
 				break;
 
 			e.Name[i] = 0;
 		}
+
+		// Convert name to uppercase
+		std::string n = std::string(e.Name);
+		std::transform(n.begin(), n.end(), n.begin(), ::toupper);
+
+		strncpy(e.Name, n.c_str(), std::min(63u, n.size()));
 	}
 
 	// List all folders and files to console
-	std::function<void(int,int,bool)> f = [&](int idx, int level, bool dirsOnly) {
+	/*std::function<void(int,int,bool)> f = [&](int idx, int level, bool dirsOnly) {
 		auto& e = m_EntryCatalog[idx];
 
 		// List files in directory
@@ -138,8 +158,179 @@ bool ArchiveVirtual::UpdateFileCatalog()
 	};
 
 	// List everything
-	f(0, 0, false);
+	//f(0, 0, false);
 
 	// Print only directory structure
-	f(0, 0, true);
+	//f(0, 0, true);*/
+
+	//extractArchiveToDisk("test");
+
+	return true;
+}
+
+/** 
+ * @brief Extracts the vdfs to disc
+ */
+bool ArchiveVirtual::extractArchiveToDisk(const std::string& baseDirectory)
+{
+	Utils::System::mkdir(baseDirectory.c_str());
+
+	// List all folders and files to console
+	std::function<void(int, const std::string&)> f = [&](int idx, const std::string& path) {
+		auto& e = m_EntryCatalog[idx];
+
+		// List files in directory
+		do
+		{
+			LogInfo() << "Entry: " << path << "/" << m_EntryCatalog[idx].Name;
+
+			std::string np = path + "/" + m_EntryCatalog[idx].Name;
+			std::string fullPath = baseDirectory + "/" + np;
+			if(m_EntryCatalog[idx].Type & VDF_ENTRY_DIR)
+			{			
+				Utils::System::mkdir(fullPath.c_str());
+
+				f(m_EntryCatalog[idx].JumpTo, np);
+				LogInfo() << "Entry: " << fullPath;
+			}
+			else
+			{
+				// Get data into memory
+				std::vector<uint8_t> data;
+				extractFile(idx, data);
+
+				// Write back to disc
+				FILE* f = fopen(fullPath.c_str(), "wb");
+
+				if(f)
+				{
+					// Write data to disk
+					if(1 == fwrite(data.data(), sizeof(uint8_t) * data.size(), 1, f))
+					{
+						fclose(f);
+					}else
+						LogError() << "Failed to write file: " << fullPath;
+				}
+				else
+					LogError() << "Failed to open file for writing: " << fullPath;
+			}
+
+			idx++;
+		}while(!(m_EntryCatalog[idx-1].Type & VDF_ENTRY_LAST));
+	};
+
+	f(0, "");
+
+	return true;
+}
+
+/**
+ * @brief Fills a vector with the data of a file
+ */
+bool ArchiveVirtual::extractFile(size_t idx, std::vector<uint8_t>& fileData)
+{ 
+	auto& e = m_EntryCatalog[idx];
+
+	// Allocate data for the file
+	fileData.resize(e.Size);
+	
+	// Jump to our file
+	fseek(m_pStream, e.JumpTo, SEEK_SET);
+
+	// Read from virtual archive
+	if(1 != fread(fileData.data(), e.Size, 1, m_pStream))
+	{
+		LogError() << "Error while reading VDFS-file " << e.Name;
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * @brief Fills a vector with the data of a file
+ */
+bool ArchiveVirtual::extractFile(const FileInfo& inf, std::vector<uint8_t>& fileData)
+{
+	if(inf.targetArchive != this)
+	{
+		LogWarn() << "Trying to extract file from archive other than the files target archive! Aborting extraction";
+		return false;
+	}
+
+	// Allocate data for the file
+	fileData.resize(inf.fileSize);
+
+	// Jump to our file
+	fseek(m_pStream, inf.archiveOffset, SEEK_SET);
+
+	// Read from virtual archive
+	if(1 != fread(fileData.data(), inf.fileSize, 1, m_pStream))
+	{
+		LogError() << "Error while reading VDFS-file " << inf.fileName;
+		return false;
+	}
+
+	return true;
+}
+
+/**
+* @brief Puts all files into the index, if the priority is right
+*/
+size_t ArchiveVirtual::insertFilesIntoIndex(FileIndex& index)
+{
+	size_t r = 0;
+
+	// Put all files of this into the index
+	iterateFiles([&](int idx, const std::string& path){
+		auto e = m_EntryCatalog[idx];
+		FileInfo f;
+
+		// Enter file properties
+		f.archiveOffset = e.JumpTo;
+		f.fileName = e.Name;
+		f.fileSize = e.Size;
+		f.targetArchive = this;
+		f.priority = m_ArchivePriority;
+
+		// Add to index
+		if(index.addFile(f))
+			r++;
+	});
+
+	return r;
+}
+/**
+* @brief Lists every file with its path and calls a callback containing the file information
+*/
+bool ArchiveVirtual::iterateFiles(std::function<void(int, const std::string&)> callback)
+{
+	// Iterate over all files and build their paths during iteration
+	std::function<void(int, const std::string&)> f = [&](int idx, const std::string& path) {
+		auto& e = m_EntryCatalog[idx];
+
+		// List files in directory
+		do
+		{
+			std::string np = path + "/" + m_EntryCatalog[idx].Name;
+
+			// Handle directories
+			if(m_EntryCatalog[idx].Type & VDF_ENTRY_DIR)
+			{			
+				// Traverse deeper into the directory structure
+				f(m_EntryCatalog[idx].JumpTo, np);		
+			}
+			else
+			{
+				// Trigger callback for the file we found
+				callback(idx, np);
+			}
+
+			idx++;
+		}while(!(m_EntryCatalog[idx-1].Type & VDF_ENTRY_LAST));
+	};
+
+	f(0, "");
+
+	return true;
 }
