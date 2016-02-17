@@ -93,6 +93,11 @@ void zCMesh::readObjectData(Parser& parser)
 
 				// Read vertex data and emplace into m_Vertices
 				parser.readMultipleStructures(numVertices, m_Vertices);
+
+				// Flip x-coord to make up for right handedness
+				//for(auto& v : m_Vertices)
+				//	v.x = -v.x;
+				
 			}
 			break;
 

@@ -5,6 +5,7 @@ include(ExternalProject)
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "")
 
 if(MSVC)
+	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set(ZE_BUILD_FLAGS "/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
     set(ZE_DEBUG_BUILD_FLAGS "")
     set(ZE_RELEASE_BUILD_FLAGS "/arch:SSE2 /Ox /Ob2 /Oi /Ot /Oy /fp:fast /GF /FD /MT /GS-")
@@ -35,7 +36,8 @@ include_directories(lib/rapi/include)
 include_directories(${OPENAL_INCLUDE_DIR})
 
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
-set(LIBRARIES debug game_classes network physics storage utils glm zenconvert ${BULLET_LIBRARIES})
+set(BULLET_MISC Bullet3Dynamics Bullet2FileLoader Bullet3Collision Bullet3Geometry Bullet3OpenCL_clew BulletFileLoader BulletWorldImporter BulletXmlWorldImporter ConvexDecomposition GIMPACTUtils HACD Test_BulletDynamics Test_BulletInverseDynamics Test_Collision)
+set(LIBRARIES libdebug game_classes network physics storage utils glm zenconvert ${BULLET_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLAGS}")
 
@@ -50,13 +52,46 @@ add_subdirectory(src/sound)
 add_subdirectory(src/storage)
 add_subdirectory(src/utils)
 add_subdirectory(src/zenconvert)
+add_subdirectory(src/vdfs)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
 add_subdirectory(lib/rapi)
 add_subdirectory(lib/glfw)
 
+# Folders for external libraries
+foreach(infileName ${BULLET_LIBRARIES})
+	set_target_properties (${infileName} PROPERTIES FOLDER lib)
+endforeach(infileName)
 
+foreach(infileName ${BULLET_MISC})
+	set_target_properties (${infileName} PROPERTIES FOLDER lib)
+endforeach(infileName)
+
+
+
+if(WIN32)
+set_target_properties (RAPI_DX PROPERTIES FOLDER lib)
+endif(WIN32)
+set_target_properties (RAPI_GL PROPERTIES FOLDER lib)
+set_target_properties (glfw PROPERTIES FOLDER lib)
+
+# Move our libs to openZE
+# Folders for game libraries
+# TODO: Maybe move this to the cmakelists.txt of the actual library?
+set_target_properties (libdebug PROPERTIES FOLDER openZE)
+set_target_properties (game_classes PROPERTIES FOLDER openZE)
+set_target_properties (gui PROPERTIES FOLDER openZE)
+set_target_properties (input PROPERTIES FOLDER openZE)
+set_target_properties (network PROPERTIES FOLDER openZE)
+set_target_properties (physics PROPERTIES FOLDER openZE)
+set_target_properties (renderer PROPERTIES FOLDER openZE)
+set_target_properties (storage PROPERTIES FOLDER openZE)
+set_target_properties (utils PROPERTIES FOLDER openZE)
+set_target_properties (zenconvert PROPERTIES FOLDER openZE)
+set_target_properties (vdfs PROPERTIES FOLDER openZE)
+
+# source files
 file(GLOB SRC
     src/engine/*.cpp
     src/engine/*.h
@@ -103,6 +138,7 @@ add_executable(ozerver ${SRC})
 set_target_properties(ozerver PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(ozerver PROPERTIES COMPILE_FLAGS -DZE_SERVER)
 target_link_libraries(ozerver ${SERVER_LIBRARIES} ${LIBRARIES})
+set_target_properties (ozerver PROPERTIES FOLDER openZE)
 
 if(WIN32)
 
@@ -171,9 +207,12 @@ if(WIN32)
 	set_target_properties(openze_dx PROPERTIES LINKER_LANGUAGE C)
 	set_target_properties(openze_dx PROPERTIES COMPILE_FLAGS "-DZE_GAME -DRND_D3D11")
 	target_link_libraries(openze_dx ${GAME_LIBRARIES} ${LIBRARIES} RAPI_DX glfw)
+	set_target_properties (openze_dx PROPERTIES FOLDER openZE)
 endif()
 
 add_executable(openze ${SRC} ${GAME_SRC})
 set_target_properties(openze PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(openze PROPERTIES COMPILE_FLAGS "-DZE_GAME -DRND_GL")
 target_link_libraries(openze ${GAME_LIBRARIES} ${LIBRARIES} RAPI_GL glfw)
+
+set_target_properties (openze PROPERTIES FOLDER openZE)

@@ -3,6 +3,7 @@
 #include "engine.h"
 #include "utils/GLFW_window.h"
 #include "utils/mathlib.h"
+#include "sound/soundmanager.h"
 
 namespace Engine
 {
@@ -29,12 +30,16 @@ namespace Engine
          */
         Utils::GLFW_Window m_Window;
 
+        /**
+         * @brief m_SoundManager
+         */
+        Sound::SoundManager m_SoundManager;
 
 		/**
 		 * @brief testing only
 		 */
 		float m_CameraAngle;
 		float m_CameraZoom;
-		Math::float3 m_CameraCenter;
+        Math::float3 m_CameraCenter;
     };
 }
