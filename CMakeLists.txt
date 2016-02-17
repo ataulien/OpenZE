@@ -140,7 +140,7 @@ set_target_properties (ozerver PROPERTIES FOLDER openZE)
 
 if(WIN32)
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 	set( PSDK_PATH "C:/Program Files/Microsoft Platform SDK/Bin" )
 	set( PSDK_INC "C:/Program Files/Microsoft Platform SDK/Include" )
 
