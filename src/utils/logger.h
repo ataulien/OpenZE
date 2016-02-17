@@ -9,7 +9,7 @@
 #define USE_LOG
 
 /** Replace some HRESULT-Functionality used by this */
-#ifndef WIN32
+#if !(defined(WIN32) || defined(_WIN32))
 #define FAILED(x) (x != 0)
 #else
 #define NOMINMAX
@@ -29,7 +29,7 @@
 #define LEB_R(x) {if(!x){LogError() << #x " failed!"; return false;}}
 
 /** Different types of messageboxes */
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 #define ErrorBox(Msg) MessageBoxA(NULL,Msg,"Error!",MB_OK|MB_ICONERROR|MB_TOPMOST)
 #define InfoBox(Msg) MessageBoxA(NULL,Msg,"Info!",MB_OK|MB_ICONASTERISK|MB_TOPMOST)
 #define WarnBox(Msg) MessageBoxA(NULL,Msg,"Warning!",MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST)
@@ -85,7 +85,7 @@ namespace Utils
 		/** Clears the logfile */
 		static void Clear()
 		{
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 			char path[MAX_PATH + 1];
 			GetModuleFileNameA(NULL, path, MAX_PATH);
 			s_LogFile = std::string(path);
@@ -134,7 +134,7 @@ namespace Utils
 					s_LogCallback(m_Message.str());
 			}
 
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 			OutputDebugString((m_Info.str() + m_Message.str() + "\n").c_str());
 #endif
 
