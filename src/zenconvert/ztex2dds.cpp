@@ -114,14 +114,14 @@ namespace ZenConvert
 		int MipmapCount;
 		int MipmapLevel;
 		int i;
-		RGBQUAD palentry;
+		ozRGBQUAD palentry;
 		uint32_t BufferSize;
-		LPBYTE Buffer;
+		uint8_t* Buffer;
 		uint32_t MipmapSize;
-		LPBYTE Mipmap;
-		RGBQUAD * Pixel32;
-		RGBTRIPLE * Pixel24;
-		BYTE ColorTemp;
+		uint8_t* Mipmap;
+		ozRGBQUAD * Pixel32;
+		ozRGBTRIPLE * Pixel24;
+		uint8_t ColorTemp;
 
 		// Read header
 		if(!readVectorData(&ZTexHeader, 0, sizeof(ZTexHeader), ztexData))
@@ -345,8 +345,8 @@ namespace ZenConvert
 			Mipmap -= MipmapSize;
 			if(optionForceARGB)
 			{
-				Pixel32 = (RGBQUAD *)Mipmap;
-				Pixel24 = (RGBTRIPLE *)Mipmap;
+				Pixel32 = (ozRGBQUAD *)Mipmap;
+				Pixel24 = (ozRGBTRIPLE *)Mipmap;
 				switch(ZTexHeader.TexInfo.Format)
 				{
 				case ZTEXFMT_B8G8R8A8:

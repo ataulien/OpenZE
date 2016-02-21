@@ -156,17 +156,17 @@ namespace ZenConvert
 		uint32_t dwReserved2;
 	} DDSURFACEDESC2;
 
-	typedef struct tagRGBQUAD {
-		BYTE    rgbBlue;
-		BYTE    rgbGreen;
-		BYTE    rgbRed;
-		BYTE    rgbReserved;
-	} RGBQUAD;
+	struct ozRGBQUAD {
+		uint8_t    rgbBlue;
+		uint8_t    rgbGreen;
+		uint8_t    rgbRed;
+		uint8_t    rgbReserved;
+	};
 
-	typedef struct tagRGBTRIPLE {
-		BYTE    rgbtBlue;
-		BYTE    rgbtGreen;
-		BYTE    rgbtRed;
-	} RGBTRIPLE;
+	struct ozRGBTRIPLE {
+		uint8_t    rgbtBlue;
+		uint8_t    rgbtGreen;
+		uint8_t    rgbtRed;
+	};
 }
 #endif /* ZTEX_H_INCLUDE_GUARD */
