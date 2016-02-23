@@ -28,7 +28,7 @@ void ZenConvert::Export::exportVobTree(Chunk *pVob)
     pVob = pVob->child(0);
     std::cout << pVob->name() << "(" << pVob->className() << ")" << std::endl;
 
-    SYS::mkdir(m_DirectoryName.c_str());
+    Utils::System::mkdir(m_DirectoryName.c_str());
 
     std::ofstream vobTreeStream(m_DirectoryName + "/vobtree.json");
     std::ofstream wayNetStream(m_DirectoryName + "/waypoints.json");

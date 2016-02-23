@@ -106,7 +106,11 @@ void Engine::ObjectFactory::test_createObjects()
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
     RAPI::RBuffer *b = MakeBox(1.0f);
 
+<<<<<<< HEAD
     RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
+=======
+	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+>>>>>>> db16561e72f0de007ba8da991d3dc133669473dc
 
 
     entity = createEntity();
@@ -233,7 +237,6 @@ bool Engine::ObjectFactory::removeCollisionComponent(const ObjectHandle &handle)
 #ifdef ZE_GAME
 Engine::Components::Visual *Engine::ObjectFactory::getVisual(const ObjectHandle &handle)
 {
-
     if(handle.offset >= m_Entities.size() || m_Entities[handle.offset].handle.count != handle.count)
         return nullptr;
 

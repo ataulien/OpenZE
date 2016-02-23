@@ -4,9 +4,12 @@ include(ExternalProject)
 
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "")
 
+option(OPENZE_D3D11 "Enable D3D11-Build" ON)
+option(OPENZE_OPENAL "Enable OpenAL-Build" OFF)
+
 if(MSVC)
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-    set(ZE_BUILD_FLAGS "/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
+    set(ZE_BUILD_FLAGS "/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX /MD")
     set(ZE_DEBUG_BUILD_FLAGS "")
     set(ZE_RELEASE_BUILD_FLAGS "/arch:SSE2 /Ox /Ob2 /Oi /Ot /Oy /fp:fast /GF /FD /MT /GS-")
 	#add_definitions("/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX")
@@ -33,11 +36,13 @@ include_directories(lib/glfw/include)
 include_directories(lib/rapi/renderer/include)
 include_directories(lib/rapi/include)
 
-include_directories(${OPENAL_INCLUDE_DIR})
+if(OPENZE_OPENAL)
+	include_directories(${OPENAL_INCLUDE_DIR})
+endif()
 
 set(BULLET_LIBRARIES Bullet3Common BulletSoftBody BulletDynamics BulletCollision BulletInverseDynamicsUtils BulletInverseDynamics LinearMath)
 set(BULLET_MISC Bullet3Dynamics Bullet2FileLoader Bullet3Collision Bullet3Geometry Bullet3OpenCL_clew BulletFileLoader BulletWorldImporter BulletXmlWorldImporter ConvexDecomposition GIMPACTUtils HACD Test_BulletDynamics Test_BulletInverseDynamics Test_Collision)
-set(LIBRARIES libdebug game_classes network physics storage utils glm zenconvert ${BULLET_LIBRARIES})
+set(LIBRARIES libdebug game_classes network physics storage utils glm zenconvert vdfs ${BULLET_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZE_BUILD_FLAGS} ${ADDITIONAL_BUILD_FLAGS}")
 
@@ -70,9 +75,10 @@ endforeach(infileName)
 
 
 
-if(WIN32)
-set_target_properties (RAPI_DX PROPERTIES FOLDER lib)
-endif(WIN32)
+if(OPENZE_D3D11)
+	set_target_properties (RAPI_DX PROPERTIES FOLDER lib)
+endif(OPENZE_D3D11)
+
 set_target_properties (RAPI_GL PROPERTIES FOLDER lib)
 set_target_properties (glfw PROPERTIES FOLDER lib)
 
@@ -115,9 +121,9 @@ file(GLOB ZEN_CONVERT
     src/zenconvert/exporter/*.cpp
     src/zenconvert/exporter/*.h
 )
-find_package(OpenAL REQUIRED)
 
-if(!OPENAL_FOUND)
+if(OPENZE_OPENAL)
+	find_package(OpenAL REQUIRED)
     message(FATAL_ERROR "OpenAL not found")
 endif()
 
@@ -125,14 +131,6 @@ set(GAME_LIBRARIES alut renderer sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC
 
 add_executable(convertzen ${ZEN_CONVERT})
 target_link_libraries(convertzen utils)
-
-add_executable(sound_test src/sound/test.cpp)
-target_link_libraries(sound_test openal opus)
-
-add_executable(render_test_GL src/renderer/renderer_test.cpp)
-set_target_properties(render_test_GL PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(render_test_GL PROPERTIES COMPILE_FLAGS -DZE_SERVER)
-target_link_libraries(render_test_GL ${LIBRARIES} ${GAME_LIBRARIES})
 
 add_executable(ozerver ${SRC})
 set_target_properties(ozerver PROPERTIES LINKER_LANGUAGE C)
@@ -142,72 +140,69 @@ set_target_properties (ozerver PROPERTIES FOLDER openZE)
 
 if(WIN32)
 
-	IF( WIN32 )
-	
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-		SET( PSDK_PATH "C:/Program Files/Microsoft Platform SDK/Bin" )
-		SET( PSDK_INC "C:/Program Files/Microsoft Platform SDK/Include" )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	set( PSDK_PATH "C:/Program Files/Microsoft Platform SDK/Bin" )
+	set( PSDK_INC "C:/Program Files/Microsoft Platform SDK/Include" )
 
-	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-		link_directories("lib/glew/x64")
-		link_directories("lib/glfw/x64")
-	else()
-		link_directories("lib/glew/Win32")
-		link_directories("lib/glfw/Win32")
-	endif()
-		
-	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-		FIND_PATH(DX_INCLUDE_PATH d3d11.h
-			PATHS
-				"$ENV{DXSDK_DIR}/Include"
-				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Include"
-			DOC "The directory where D3D11.h resides")
+	IF( OPENZE_D3D11 )
+		if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+			FIND_PATH(DX_INCLUDE_PATH d3d11.h
+				PATHS
+					"$ENV{DXSDK_DIR}/Include"
+					"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Include"
+				DOC "The directory where D3D11.h resides")
 
 
-		FIND_LIBRARY(D3D11_LIBRARY d3d11.lib
-			PATHS
-				"$ENV{DXSDK_DIR}/Lib/x64"
-				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x64"
-			DOC "The directory where d3d11.lib resides")
+			FIND_LIBRARY(D3D11_LIBRARY d3d11.lib
+				PATHS
+					"$ENV{DXSDK_DIR}/Lib/x64"
+					"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x64"
+				DOC "The directory where d3d11.lib resides")
 
-		FIND_LIBRARY(D3DX11_LIBRARY d3dx11.lib
-			PATHS
-				"$ENV{DXSDK_DIR}/Lib/x64"
-				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x64"
-			DOC "The directory where d3dx11.lib resides")
-	else()
-		FIND_PATH(DX_INCLUDE_PATH d3d11.h
-			PATHS
-				"$ENV{DXSDK_DIR}/Include"
-				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Include"
-			DOC "The directory where D3D11.h resides")
+			FIND_LIBRARY(D3DX11_LIBRARY d3dx11.lib
+				PATHS
+					"$ENV{DXSDK_DIR}/Lib/x64"
+					"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x64"
+				DOC "The directory where d3dx11.lib resides")
+		else()
+			FIND_PATH(DX_INCLUDE_PATH d3d11.h
+				PATHS
+					"$ENV{DXSDK_DIR}/Include"
+					"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Include"
+				DOC "The directory where D3D11.h resides")
 
 
-		FIND_LIBRARY(D3D11_LIBRARY d3d11.lib
-			PATHS
-				"$ENV{DXSDK_DIR}/Lib/x86"
-				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x86"
-			DOC "The directory where d3d11.lib resides")
+			FIND_LIBRARY(D3D11_LIBRARY d3d11.lib
+				PATHS
+					"$ENV{DXSDK_DIR}/Lib/x86"
+					"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x86"
+				DOC "The directory where d3d11.lib resides")
 
-		FIND_LIBRARY(D3DX11_LIBRARY d3dx11.lib
-			PATHS
-				"$ENV{DXSDK_DIR}/Lib/x86"
-				"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x86"
-			DOC "The directory where d3dx11.lib resides")
-	endif()
+			FIND_LIBRARY(D3DX11_LIBRARY d3dx11.lib
+				PATHS
+					"$ENV{DXSDK_DIR}/Lib/x86"
+					"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x86"
+				DOC "The directory where d3dx11.lib resides")
+		else()
+			SET(DX_INCLUDE_PATH "")
+			SET(D3D11_LIBRARY "")
+			SET(D3DX11_LIBRARY "")
+		endif()
 			
 		SET( DX11_LIBRARIES ${D3D11_LIBRARY} ${D3DX11_LIBRARY} )
 		
 		include_directories(${DX_INCLUDE_PATH})
+		
+		add_executable(openze_dx ${SRC} ${GAME_SRC})
+		set_target_properties(openze_dx PROPERTIES LINKER_LANGUAGE C)
+		set_target_properties(openze_dx PROPERTIES COMPILE_FLAGS "-DZE_GAME -DRND_D3D11")
+		target_link_libraries(openze_dx ${GAME_LIBRARIES} ${LIBRARIES} RAPI_DX glfw)
+		set_target_properties (openze_dx PROPERTIES FOLDER openZE)
 	ELSE()
 		
 	ENDIF() 
 
-	add_executable(openze_dx ${SRC} ${GAME_SRC})
-	set_target_properties(openze_dx PROPERTIES LINKER_LANGUAGE C)
-	set_target_properties(openze_dx PROPERTIES COMPILE_FLAGS "-DZE_GAME -DRND_D3D11")
-	target_link_libraries(openze_dx ${GAME_LIBRARIES} ${LIBRARIES} RAPI_DX glfw)
-	set_target_properties (openze_dx PROPERTIES FOLDER openZE)
+
 endif()
 
 add_executable(openze ${SRC} ${GAME_SRC})

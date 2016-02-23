@@ -102,7 +102,16 @@ void zCMesh::readObjectData(Parser& parser)
 			break;
 
 		case MSID_FEATLIST:
-			parser.setSeek(chunkEnd); // Skip chunk
+			{
+				// uint32 - number of features
+				// zTMSH_FeatureChunk*num - features
+
+				// Read how many feats we have
+				uint32_t numFeats = parser.readBinaryDword();
+
+				// Read features
+				parser.readMultipleStructures(numFeats, m_Features);
+			}
 			break;
 
 		case MSID_POLYLIST:

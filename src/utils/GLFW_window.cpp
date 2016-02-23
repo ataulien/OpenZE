@@ -111,7 +111,7 @@ GLFWwindow* GLFW_Window::getGLFWwindow()
 */
 void* GLFW_Window::getNativeHandle()
 {
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 	//return m_pWindowHandle;
 	// TODO: OpenGL under Windows is broken because of this!
 	return glfwGetWin32Window(m_pWindowHandle);

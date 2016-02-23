@@ -1,8 +1,7 @@
 #pragma once
 
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 #include "systemwindows.h"
-#define SYS Utils::SystemWindows
 #else
 #include "systemlinux.h"
 #define SYS Utils::System
