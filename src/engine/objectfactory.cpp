@@ -291,17 +291,17 @@ uint32_t Engine::ObjectFactory::firstFreeEntityOffset()
     m_CAttributes.m_Data.emplace_back();
     m_CAis.m_Data.emplace_back();
 
-    std::cout << __PRETTY_FUNCTION__ << ": object count: " << m_Entities.size() << std::endl;
+    LogInfo() << ": object count: " << m_Entities.size();
     return offset;
 }
 
 void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3& position, const Math::float3& impulse)
 {
     static uint32_t count = 0;
-    std::cout << __PRETTY_FUNCTION__ << ": count: " << count << std::endl;
+	LogInfo() << ": count: " << count << std::endl;
     if(count % 100 == 0 && count != 0)
     {
-        std::cout << __PRETTY_FUNCTION__ << ": destroy entity 100" << std::endl;
+		LogInfo() << ": destroy entity 100" << std::endl;
         destroyEntity(100);
     }
     ++count;

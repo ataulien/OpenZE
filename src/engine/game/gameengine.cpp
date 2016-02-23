@@ -391,7 +391,7 @@ bool Engine::GameEngine::render(float alpha)
                 trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
             }
             else
-                std::cout << __PRETTY_FUNCTION__ << ": Invalid collision object" << std::endl;
+                LogWarn() << "Invalid collision object";
         }
 
         Math::Matrix viewProj = projection * view * model;

@@ -313,7 +313,7 @@ namespace ZenConvert
 
 				BytesRead += sizeof(palentry);
 
-				if(!writeVectorData(&palentry, sizeof(RGBQUAD), ddsData))
+				if(!writeVectorData(&palentry, sizeof(ozRGBQUAD), ddsData))
 				{
 					return ZTEX2DDS_ERROR_WRITE;
 				}
