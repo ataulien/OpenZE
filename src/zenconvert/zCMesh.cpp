@@ -3,6 +3,9 @@
 #include "utils/logger.h"
 #include "zTypes.h"
 #include <string>
+#include "vdfs/fileIndex.h"
+#include "vob.h"
+#include "zCMaterial.h"
 
 using namespace ZenConvert;
 
@@ -18,9 +21,36 @@ static const unsigned short	MSID_POLYLIST = 0xB050;
 static const unsigned short	MSID_MESH_END = 0xB060;
 
 /**
+* @brief Loads the mesh from the given VDF-Archive
+*/
+zCMesh::zCMesh(const std::string& fileName, VDFS::FileIndex& fileIndex)
+{
+	ZenConvert::Chunk parentVob("parent", "", 0);
+	ZenConvert::zCMesh worldMesh;
+
+	std::vector<uint8_t> data;
+	fileIndex.getFileData(fileName, data);
+
+	try
+	{
+		// Create parser from memory
+		// FIXME: There is an internal copy of the data here. Optimize!
+		ZenConvert::Parser parser(data, nullptr, nullptr);
+		
+		// .MSH-Files are just saved zCMeshes
+		readObjectData(parser, false);
+	}
+	catch(std::exception &e)
+	{
+		LogError() << e.what();
+		return;
+	}
+}
+
+/**
 * @brief Reads the mesh-object from the given binary stream
 */
-void zCMesh::readObjectData(Parser& parser)
+void zCMesh::readObjectData(Parser& parser, bool fromZen)
 {
 	// Information about the whole file we are reading here
 	BinaryFileInfo fileInfo;
@@ -30,11 +60,18 @@ void zCMesh::readObjectData(Parser& parser)
 
 	size_t binFileEnd; // Ending location of the binary file
 
-	// Read information about the current file. Mainly size is important here.
-	parser.readStructure(fileInfo);
+	if(fromZen)
+	{
+		// Read information about the current file. Mainly size is important here.
+		parser.readStructure(fileInfo);
 
-	// Calculate ending location and thus, the filesize
-	binFileEnd = parser.getSeek() + fileInfo.size;
+		// Calculate ending location and thus, the filesize
+		binFileEnd = parser.getSeek() + fileInfo.size;
+	}
+	else
+	{
+		binFileEnd = parser.getFileSize();
+	}
 
 	// Read chunks until we left the virtual binary file or got to the end-chunk
 	// Each chunk starts with a header (BinaryChunkInfo) which gives information
@@ -66,11 +103,44 @@ void zCMesh::readObjectData(Parser& parser)
 		break;
 
 		case MSID_BBOX3D:
+		{
+			Math::float4 min, max;
+			parser.readStructure(min);
+			parser.readStructure(max);
+
+			m_BBMin = Math::float3(min.x, min.y,min.z);
+			m_BBMax = Math::float3(max.x, max.y,max.z);
+
 			parser.setSeek(chunkEnd); // Skip chunk
+		}
 			break;
 
 		case MSID_MATLIST:
-			parser.setSeek(chunkEnd); // Skip chunk
+			{
+				// ZenArchive - Header
+				// uint32_t - Num materials
+				// For each material:
+				//  - String - Name
+				//  - zCMaterial-Chunk
+
+				Parser::Header tmpHeader;
+				parser.readHeader(&tmpHeader);
+
+				// Read number of materials
+				uint32_t numMaterials = parser.readBinaryDword();
+
+				// Read every stored material
+				for(uint32_t i = 0; i < numMaterials; i++)
+				{
+					zCMaterial mat;
+					mat.readObjectData(parser);
+
+					// Save into vector
+					m_Materials.emplace_back(mat.getMaterialInfo());
+				}
+
+				parser.setSeek(chunkEnd); // Skip chunk
+			}
 			break;
 
 		case MSID_LIGHTMAPLIST:
@@ -119,8 +189,8 @@ void zCMesh::readObjectData(Parser& parser)
 				// uint32 - number of polygons
 				struct polyData1
 				{
-					short		materialIndex;
-					short		lightmapIndex;
+					uint16_t	materialIndex;
+					uint16_t	lightmapIndex;
 					zTPlane		polyPlane;
 					PolyFlags	flags;
 					uint8_t		polyNumVertices;
@@ -160,6 +230,9 @@ void zCMesh::readObjectData(Parser& parser)
 							m_Indices.emplace_back(p->indices[v].VertexIndex);
 							m_FeatureIndices.emplace_back(p->indices[v].FeatIndex);
 						}
+
+						// Save material index for the written triangle
+						m_TriangleMaterialIndices.emplace_back(p->materialIndex);
 					}
 					else
 					{
@@ -173,6 +246,9 @@ void zCMesh::readObjectData(Parser& parser)
 							m_FeatureIndices.emplace_back(p->indices[0].FeatIndex);
 							m_FeatureIndices.emplace_back(p->indices[i + 1].FeatIndex);
 							m_FeatureIndices.emplace_back(p->indices[i].FeatIndex);
+
+							// Save material index for the written triangle
+							m_TriangleMaterialIndices.emplace_back(p->materialIndex);
 						}
 					}
 

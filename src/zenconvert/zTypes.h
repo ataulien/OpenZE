@@ -1,9 +1,40 @@
 #pragma once
 #include <inttypes.h>
 #include "utils/mathlib.h"
+#include <string>
 
 namespace ZenConvert
 {
+	/**
+	 * @brief All kinds of information found in a zCMaterial
+	 */
+	struct MaterialInfo
+	{
+		std::string matName;
+		uint8_t matGroup;
+		uint32_t color;
+		float smoothAngle;
+		std::string texture;
+		std::string texScale;
+		float texAniFPS;
+		uint8_t texAniMapMode;
+		std::string texAniMapDir;
+		uint8_t noCollDet;
+		uint8_t noLighmap;
+		uint8_t loadDontCollapse;
+		std::string detailObject;
+		float detailTextureScale;
+		uint8_t forceOccluder;
+		uint8_t environmentMapping;
+		float environmentalMappingStrength;;
+		uint8_t waveMode;
+		uint8_t waveSpeed;
+		float waveMaxAmplitude;;
+		float waveGridSize;
+		uint8_t ignoreSun;
+		uint8_t alphaFunc;
+	};
+
 #pragma pack(push, 1)
 	// Information about the whole file we are reading here
 	struct BinaryFileInfo
@@ -57,4 +88,26 @@ namespace ZenConvert
 		Math::float3 normal;
 	};
 #pragma pack(pop)
+
+	struct zWedge 
+	{
+		Math::float3 m_Normal;
+		Math::float2 m_Texcoord;
+		uint16_t m_VertexIndex;
+	};
+
+	struct zTriangle
+	{
+		uint16_t m_Wedges[3];
+	};													
+
+	struct zTriangleEdges 
+	{
+		uint16_t m_Edges[3];
+	};													
+
+	struct zEdge 
+	{
+		uint16_t m_Wedges[2];
+	};													
 }

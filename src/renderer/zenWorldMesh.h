@@ -2,6 +2,7 @@
 #include <vector>
 #include "utils/mathlib.h"
 #include "vertextypes.h"
+#include <REngine.h>
 
 namespace RAPI
 {
@@ -12,6 +13,7 @@ namespace RAPI
 namespace ZenConvert
 {
 	class zCMesh;
+	class zCProgMeshProto;
 }
 
 namespace Renderer
@@ -23,6 +25,7 @@ namespace Renderer
 	{
 	public:
 		ZenWorldMesh(const ZenConvert::zCMesh& source, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
+		ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
 		~ZenWorldMesh();
 
 		struct SubMesh
@@ -30,7 +33,7 @@ namespace Renderer
 			RAPI::RPipelineState* state;
 		};
 
-		void render(const Math::Matrix& viewProj);
+		void render(const Math::Matrix& viewProj, RAPI::RRenderQueueID queue);
 
 	private:
 		std::vector<SubMesh> m_SubMeshes;

@@ -12,6 +12,8 @@
 #include <RTexture.h>
 #include "vdfs/fileIndex.h"
 #include "zenconvert/ztex2dds.h"
+#include "zenconvert/zCProgMeshProto.h"
+
 
 static RAPI::RTexture* loadTexture(const std::string& name, VDFS::FileIndex& fileIndex)
 {
@@ -49,9 +51,6 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, float sc
 	{
 		uint32_t idx = source.getIndices()[i];
 		uint32_t featidx = source.getFeatureIndices()[i];
-
-		if(idx >= source.getVertices().size())
-			LogError() << "asdasd";
 
 		// get vertex and scale
 		m_VerticesAsTriangles[i].Position = source.getVertices()[idx];
@@ -106,8 +105,89 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, float sc
 	Math::Matrix m = Math::Matrix::CreateIdentity();
 	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
-	VDFS::FileIndex vdfsIndex;
+	static VDFS::FileIndex vdfsIndex;
 	vdfsIndex.loadVDF("textures.vdf");
+	for(auto& t : verticesByTexture)
+	{
+		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
+		b->Init(t.second.data(), t.second.size() * sizeof(Renderer::WorldVertex), sizeof(Renderer::WorldVertex));
+
+		m_BufferMap[t.first] = b;
+
+		sm.SetVertexBuffer(0, b);
+		sm.SetTexture(0, loadTexture(t.first, vdfsIndex), RAPI::ST_PIXEL);
+
+		// Make drawcalls
+		SubMesh subMesh;
+		subMesh.state = sm.MakeDrawCall(t.second.size());
+		m_SubMeshes.emplace_back(subMesh);
+	}
+}
+
+Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, float scale, const Math::float3& positionOffset)
+{
+	std::vector<WorldVertex> vertices;
+	std::vector<uint32_t> subMeshIndexOffsets;
+	std::unordered_map<std::string, std::vector<Renderer::WorldVertex>> verticesByTexture;
+	for(size_t i = 0; i < source.getNumSubmeshes(); i++)
+	{
+		auto& m = source.getSubmesh(i);
+
+		uint32_t iOff = vertices.size();
+		subMeshIndexOffsets.emplace_back(iOff);
+
+		// Get data
+		for(int i = 0; i < m.m_WedgeList.size(); i++)
+		{
+			const ZenConvert::zWedge& wedge = m.m_WedgeList[i];
+
+			WorldVertex wv;
+			wv.Position = source.getPositionList()[wedge.m_VertexIndex] * scale + positionOffset;
+			wv.Normal = wedge.m_Normal;
+			wv.TexCoord = wedge.m_Texcoord;
+			wv.Color = 0xFFFFFFFF; // TODO: Apply color from material!
+			vertices.emplace_back(wv);
+		}		
+	}
+
+	for(size_t i = 0; i < source.getNumSubmeshes(); i++)
+	{
+		auto& m = source.getSubmesh(i);
+		auto& vxs = verticesByTexture[m.m_Material.texture];
+
+		for(uint32_t t = 0; t < m.m_TriangleList.size(); t++)
+		{
+			for(uint32_t j = 0; j < 3; j++)
+			{
+				vxs.push_back( vertices[m.m_TriangleList[t].m_Wedges[j] + subMeshIndexOffsets[i]]);
+			}			
+		}
+	}
+
+
+	// Create buffers and states for each texture
+	RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");
+	RAPI::RVertexShader* vs = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RVertexShader>("simpleVS");
+	RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
+
+	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+	RAPI::RSamplerState* ss;
+	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
+	sm.SetSamplerState(ss);
+
+	sm.SetPixelShader(ps);
+	sm.SetVertexShader(vs);
+	sm.SetInputLayout(inputLayout);
+
+	m_pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
+	sm.SetConstantBuffer(0, m_pObjectBuffer, RAPI::ST_VERTEX);
+
+	Math::Matrix m = Math::Matrix::CreateIdentity();
+	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
+
+	static VDFS::FileIndex vdfsIndex;
+	vdfsIndex.loadVDF("textures.vdf");
+
 	for(auto& t : verticesByTexture)
 	{
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
@@ -133,15 +213,12 @@ Renderer::ZenWorldMesh::~ZenWorldMesh()
 	}
 }
 
-void Renderer::ZenWorldMesh::render(const Math::Matrix& viewProj)
+void Renderer::ZenWorldMesh::render(const Math::Matrix& viewProj, RAPI::RRenderQueueID queue)
 {
 	m_pObjectBuffer->UpdateData(&viewProj);
-	RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue();
 
 	for(size_t i = 0, end = m_SubMeshes.size(); i < end; ++i)
 	{
-		RAPI::REngine::RenderingDevice->QueuePipelineState(m_SubMeshes[i].state, queueID);		
+		RAPI::REngine::RenderingDevice->QueuePipelineState(m_SubMeshes[i].state, queue);		
 	}
-
-	RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
 }

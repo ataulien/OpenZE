@@ -5,6 +5,8 @@
 #include "utils/mathlib.h"
 //#include "sound/soundmanager.h"
 
+#include "renderer/zenWorld.h"
+
 namespace Engine
 {
     class GameEngine : public Engine
@@ -41,5 +43,6 @@ namespace Engine
 		float m_CameraAngle;
 		float m_CameraZoom;
         Math::float3 m_CameraCenter;
+		Renderer::ZenWorld* m_TestWorld;
     };
 }

@@ -182,7 +182,7 @@ void ZenConvert::Parser::readWorldMesh()
 {
 	// Read worldmesh, if needed
     if(m_pWorldMesh)
-		m_pWorldMesh->readObjectData(*this);
+		m_pWorldMesh->readObjectData(*this, true);
 	else
 		skipBinaryChunk();
 }
@@ -401,7 +401,7 @@ uint16_t ZenConvert::Parser::readBinaryWord()
 	return retVal;
 }
 
-uint16_t ZenConvert::Parser::readBinaryByte()
+uint8_t ZenConvert::Parser::readBinaryByte()
 {
 	uint8_t retVal = *reinterpret_cast<uint8_t *>(&m_Data[m_Seek]);
 	m_Seek += sizeof(uint8_t);

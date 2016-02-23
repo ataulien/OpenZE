@@ -45,6 +45,8 @@ namespace ZenConvert
         void readChunk(Chunk *pParent);
         void readBinaryChunk(Chunk *pParent);
 
+		size_t getFileSize(){ return m_Data.size(); }
+
 		/**
 		* @brief Reads a string until \r, \n or a space is found
         */
@@ -83,7 +85,7 @@ namespace ZenConvert
 
 		uint32_t readBinaryDword();
 		uint16_t readBinaryWord();
-		uint16_t readBinaryByte();
+		uint8_t readBinaryByte();
 
         bool isNumber();
         bool isNumber(const std::string &expr);

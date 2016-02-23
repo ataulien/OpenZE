@@ -52,11 +52,13 @@ static const char* vertex_shader =
 static const char* fragment_shader =
         "#version 420\n"
         "out vec4 frag_colour;"
+		"uniform sampler2D texture0;"
 		"in vec3 f_nrm;\n"
 		"in vec2 f_uv;\n"
 		"in vec4 f_color;\n"
         "void main () {"
-		"  frag_colour = vec4 (f_uv, 0.0, 1.0) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
+		"  vec4 tx = texture2D(texture0, f_uv.xy);"
+		"  frag_colour = vec4(tx.rgb,1) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
         "}";
 #else
 const char* vertex_shader =
@@ -98,7 +100,8 @@ const char* fragment_shader =
 		"SamplerState SS_Linear : register( s0 );"
         "float4 PSMain (VS_OUTPUT input) : SV_TARGET {"
 		"  float4 tx = TX_Texture0.Sample(SS_Linear, frac(input.texCoord));"
-		"  return float4(tx.rgb, 1.0);"
+		"  clip(tx.a - 0.5f);"
+		"  return 2 * input.color * float4(tx.rgb, 1.0);"
         "}";
 #endif
 
@@ -265,12 +268,14 @@ Engine::GameEngine::GameEngine(int argc, char *argv[]) :
     Engine(argc, argv),
     m_Window(200, 200, 800, 600, "OpenZE"),
 	m_CameraZoom(1.0f),
-	m_CameraAngle(0.0f)
+	m_CameraAngle(0.0f),
+	m_TestWorld(nullptr)
 {
 }
 
 Engine::GameEngine::~GameEngine()
 {
+	delete m_TestWorld;
     RAPI::REngine::UninitializeEngine();
 }
 
@@ -313,61 +318,45 @@ bool Engine::GameEngine::render(float alpha)
         case Utils::Window::E_Resized:
             LogInfo() << "Resized window!";
             break;
-
-		case Utils::Window::EEvent::E_KeyEvent:
-			switch(ev.KeyboardEvent.key)
-			{
-			case Utils::EKey::KEY_LEFT:
-				m_CameraAngle += turn;
-				break;
-
-			case Utils::EKey::KEY_RIGHT:
-				m_CameraAngle -= turn;
-				break;
-
-			case Utils::EKey::KEY_UP:
-				m_CameraZoom -= m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
-				break;
-
-			case Utils::EKey::KEY_DOWN:
-				m_CameraZoom += m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
-				break;
-
-			case Utils::EKey::KEY_W:
-				m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
-				break;
-
-			case Utils::EKey::KEY_A:
-				m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
-				break;
-
-			case Utils::EKey::KEY_S:
-				m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
-				break;
-
-			case Utils::EKey::KEY_D:
-				m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
-				break;
-
-			case Utils::EKey::KEY_Q:
-				m_CameraCenter.y += movement;
-				break;
-
-			case Utils::EKey::KEY_Y:
-				m_CameraCenter.y -= movement;
-				break;
-
-			case Utils::EKey::KEY_SPACE:
-				{
-					Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
-					Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
-				m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
-				}
-				break;
-			}
-			break;
         }
     });
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_LEFT))
+		m_CameraAngle += turn;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_RIGHT))
+		m_CameraAngle -= turn;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_UP))
+		m_CameraZoom -= m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_DOWN))
+		m_CameraZoom += m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_W))
+		m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_A))
+		m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;	
+
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_S))
+		m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_D))
+		m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_Q))
+		m_CameraCenter.y += movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_Y) || m_Window.getKeyPressed(Utils::EKey::KEY_Z))
+		m_CameraCenter.y -= movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_SPACE))
+	{
+		Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
+		Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
+		m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+	}
 
 	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), m_CameraCenter, Math::float3(0,1,0));
 
@@ -408,6 +397,8 @@ bool Engine::GameEngine::render(float alpha)
 	//Math::Matrix viewProj = projection * view;
 	//RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
 
+	m_TestWorld->render(projection * view);
+
 	// Process frame
     RAPI::REngine::RenderingDevice->OnFrameEnd();
     RAPI::REngine::RenderingDevice->Present();
@@ -433,4 +424,7 @@ void Engine::GameEngine::init()
 
     RAPI::RVertexShader* vs = RAPI::RTools::LoadShaderFromString<RAPI::RVertexShader>(vertex_shader, "simpleVS");
     RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+
+
+	m_TestWorld = new Renderer::ZenWorld("newworld.zen");
 }

@@ -81,7 +81,7 @@ uint32_t Engine::ObjectFactory::createObject()
 	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
 
 	entity = createEntity();
-	m_Mask[entity] = static_cast<EComponents>(C_COLLISION | C_VISUAL);
+	m_Mask[entity] = static_cast<EComponents>(C_COLLISION);
 
 	std::vector<Math::float3> zenVertices;
     std::vector<uint32_t> zenIndices;
@@ -107,19 +107,6 @@ uint32_t Engine::ObjectFactory::createObject()
 	m_pEngine->physicsSystem()->addRigidBody(m_Collision[entity].pRigidBody);
 	m_Collision[entity].pRigidBody->setRestitution(0.1f);
 	m_Collision[entity].pRigidBody->setFriction(1.0f);
-
-	m_Visual[entity].pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-
-	Math::Matrix m = Math::Matrix::CreateIdentity();
-	m_Visual[entity].pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::EUsageFlags::U_DYNAMIC, RAPI::ECPUAccessFlags::CA_WRITE);
-
-	sm.SetVertexBuffer(0, worldMesh);
-	sm.SetPixelShader(ps);
-	sm.SetVertexShader(vs);
-	sm.SetInputLayout(inputLayout);
-	sm.SetConstantBuffer(0, m_Visual[entity].pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
-
-	m_Visual[entity].pPipelineState = sm.MakeDrawCall(worldMesh->GetSizeInBytes() / worldMesh->GetStructuredByteSize());
 
     const int n = 1;
 	const float turns = 5;
