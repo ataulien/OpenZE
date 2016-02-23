@@ -6,7 +6,6 @@
 
 namespace Utils
 {
-    //TODO: Implement a version with O(1) deletion time
     template<typename T>class Vector
     {
     public:
@@ -38,6 +37,13 @@ namespace Utils
         void remove(uint32_t id)
         {
             m_Data.erase(m_Data.begin() + id, m_Data.begin() + id + 1);
+        }
+
+        void clear(bool freeMemory = false)
+        {
+            m_Data.clear();
+            if(freeMemory)
+                m_Data.shrink_to_fit();
         }
 
         std::vector<T> m_Data;

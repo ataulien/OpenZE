@@ -4,7 +4,13 @@
 #include <string.h>
 
 namespace Math
-{
+{    
+    constexpr int64_t ipow(int64_t base, int exp, int64_t result = 1)
+    {
+      return exp < 1 ? result : ipow(base * base, exp / 2, (exp % 2) ? result * base : result);
+    }
+
+
     /**
      * @brief Converson of degrees to radians
      */
@@ -120,7 +126,7 @@ namespace Math
         float length() const { return static_cast<float>(T::_glmt_vector.length()); }
         float lengthSquared() const { return T::x * T::x + T::y * T::y; }
 
-        float dot(const t_vector<T, S...>& v) const { glm::dot(T::_glmt_vector, v._glmt_vector); } //TODO: Degenerated: no PB style!
+        float dot(const t_vector<T, S...>& v) const { return glm::dot(T::_glmt_vector, v._glmt_vector); }
         void cross(const t_vector<T, S...>& v, t_vector<T, S...>& result) const { glm::cross(T::_glmt_vector, v._glmt_vector); }
         //t_vector<T, S...> cross(const t_vector<T, S...>& v) { T::_glmt_vector = glm::cross(T::_glmt_vector, v._glmt_vector); return *this; }
 

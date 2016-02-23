@@ -4,9 +4,9 @@
 [submodule "lib/bullet"]
 	path = lib/bullet
 	url = git@github.com:bulletphysics/bullet3.git
-[submodule "lib/rapi"]
-	path = lib/rapi
-	url = https://github.com/Degenerated1123/RAPI.git
 [submodule "lib/glfw"]
 	path = lib/glfw
 	url = https://github.com/glfw/glfw
+[submodule "lib/rapi"]
+	path = lib/rapi
+	url = git@github.com:Degenerated1123/RAPI.git

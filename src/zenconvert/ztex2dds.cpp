@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <algorithm>
 #include "utils/logger.h"
+#include <string.h>
 
 #define ZTEX2DDS_ERROR_NONE   0 /* No Error                  */
 #define ZTEX2DDS_ERROR_ARGS   1 /* Invalid Params / Syntax   */

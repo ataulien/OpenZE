@@ -21,3 +21,8 @@ void Physics::Physics::addRigidBody(btRigidBody *pRigidBody)
 {
     m_DynamicsWorld.addRigidBody(pRigidBody);
 }
+
+btDiscreteDynamicsWorld *Physics::Physics::world()
+{
+    return &m_DynamicsWorld;
+}

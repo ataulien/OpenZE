@@ -7,6 +7,7 @@ namespace Physics
 {
     class Physics
     {
+        friend class RigidBody;
     public:
         /**
          * @brief Physics
@@ -27,6 +28,8 @@ namespace Physics
         void addRigidBody(btRigidBody *pRigidBody);
 
     private:
+        btDiscreteDynamicsWorld *world();
+
         btDbvtBroadphase m_Broadphase;
         btDefaultCollisionConfiguration m_CollisionConfiguration;
         btCollisionDispatcher m_Dispatcher;

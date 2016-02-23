@@ -4,7 +4,20 @@
 
 namespace Physics
 {
-    class CollisionShape : public btCollisionShape
+    class CollisionShape
     {
+        friend class RigidBody;
+    public:
+        CollisionShape(btCollisionShape *pCollisionShape) : m_pShape(pCollisionShape)
+        {
+        }
+
+    private:
+        btCollisionShape *shape()
+        {
+            return m_pShape;
+        }
+
+        btCollisionShape *m_pShape;
     };
 }

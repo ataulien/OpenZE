@@ -11,6 +11,7 @@ Engine::Engine::Engine(int argc, char *argv[]) :
 
 Engine::Engine::~Engine()
 {
+    m_Factory.cleanUp();
     delete m_pSettings;
 }
 
@@ -31,7 +32,7 @@ bool Engine::Engine::render(float alpha)
 
 void Engine::Engine::mainLoop()
 {
-    m_Factory.createObject();
+    m_Factory.test_createObjects();
 
 	// Define the updaterate for the game-logic
     const float update_fps = 128;
