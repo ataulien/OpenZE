@@ -305,7 +305,6 @@ void ZenConvert::Parser::readBinaryChunk(ZenConvert::Chunk *pParent)
     uint32_t version = readBinaryDword();
     (void)version;//nvm
     uint32_t size = readBinaryDword();
-
 }
 
 std::string ZenConvert::Parser::readString(bool skip)

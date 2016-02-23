@@ -307,8 +307,8 @@ bool Engine::GameEngine::render(float alpha)
 			case Utils::EKey::KEY_SPACE:
 				{
 					Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
-					Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
-				m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+                    Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
+                    m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
 				}
 				break;
 			}
@@ -329,28 +329,37 @@ bool Engine::GameEngine::render(float alpha)
 	// Draw frame
     RAPI::REngine::RenderingDevice->OnFrameStart();
     RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue();
-    for(int i = 0; i < m_Factory.getMasks().size(); ++i)
+
+    Math::Matrix model = Math::Matrix::CreateIdentity();
+
+    Utils::Vector<Entity> &entities = m_Factory.getEntities();
+    for(uint32_t i = 0, end = entities.size(); i < end; ++i)
     {
-        if((m_Factory.getMasks().m_Data[i] & RENDER_MASK) == RENDER_MASK)
+        Entity &entity = entities[i];
+        if((entity.mask & C_VISUAL) != C_VISUAL)
+            continue;
+
+        if((entity.mask & C_COLLISION) == C_COLLISION)
         {
-			Math::Matrix model = Math::Matrix::CreateIdentity();
-
-			if((m_Factory.getMasks().m_Data[i] & C_COLLISION) == C_COLLISION)
-			{
-				btTransform trans;
-				m_Factory.getCollision(i).pMotionState->getWorldTransform(trans);
-				trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
-			}
-
-           
-            Math::Matrix viewProj = projection * view * model;
-            Components::Visual &visual = m_Factory.getVisual(i);
-            visual.pObjectBuffer->UpdateData(&viewProj);
-
-            RAPI::REngine::RenderingDevice->QueuePipelineState(visual.pPipelineState, queueID);
+            btTransform trans;
+            Components::Collision *pCollision = m_Factory.getCollision(entity.handle);
+            if(pCollision)
+            {
+                pCollision->rigidBody.getMotionState()->getWorldTransform(trans);
+                trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
+            }
+            else
+                std::cout << __PRETTY_FUNCTION__ << ": Invalid collision object" << std::endl;
         }
+
+        Math::Matrix viewProj = projection * view * model;
+        Components::Visual *pVisual = m_Factory.getVisual(entity.handle);
+        pVisual->pObjectBuffer->UpdateData(&viewProj);
+
+        RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
+
+        RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
     }
-    RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
 
 	//Math::Matrix viewProj = projection * view;
 	//RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));

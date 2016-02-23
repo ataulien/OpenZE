@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 
 #include "components.h"
 #include "components/collision.h"
@@ -9,48 +10,104 @@
 #include "utils/logger.h"
 #include "utils/mathlib.h"
 
+#define OBJECT_HANDLE_COUNT_BITS 15
+#define OBJECT_HANDLE_HANDLE_BITS (32 - OBJECT_HANDLE_COUNT_BITS)
+
 namespace Engine
 {
+    struct ObjectHandle
+    {
+        union
+        {
+            struct
+            {
+                uint32_t count: OBJECT_HANDLE_COUNT_BITS;
+                uint32_t offset: OBJECT_HANDLE_HANDLE_BITS;
+            };
+            uint32_t handle;
+        };
+    };
+
+    struct Entity
+    {
+        Entity(uint32_t offset = 0);
+
+        ObjectHandle handle;
+        EComponents mask;
+    };
+
     class Engine;
 
     /**
-     * @brief The ObjectFactory class creates and stores game objects
+     * @brief The ObjectFactory class creates and stores entities
      */
     class ObjectFactory
     {
         friend class Engine;
+
     public:
-        ObjectFactory(Engine *pEngine, uint32_t objCount = 0);
+        ObjectFactory(Engine *pEngine, uint32_t initialSize = 0);
+        ~ObjectFactory();
 
-        uint32_t createEntity();
+        ObjectHandle createEntity();
+        void destroyEntity(uint32_t offset);
+        void destroyEntity(ObjectHandle handle);
 
-		uint32_t test_createPhysicsEntity(const Math::float3& position, const Math::float3& impulse);
+        void test_createPhysicsEntity(const Math::float3& position, const Math::float3& impulse);
 
-        void destroyEntity(uint32_t entity);
+        void test_createObjects();
 
-        uint32_t createObject();
+        Utils::Vector<Entity> &getEntities();
 
-        const Utils::Vector<EComponents> &getMasks(){ return m_Mask; }
-        Components::Collision &getCollision(uint32_t objectID) { return m_Collision.m_Data[objectID]; }
+        Components::Collision *getCollision(const ObjectHandle &handle);
+        Components::Collision *addCollisionComponent(const ObjectHandle &handle);
+        bool removeCollisionComponent(const ObjectHandle &handle);
+
 #ifdef ZE_GAME
-        Components::Visual &getVisual(uint32_t objectID) { return m_Visual.m_Data[objectID]; }
+        Components::Visual *getVisual(const ObjectHandle &handle);
+        Components::Visual *addVisualComponent(const ObjectHandle &handle);
+        bool removeVisualComponent(const ObjectHandle &handle);
 #endif
+
+        void cleanUp();
 
     private:
-        Engine *m_pEngine;
         /**
-         * @brief stores the masks for the components
+         * @brief
+         * @return object offset
          */
-        Utils::Vector<EComponents> m_Mask;
+        uint32_t firstFreeEntityOffset();
 
         /**
-         * @brief Vectors to store the component data
+         * @brief a pointer to the engine object
          */
-        Utils::Vector<Components::Collision> m_Collision;
+        Engine *m_pEngine;
+
+        /**
+         * @brief this vector stores all entity objects
+         */
+        Utils::Vector<Entity> m_Entities;
+
+        /**
+         * @brief this vector stores all collision objects
+         */
+        Utils::Vector<Components::Collision> m_CCollisions;
+
 #ifdef ZE_GAME
-        Utils::Vector<Components::Visual> m_Visual;
+        /**
+         * @brief this vector stores all visual objects
+         */
+        Utils::Vector<Components::Visual> m_CVisuals;
 #endif
-        Utils::Vector<Components::Attributes> m_Attributes;
-        Utils::Vector<Components::AI> m_AI;
+
+        /**
+         * @brief this vector stores all attribute objects
+         */
+        Utils::Vector<Components::Attributes> m_CAttributes;
+
+        /**
+         * @brief this vector stores all AI objects
+         */
+        Utils::Vector<Components::AI> m_CAis;
     };
 }

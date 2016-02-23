@@ -1,8 +1,6 @@
 #pragma once
 
-class btRigidBody;
-class btCollisionShape;
-class btMotionState;
+#include "physics/rigidbody.h"
 
 namespace Engine
 {
@@ -10,9 +8,12 @@ namespace Engine
     {
         struct Collision
         {
-            btRigidBody *pRigidBody;
-            btCollisionShape *pCollisionShape;
-            btMotionState *pMotionState;
+            Physics::RigidBody rigidBody;
+
+            void cleanUp()
+            {
+                rigidBody.cleanUp();
+            }
         };
     }
 }
