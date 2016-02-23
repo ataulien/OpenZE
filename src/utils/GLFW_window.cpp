@@ -16,6 +16,9 @@ using namespace Utils;
 GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bottomX, unsigned int bottomY, const std::string& title) 
 	: Window(topX, topY, bottomX, bottomY, title)
 {
+	// Init key-array
+	memset(m_KeyPresses, 0, sizeof(m_KeyPresses));
+
 	/* Initialize the library */
 	if(!glfwInit())
 	{
@@ -55,19 +58,36 @@ GLFW_Window::~GLFW_Window()
 void GLFW_Window::pollEvent(const std::function<void(Event)>& callback)
 {
 	// Set our callback function as userdata so we can access it from the glfw callbacks
-	std::function<void(Event)> fn = callback;
-	glfwSetWindowUserPointer(m_pWindowHandle, &fn);
+
+	struct hlpStruct
+	{
+		std::function<void(Event)> fn;
+		GLFW_Window* thisptr;
+	}userData;
+
+	userData.fn = callback;
+	userData.thisptr = this;
+
+	glfwSetWindowUserPointer(m_pWindowHandle, &userData);
 
 	// Assign callbacks
 	glfwSetKeyCallback(m_pWindowHandle, [](GLFWwindow* wnd, int key, int scancode, int action, int mods)
 	{
+		hlpStruct* hlp = reinterpret_cast<hlpStruct*>(glfwGetWindowUserPointer(wnd));
+
 		// Get our callback funktion back
-		std::function<void(Event)> fn = *reinterpret_cast<std::function<void(Event)>*>(glfwGetWindowUserPointer(wnd));
+		std::function<void(Event)> fn = hlp->fn;
 
 		Event e(EEvent::E_KeyEvent);
 		e.KeyboardEvent.action = (EKeyAction)action;
 		e.KeyboardEvent.key = (EKey)key;
 		e.KeyboardEvent.scancode = scancode;
+
+		// Set key-state (Ignore repeat-events)
+		if(action == EKeyAction::EA_Pressed)
+			hlp->thisptr->setKeyPressed((EKey)key, true);
+		else if(action == EKeyAction::EA_Released)
+			hlp->thisptr->setKeyPressed((EKey)key, false);
 
 		fn(e);
 	});

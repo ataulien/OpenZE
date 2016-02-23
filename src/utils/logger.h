@@ -34,9 +34,10 @@
 #define InfoBox(Msg) MessageBoxA(NULL,Msg,"Info!",MB_OK|MB_ICONASTERISK|MB_TOPMOST)
 #define WarnBox(Msg) MessageBoxA(NULL,Msg,"Warning!",MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST)
 #else
-#define ErrorBox(Msg) /** TODO **/
-#define InfoBox(Msg)
-#define WarnBox(Msg)
+/** TODO **/
+#define ErrorBox(Msg) {}
+#define InfoBox(Msg) {}
+#define WarnBox(Msg) {}
 #endif
 
 /** Logging macros */
@@ -142,17 +143,17 @@ namespace Utils
 			switch(m_TypeID)
 			{
 			case MT_Info:
-				std::cout << m_Info.str() << m_Message.str() << std::endl;
+				//std::cout << m_Info.str() << m_Message.str() << std::endl;
                 if(m_MessageBox) InfoBox(m_Message.str().c_str());
 				break;
 
 			case MT_Warning:
-				std::cerr << m_Info.str() << m_Message.str() << std::endl;
+				//std::cerr << m_Info.str() << m_Message.str() << std::endl;
 				if(m_MessageBox) WarnBox(m_Message.str().c_str());
 				break;
 
 			case MT_Error:
-				std::cerr << m_Info.str() << m_Message.str() << std::endl;
+				//std::cerr << m_Info.str() << m_Message.str() << std::endl;
 				if(m_MessageBox) ErrorBox(m_Message.str().c_str());
 				break;
 			}

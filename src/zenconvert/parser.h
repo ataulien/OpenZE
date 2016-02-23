@@ -18,18 +18,20 @@ namespace ZenConvert
             FT_BINARY
         };
 
-        struct Header
-        {
-            int version;
-            EFileType fileType;
-            bool saveGame;
-            std::string date;
-            std::string user;
-            int objectCount;
-        } m_Header;
-
     public:
-        Parser(const std::string &fileName, Chunk *pVob = nullptr, zCMesh* pWorldMesh = nullptr);
+
+		struct Header
+		{
+			int version;
+			EFileType fileType;
+			bool saveGame;
+			std::string date;
+			std::string user;
+			int objectCount;
+		} m_Header;
+
+		Parser(const std::string &fileName, Chunk *pVob = nullptr, zCMesh* pWorldMesh = nullptr);
+		Parser(const std::vector<uint8_t>& fileData, Chunk *pVob = nullptr, zCMesh* pWorldMesh = nullptr);
         ~Parser();
         void parse();
 
@@ -38,10 +40,12 @@ namespace ZenConvert
         void skipLine(bool silent = true);
         void skipBinaryChunk();
 
-        void readHeader();
+        void readHeader(Header* targetHeader = nullptr);
         void readWorldMesh();
         void readChunk(Chunk *pParent);
         void readBinaryChunk(Chunk *pParent);
+
+		size_t getFileSize(){ return m_Data.size(); }
 
 		/**
 		* @brief Reads a string until \r, \n or a space is found
@@ -81,6 +85,7 @@ namespace ZenConvert
 
 		uint32_t readBinaryDword();
 		uint16_t readBinaryWord();
+		uint8_t readBinaryByte();
 
         bool isNumber();
         bool isNumber(const std::string &expr);

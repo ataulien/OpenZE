@@ -1,6 +1,7 @@
 #pragma once
 #include "window.h"
-#include <GLFW/glfw3.h>
+
+struct GLFWwindow;
 
 namespace Utils
 {
@@ -39,11 +40,26 @@ namespace Utils
 		* @brief Sets the title of the window
 		*/
 		virtual void setWindowTitle(const std::string& title) override;
+
+		/**
+		* @brief Gets the current keystate
+		*/
+		virtual bool getKeyPressed(EKey key) override {return m_KeyPresses[key];};
+
+		/**
+		 * @brief Semi-Private function to set a key.
+		 */
+		void setKeyPressed(EKey key, bool value){m_KeyPresses[key] = value;}
 	private:
 
 		/**
 		* @brief Window-Handle of this object 
 		*/
 		GLFWwindow* m_pWindowHandle;
+
+		/**
+		 * @brief state of all keys
+		 */
+		bool m_KeyPresses[KEY_LAST];
 	};
 }

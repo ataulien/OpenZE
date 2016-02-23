@@ -52,11 +52,13 @@ static const char* vertex_shader =
 static const char* fragment_shader =
         "#version 420\n"
         "out vec4 frag_colour;"
+		"uniform sampler2D texture0;"
 		"in vec3 f_nrm;\n"
 		"in vec2 f_uv;\n"
 		"in vec4 f_color;\n"
         "void main () {"
-		"  frag_colour = vec4 (f_uv, 0.0, 1.0) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
+		"  vec4 tx = texture2D(texture0, f_uv.xy);"
+		"  frag_colour = vec4(tx.rgb,1) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
         "}";
 #else
 const char* vertex_shader =
@@ -97,8 +99,9 @@ const char* fragment_shader =
 		"Texture2D	TX_Texture0 : register( t0 );"
 		"SamplerState SS_Linear : register( s0 );"
         "float4 PSMain (VS_OUTPUT input) : SV_TARGET {"
-		"  float4 tx = TX_Texture0.Sample(SS_Linear, input.texCoord);"
-		"  return float4 (tx.rgb, 1.0) * max(0.2f, dot(input.normal, -float3(-0.3333f,0.3333f,-0.3333f)));"
+		"  float4 tx = TX_Texture0.Sample(SS_Linear, frac(input.texCoord));"
+		"  clip(tx.a - 0.5f);"
+		"  return 2 * input.color * float4(tx.rgb, 1.0);"
         "}";
 #endif
 
@@ -109,7 +112,7 @@ RAPI::RTexture* loadVDFTexture(const std::string& file)
 	idx.loadVDF("Textures.vdf");
 
 	std::vector<uint8_t> testData;
-	idx.getFileData("NW_DUNGEON_WALL_01-C.TEX", testData);
+	idx.getFileData("CHAPTER5_PAL-C.TEX", testData);
 
 	std::vector<uint8_t> ddsData;
 	ZenConvert::convertZTEX2DDS(testData, ddsData);
@@ -117,6 +120,7 @@ RAPI::RTexture* loadVDFTexture(const std::string& file)
 	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->CreateResource<RAPI::RTexture>();
 	tx->CreateTexture(ddsData.data(), ddsData.size(), RAPI::RInt2(0,0), 0, RAPI::TF_FORMAT_UNKNOWN_DXT);
 	
+	RAPI::REngine::ResourceCache->AddToCache("testtexture", tx);
 	return nullptr;
 }
 
@@ -148,6 +152,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 	for(size_t i = 0, end = vx.size(); i < end; i++)
 	{
 		uint32_t idx = worldMesh.getIndices()[i];
+		uint32_t featidx = worldMesh.getFeatureIndices()[i];
 
 		if(idx >= worldMesh.getVertices().size())
 			LogError() << "asdasd";
@@ -159,7 +164,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		if(idx < worldMesh.getFeatures().size())
 		{
 			vx[i].Color = worldMesh.getFeatures()[idx].lightStat;
-			vx[i].TexCoord = worldMesh.getFeatures()[idx].uv;
+			vx[i].TexCoord = Math::float2(worldMesh.getFeatures()[featidx].uv[0], worldMesh.getFeatures()[featidx].uv[1]);
 			vx[i].Normal = worldMesh.getFeatures()[idx].vertNormal;
 		}
 
@@ -180,7 +185,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		vx[i+2].Normal = nrm;			
 	}
 
-	//loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
+	loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
 
 	RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
 	buffer->Init(&vx[0], sizeof(Renderer::WorldVertex) * vx.size(), sizeof(Renderer::WorldVertex));
@@ -249,7 +254,7 @@ RAPI::RBuffer* MakeBox(float extends)
     // Loop through all vertices and apply the extends
     for(i = 0; i < n; i++)
     {
-		vx[i].Color = 0x00FF0000;
+		vx[i].Color = 0xFFFF0000;
 		vx[i].TexCoord = Math::float2(0,0);
         vx[i].Position *= extends;
     }
@@ -263,12 +268,14 @@ Engine::GameEngine::GameEngine(int argc, char *argv[]) :
     Engine(argc, argv),
     m_Window(200, 200, 800, 600, "OpenZE"),
 	m_CameraZoom(1.0f),
-	m_CameraAngle(0.0f)
+	m_CameraAngle(0.0f),
+	m_TestWorld(nullptr)
 {
 }
 
 Engine::GameEngine::~GameEngine()
 {
+	delete m_TestWorld;
     RAPI::REngine::UninitializeEngine();
 }
 
@@ -311,61 +318,45 @@ bool Engine::GameEngine::render(float alpha)
         case Utils::Window::E_Resized:
             LogInfo() << "Resized window!";
             break;
-
-		case Utils::Window::EEvent::E_KeyEvent:
-			switch(ev.KeyboardEvent.key)
-			{
-			case Utils::EKey::KEY_LEFT:
-				m_CameraAngle += turn;
-				break;
-
-			case Utils::EKey::KEY_RIGHT:
-				m_CameraAngle -= turn;
-				break;
-
-			case Utils::EKey::KEY_UP:
-				m_CameraZoom -= m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
-				break;
-
-			case Utils::EKey::KEY_DOWN:
-				m_CameraZoom += m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
-				break;
-
-			case Utils::EKey::KEY_W:
-				m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
-				break;
-
-			case Utils::EKey::KEY_A:
-				m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
-				break;
-
-			case Utils::EKey::KEY_S:
-				m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
-				break;
-
-			case Utils::EKey::KEY_D:
-				m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
-				break;
-
-			case Utils::EKey::KEY_Q:
-				m_CameraCenter.y += movement;
-				break;
-
-			case Utils::EKey::KEY_Y:
-				m_CameraCenter.y -= movement;
-				break;
-
-			case Utils::EKey::KEY_SPACE:
-				{
-					Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
-                    Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
-                    m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
-				}
-				break;
-			}
-			break;
         }
     });
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_LEFT))
+		m_CameraAngle += turn;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_RIGHT))
+		m_CameraAngle -= turn;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_UP))
+		m_CameraZoom -= m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_DOWN))
+		m_CameraZoom += m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_W))
+		m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_A))
+		m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;	
+
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_S))
+		m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_D))
+		m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_Q))
+		m_CameraCenter.y += movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_Y) || m_Window.getKeyPressed(Utils::EKey::KEY_Z))
+		m_CameraCenter.y -= movement;
+	
+	if(m_Window.getKeyPressed(Utils::EKey::KEY_SPACE))
+	{
+		Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
+		Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
+		m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+	}
 
 	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), m_CameraCenter, Math::float3(0,1,0));
 
@@ -415,6 +406,8 @@ bool Engine::GameEngine::render(float alpha)
 	//Math::Matrix viewProj = projection * view;
 	//RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
 
+	m_TestWorld->render(projection * view);
+
 	// Process frame
     RAPI::REngine::RenderingDevice->OnFrameEnd();
     RAPI::REngine::RenderingDevice->Present();
@@ -440,4 +433,7 @@ void Engine::GameEngine::init()
 
     RAPI::RVertexShader* vs = RAPI::RTools::LoadShaderFromString<RAPI::RVertexShader>(vertex_shader, "simpleVS");
     RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+
+
+	m_TestWorld = new Renderer::ZenWorld("newworld.zen");
 }

@@ -123,7 +123,7 @@ namespace Math
         t_vector<T, S...> operator- () const { return t_vector<T, S...>(-T::x, -T::y); }
 
         //TODO: float = S ;)
-        float length() const { return T::_glmt_vector.length(); }
+        float length() const { return static_cast<float>(T::_glmt_vector.length()); }
         float lengthSquared() const { return T::x * T::x + T::y * T::y; }
 
         float dot(const t_vector<T, S...>& v) const { return glm::dot(T::_glmt_vector, v._glmt_vector); }

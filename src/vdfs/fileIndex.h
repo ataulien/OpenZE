@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <set>
 
 
 #include "archive_virtual.h"
@@ -63,6 +64,11 @@ namespace VDFS
 		 */
 		void clearIndex();
 
+		/**
+		 * @brief Returnst the list of all known files
+		 */
+		const std::vector<FileInfo>& getKnownFiles(){return m_KnownFiles;}
+
 	private:
 		/**
 		 * @brief Vector of all known files
@@ -78,5 +84,10 @@ namespace VDFS
 		 * @brief all currently loaded virtual archives
 		 */
 		std::vector<ArchiveVirtual*> m_LoadedVirtualArchives;
+
+		/** 
+		 * @brief set of all loaded archives
+		 */
+		std::set<std::string> m_LoadedArchives;
 	};
 }

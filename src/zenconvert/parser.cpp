@@ -30,6 +30,14 @@ ZenConvert::Parser::Parser(const std::string &fileName, Chunk *pVob, zCMesh* pWo
     file.read(reinterpret_cast<char *>(m_Data.data()), size);
 }
 
+ZenConvert::Parser::Parser(const std::vector<uint8_t>& fileData, Chunk *pVob, zCMesh* pWorldMesh) : 
+	m_Seek(0),
+	m_pVob(pVob),
+	m_pWorldMesh(pWorldMesh)
+{
+	m_Data = fileData;
+}
+
 ZenConvert::Parser::~Parser()
 {
 }
@@ -82,6 +90,7 @@ void ZenConvert::Parser::skipSpaces()
         case '\r':
         case '\t':
         case '\n':
+		case '\0':
             ++m_Seek;
             break;
         default:
@@ -115,40 +124,44 @@ void ZenConvert::Parser::skipBinaryChunk()
     m_Seek += readBinaryDword();
 }
 
-void ZenConvert::Parser::readHeader()
+void ZenConvert::Parser::readHeader(Header* targetHeader)
 {
+	// Write to main header if nothing else was specified
+	if(!targetHeader)
+		targetHeader = &m_Header;
+
     if(!skipString(s_FileFormat))
         throw std::runtime_error("Not a valid format");
 
     if(!skipString("ver"))
         throw std::runtime_error("Not a valid header");
 
-    m_Header.version = readInt();
+    targetHeader->version = readInt();
 
     if(!skipString("zCArchiverGeneric"))
         throw std::runtime_error("Not a valid header");
 
     std::string fileType = readString();
     if(fileType == "ASCII")
-        m_Header.fileType = FT_ASCII;
+        targetHeader->fileType = FT_ASCII;
     else if(fileType == "BINARY")
-        m_Header.fileType = FT_BINARY;
+        targetHeader->fileType = FT_BINARY;
     else
         throw std::runtime_error("Unsupported file format");
 
     if(!skipString("saveGame"))
         throw std::runtime_error("Unsupported file format");
 
-    m_Header.saveGame = readBool();
+    targetHeader->saveGame = readBool();
 
     if(skipString("date"))
     {
-        m_Header.date = readString() + " ";
-        m_Header.date += readString();
+        targetHeader->date = readString() + " ";
+        targetHeader->date += readString();
     }
 
     if(skipString("user"))
-        m_Header.user = readString();
+        targetHeader->user = readString();
 
     if(!skipString("END"))
         throw std::runtime_error("No END in header(1)");
@@ -156,17 +169,20 @@ void ZenConvert::Parser::readHeader()
     if(!skipString("objects"))
         throw std::runtime_error("Object count missing");
 
-    m_Header.objectCount = readInt();
+    targetHeader->objectCount = readInt();
 
     if(!skipString("END"))
         throw std::runtime_error("No END in header(2)");
+
+	// Skip trailing \n behind the header
+	skipSpaces();
 }
 
 void ZenConvert::Parser::readWorldMesh()
 {
 	// Read worldmesh, if needed
     if(m_pWorldMesh)
-		m_pWorldMesh->readObjectData(*this);
+		m_pWorldMesh->readObjectData(*this, true);
 	else
 		skipBinaryChunk();
 }
@@ -324,11 +340,15 @@ std::string ZenConvert::Parser::readString(bool skip)
 std::string ZenConvert::Parser::readLine(bool skip)
 {
     std::string retVal;
-    while(m_Data[m_Seek] != '\r' && m_Data[m_Seek] != '\n')
+    while(m_Data[m_Seek] != '\r' && m_Data[m_Seek] != '\n' && m_Data[m_Seek] != '\0')
     {
         checkArraySize();
         retVal += m_Data[m_Seek++];
     }
+
+	// Skip trailing \n\r\0
+	m_Seek++;
+
     if(skip)
 		skipSpaces();
     return retVal;
@@ -377,6 +397,13 @@ uint16_t ZenConvert::Parser::readBinaryWord()
 {
 	uint16_t retVal = *reinterpret_cast<uint16_t *>(&m_Data[m_Seek]);
 	m_Seek += sizeof(uint16_t);
+	return retVal;
+}
+
+uint8_t ZenConvert::Parser::readBinaryByte()
+{
+	uint8_t retVal = *reinterpret_cast<uint8_t *>(&m_Data[m_Seek]);
+	m_Seek += sizeof(uint8_t);
 	return retVal;
 }
 

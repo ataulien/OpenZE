@@ -14,6 +14,7 @@
 #include <RPixelShader.h>
 #include <RInputLayout.h>
 #include <RTools.h>
+#include <RTexture.h>
 
 #include "renderer/vertextypes.h"
 
@@ -106,19 +107,21 @@ void Engine::ObjectFactory::test_createObjects()
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
     RAPI::RBuffer *b = MakeBox(1.0f);
 
-<<<<<<< HEAD
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
-=======
 	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
->>>>>>> db16561e72f0de007ba8da991d3dc133669473dc
 
+	RAPI::RSamplerState* ss;
+	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
 
-    entity = createEntity();
-    m_Mask[entity] = static_cast<EComponents>(C_COLLISION | C_VISUAL);
+	entity = createEntity();
+    m_Mask[entity] = static_cast<EComponents>(C_COLLISION);
 
     std::vector<Math::float3> zenVertices;
     std::vector<uint32_t> zenIndices;
     RAPI::RBuffer* worldMesh = loadZENMesh("newworld.zen", 1.0f / 50.0f, zenVertices, zenIndices);
+
+	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RTexture>("testtexture");
+	sm.SetTexture(0, tx, RAPI::ST_PIXEL);
+	sm.SetSamplerState(ss);
 
     btTriangleMesh* wm = new btTriangleMesh;
 
@@ -136,19 +139,6 @@ void Engine::ObjectFactory::test_createObjects()
     m_pEngine->physicsSystem()->addRigidBody(m_Collision[entity].pRigidBody);
     m_Collision[entity].pRigidBody->setRestitution(0.1f);
     m_Collision[entity].pRigidBody->setFriction(1.0f);
-
-    m_Visual[entity].pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-
-    Math::Matrix m = Math::Matrix::CreateIdentity();
-    m_Visual[entity].pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::EUsageFlags::U_DYNAMIC, RAPI::ECPUAccessFlags::CA_WRITE);
-
-    sm.SetVertexBuffer(0, worldMesh);
-    sm.SetPixelShader(ps);
-    sm.SetVertexShader(vs);
-    sm.SetInputLayout(inputLayout);
-    sm.SetConstantBuffer(0, m_Visual[entity].pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
-
-    m_Visual[entity].pPipelineState = sm.MakeDrawCall(worldMesh->GetSizeInBytes() / worldMesh->GetStructuredByteSize());
 
     const int n = 1;
     const float turns = 5;

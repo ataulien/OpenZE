@@ -23,6 +23,12 @@ FileIndex::~FileIndex()
 */
 bool FileIndex::loadVDF(const std::string& vdf, uint32_t priority)
 {
+	// Check if this was already loaded
+	std::string upper = vdf;
+	std::transform(upper.begin(), upper.end(),upper.begin(), ::toupper);
+	if(m_LoadedArchives.find(upper) != m_LoadedArchives.end())
+		return true; // Already loaded, don't do it again
+
 	ArchiveVirtual* a = new ArchiveVirtual();
 
 	// Load the archive
@@ -39,6 +45,9 @@ bool FileIndex::loadVDF(const std::string& vdf, uint32_t priority)
 
 	// Put into list of archives
 	m_LoadedVirtualArchives.emplace_back(a);
+
+	// Add to loaded archive set
+	m_LoadedArchives.insert(upper);
 
 	return true;
 }

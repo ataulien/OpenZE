@@ -87,5 +87,10 @@ namespace Utils
 		 * @brief Sets the title of the window
 		 */
 		virtual void setWindowTitle(const std::string& title){}
+
+		/**
+		 * @brief Gets the current keystate
+		 */
+		virtual bool getKeyPressed(EKey key){return false;}
     };
 }

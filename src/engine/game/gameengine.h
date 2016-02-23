@@ -3,7 +3,9 @@
 #include "engine.h"
 #include "utils/GLFW_window.h"
 #include "utils/mathlib.h"
-#include "sound/soundmanager.h"
+//#include "sound/soundmanager.h"
+
+#include "renderer/zenWorld.h"
 
 namespace Engine
 {
@@ -33,7 +35,7 @@ namespace Engine
         /**
          * @brief m_SoundManager
          */
-        Sound::SoundManager m_SoundManager;
+        //Sound::SoundManager m_SoundManager;
 
 		/**
 		 * @brief testing only
@@ -41,5 +43,6 @@ namespace Engine
 		float m_CameraAngle;
 		float m_CameraZoom;
         Math::float3 m_CameraCenter;
+		Renderer::ZenWorld* m_TestWorld;
     };
 }
