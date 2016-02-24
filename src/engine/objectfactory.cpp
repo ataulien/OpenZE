@@ -143,7 +143,6 @@ void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &positio
         return;
     }
     Physics::CollisionShape collisionShape(new btBoxShape(btVector3(1.0f, 1.0f, 1.0f)));
-    LogInfo() << "Init physics";
     pCollision->rigidBody.initPhysics(m_pEngine->physicsSystem(), collisionShape, position, 500.0f);
     pCollision->rigidBody.setFriction(1.0f);
     pCollision->rigidBody.setRestitution(0.1f);

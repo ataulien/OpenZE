@@ -26,8 +26,8 @@ namespace Engine
 
             void cleanUp()
             {
-                RAPI::REngine::ResourceCache->DeleteResource(pObjectBuffer);
-                RAPI::REngine::ResourceCache->DeleteResource(pPipelineState);
+                //RAPI::REngine::ResourceCache->DeleteResource(pObjectBuffer);
+                //RAPI::REngine::ResourceCache->DeleteResource(pPipelineState);
             }
         };
     }

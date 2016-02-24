@@ -34,11 +34,7 @@ namespace Engine
 
         void test_createPhysicsEntity(const Math::float3& position, const Math::float3& impulse);
 
-#ifdef ZE_GAME
-    ObjectStorage<Components::Collision, Components::Visual> &storage()
-#else
-    ObjectStorage<Components::Collision> &storage()
-#endif
+    ObjectStorage<COMPONENTS> &storage()
         {
             return m_Storage;
         }
@@ -55,10 +51,6 @@ namespace Engine
         /**
          * @brief storage class for all components
          */
-#ifdef ZE_GAME
-        ObjectStorage<Components::Collision, Components::Visual> m_Storage;
-#else
-        ObjectStorage<Components::Collision> m_Storage;
-#endif
+        ObjectStorage<COMPONENTS> m_Storage;
     };
 }

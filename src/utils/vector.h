@@ -51,6 +51,8 @@ namespace Utils
                 m_Data.shrink_to_fit();
         }
 
+        typedef T value_type;
+
         std::vector<T> m_Data;
     };
 }
