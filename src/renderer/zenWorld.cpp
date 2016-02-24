@@ -1,4 +1,4 @@
-#include "ZenWorld.h"
+#include "zenWorld.h"
 #include "zenconvert/parser.h"
 #include "utils/logger.h"
 #include <string>
@@ -34,8 +34,8 @@ ZenWorld::ZenWorld(const std::string& zen)
 	}
 
 	const float scale = 1.0f / 50.0f;
-	/*m_Meshes.emplace_back(new Renderer::ZenWorldMesh(worldMesh, scale));
-
+    m_Meshes.emplace_back(new Renderer::ZenWorldMesh(worldMesh, scale));
+/*
 	std::function<void(ZenConvert::Chunk*)> fn = [&](ZenConvert::Chunk* parent){
 		for(uint32_t i = 0; i < parent->childCount(); i++)
 		{
@@ -55,6 +55,7 @@ ZenWorld::ZenWorld(const std::string& zen)
 
 	VDFS::FileIndex vdfsIndex;
 	vdfsIndex.loadVDF("Meshes.vdf");
+    LogInfo() << vdfsIndex.getKnownFiles().size();
 
 	float xoff = 0;
 	for(auto& f : vdfsIndex.getKnownFiles())

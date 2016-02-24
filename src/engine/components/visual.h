@@ -5,6 +5,8 @@
 #include <REngine.h>
 #include <RResourceCache.h>
 
+#include "components.h"
+
 namespace RAPI
 {
     class RBuffer;
@@ -17,6 +19,8 @@ namespace Engine
     {
         struct Visual
         {
+            enum { MASK = C_VISUAL };
+
             RAPI::RBuffer *pObjectBuffer;
             RAPI::RPipelineState *pPipelineState;
 

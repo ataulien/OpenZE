@@ -7,6 +7,8 @@
 #include "objectfactory.h"
 #include "physics/physics.h"
 #include "utils/timer.h"
+#include "components/collision.h"
+#include "components/visual.h"
 
 
 
@@ -61,7 +63,11 @@ namespace Engine
         /**
          * @brief the object factory creates all game objects
          */
-        ObjectFactory m_Factory;
+        ObjectFactory<Components::Collision
+#ifdef ZE_GAME
+        , Components::Visual
+#endif
+        > m_Factory;
 
     protected:
         /**
