@@ -1,10 +1,32 @@
 #include "objectfactory.h"
 #include "engine.h"
+#include "utils/vector.h"
+#include "utils/mathlib.h"
+#include "physics/rigidbody.h"
+
+#ifdef ZE_GAME
+#include <REngine.h>
+#include <RResourceCache.h>
+#include <RBuffer.h>
+#include <RPipelineState.h>
+#include <RDevice.h>
+#include <RStateMachine.h>
+#include <RVertexShader.h>
+#include <RPixelShader.h>
+#include <RInputLayout.h>
+#include <RTools.h>
+#include <RTexture.h>
+
+#include "renderer/vertextypes.h"
+
+extern RAPI::RBuffer* MakeBox(float extends);
+extern RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices);
+#endif
 
 void Engine::ObjectFactory::test_createObjects()
 {
-    ObjectHandle handle = createEntity();
-    Components::Collision *pCollision = addComponent<Components::Collision>(handle);
+    ObjectHandle handle = m_Storage.createEntity();
+    Components::Collision *pCollision = m_Storage.addComponent<Components::Collision>(handle);
     Physics::CollisionShape shape(new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 1.0f));
     pCollision->rigidBody.initPhysics(m_pEngine->physicsSystem(), shape,  Math::float3(0.0f, -100.0f, 0.0f));
     pCollision->rigidBody.setFriction(1.0f);
@@ -21,8 +43,8 @@ void Engine::ObjectFactory::test_createObjects()
     RAPI::RSamplerState* ss;
     RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
 
-    handle = createEntity();
-    pCollision = addComponent(handle);
+    handle = m_Storage.createEntity();
+    pCollision = m_Storage.addComponent<Components::Collision>(handle);
 
     std::vector<Math::float3> zenVertices;
     std::vector<uint32_t> zenIndices;
@@ -85,10 +107,9 @@ void Engine::ObjectFactory::test_createObjects()
 #endif
 }
 
-template<typename... C>
-void Engine::ObjectFactory<C...>::test_createPhysicsEntity(const Math::float3 &position, const Math::float3 &impulse)
+void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &position, const Math::float3 &impulse)
 {
-    ObjectHandle handle = createEntity();
+    ObjectHandle handle = m_Storage.createEntity();
 
 #ifdef ZE_GAME
     RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");
@@ -98,7 +119,7 @@ void Engine::ObjectFactory<C...>::test_createPhysicsEntity(const Math::float3 &p
 
     RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
 
-    Components::Visual *pVisual = addComponent<Components::Visual>(handle);
+    Components::Visual *pVisual = m_Storage.addComponent<Components::Visual>(handle);
     if(!pVisual)
     {
         LogWarn() << "Could not create visual";
@@ -115,7 +136,7 @@ void Engine::ObjectFactory<C...>::test_createPhysicsEntity(const Math::float3 &p
     pVisual->pPipelineState = sm.MakeDrawCall(b->GetSizeInBytes() / b->GetStructuredByteSize());
 #endif
 
-    Components::Collision *pCollision = addComponent<Components::Collision>(handle);
+    Components::Collision *pCollision = m_Storage.addComponent<Components::Collision>(handle);
     if(!pCollision)
     {
         LogWarn() << "Could not create collision";
@@ -127,5 +148,10 @@ void Engine::ObjectFactory<C...>::test_createPhysicsEntity(const Math::float3 &p
     pCollision->rigidBody.setFriction(1.0f);
     pCollision->rigidBody.setRestitution(0.1f);
     pCollision->rigidBody.applyCentralImpulse(impulse);
+}
+
+void Engine::ObjectFactory::cleanUp()
+{
+    m_Storage.cleanUp();
 }
 

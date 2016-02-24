@@ -63,11 +63,7 @@ namespace Engine
         /**
          * @brief the object factory creates all game objects
          */
-        ObjectFactory<Components::Collision
-#ifdef ZE_GAME
-        , Components::Visual
-#endif
-        > m_Factory;
+        ObjectFactory m_Factory;
 
     protected:
         /**

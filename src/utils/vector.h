@@ -24,6 +24,11 @@ namespace Utils
             return m_Data.size();
         }
 
+        void resize(size_t size)
+        {
+            m_Data.resize(size);
+        }
+
         T &operator [](size_t s)
         {
             return m_Data[s];

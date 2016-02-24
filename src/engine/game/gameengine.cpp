@@ -374,7 +374,7 @@ bool Engine::GameEngine::render(float alpha)
 
     Math::Matrix model = Math::Matrix::CreateIdentity();
 
-    Utils::Vector<Entity> &entities = m_Factory.getEntities();
+    Utils::Vector<Entity> &entities = m_Factory.storage().getEntities();
     for(uint32_t i = 0, end = entities.size(); i < end; ++i)
     {
         Entity &entity = entities[i];
@@ -384,7 +384,7 @@ bool Engine::GameEngine::render(float alpha)
         if((entity.mask & C_COLLISION) == C_COLLISION)
         {
             btTransform trans;
-            Components::Collision *pCollision = m_Factory.getComponent<Components::Collision>(entity.handle);
+            Components::Collision *pCollision = m_Factory.storage().getComponent<Components::Collision>(entity.handle);
             if(pCollision)
             {
                 pCollision->rigidBody.getMotionState()->getWorldTransform(trans);
@@ -395,7 +395,7 @@ bool Engine::GameEngine::render(float alpha)
         }
 
         Math::Matrix viewProj = projection * view * model;
-        Components::Visual *pVisual = m_Factory.getComponent<Components::Visual>(entity.handle);
+        Components::Visual *pVisual = m_Factory.storage().getComponent<Components::Visual>(entity.handle);
         pVisual->pObjectBuffer->UpdateData(&viewProj);
 
         RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
