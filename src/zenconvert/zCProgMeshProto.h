@@ -10,13 +10,13 @@ namespace VDFS
 
 namespace ZenConvert
 {
-	class Parser;
+	class ZenParser;
 	class zCProgMeshProto
 	{
 	public:
 		struct SubMesh
 		{
-			MaterialInfo m_Material;
+			zCMaterialData m_Material;
 			std::vector<zTriangle> m_TriangleList;
 			std::vector<zWedge> m_WedgeList;
 			std::vector<float> m_ColorList;
@@ -38,7 +38,7 @@ namespace ZenConvert
 		/**
 		 * @brief Reads the mesh-object from the given binary stream
 		 */
-		void readObjectData(Parser& parser);
+		void readObjectData(ZenParser& parser);
 
 		/**
 		@ brief returns the vector of vertex-positions
@@ -53,7 +53,7 @@ namespace ZenConvert
 		/**
 		 * @brief returns the vector of the materials used by this mesh
 		 */
-		const std::vector<MaterialInfo>& getMaterials() const { return m_Materials; }
+		const std::vector<zCMaterialData>& getMaterials() const { return m_Materials; }
 
 		/**
 		 * @brief getter for the boudingboxes
@@ -91,7 +91,7 @@ namespace ZenConvert
 		/**
 		* @brief All materials used by this mesh
 		*/
-		std::vector<MaterialInfo> m_Materials;
+		std::vector<zCMaterialData> m_Materials;
 
 		/**
 		 * @brief Whether this mesh is using alphatest

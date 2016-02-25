@@ -1,5 +1,5 @@
 #include "zCMesh.h"
-#include "parser.h"
+#include "zenParser.h"
 #include "utils/logger.h"
 #include "zTypes.h"
 #include <string>
@@ -35,7 +35,7 @@ zCMesh::zCMesh(const std::string& fileName, VDFS::FileIndex& fileIndex)
 	{
 		// Create parser from memory
 		// FIXME: There is an internal copy of the data here. Optimize!
-		ZenConvert::Parser parser(data, nullptr, nullptr);
+		ZenConvert::ZenParser parser(data.data(), data.size());
 		
 		// .MSH-Files are just saved zCMeshes
 		readObjectData(parser, false);
@@ -50,7 +50,7 @@ zCMesh::zCMesh(const std::string& fileName, VDFS::FileIndex& fileIndex)
 /**
 * @brief Reads the mesh-object from the given binary stream
 */
-void zCMesh::readObjectData(Parser& parser, bool fromZen)
+void zCMesh::readObjectData(ZenParser& parser, bool fromZen)
 {
 	// Information about the whole file we are reading here
 	BinaryFileInfo fileInfo;
@@ -123,20 +123,30 @@ void zCMesh::readObjectData(Parser& parser, bool fromZen)
 				//  - String - Name
 				//  - zCMaterial-Chunk
 
-				Parser::Header tmpHeader;
-				parser.readHeader(&tmpHeader);
+				ZenParser p2(&parser.getData()[parser.getSeek()], parser.getData().size() - parser.getSeek());
+				p2.readHeader();
 
 				// Read number of materials
-				uint32_t numMaterials = parser.readBinaryDword();
+				uint32_t numMaterials = p2.readBinaryDWord();
 
 				// Read every stored material
 				for(uint32_t i = 0; i < numMaterials; i++)
 				{
-					zCMaterial mat;
-					mat.readObjectData(parser);
+					p2.readLine(false); // Read unused material name (Stored a second time later)
+
+										// Skip chunk headers - we know these are zCMaterial
+					uint32_t chunksize = p2.readBinaryDWord();
+					uint16_t version = p2.readBinaryWord();
+					uint32_t objectIndex = p2.readBinaryDWord();
+
+					p2.skipSpaces();
+
+					// Skip chunk-header
+					std::string name = p2.readLine();
+					std::string classname = p2.readLine();
 
 					// Save into vector
-					m_Materials.emplace_back(mat.getMaterialInfo());
+					m_Materials.emplace_back(zCMaterial::readObjectData(p2));
 				}
 
 				parser.setSeek(chunkEnd); // Skip chunk
@@ -157,12 +167,12 @@ void zCMesh::readObjectData(Parser& parser, bool fromZen)
 				// numVx float3s of vertexpositions
 
 				// Read how many vertices we have in this chunk
-				uint32_t numVertices = parser.readBinaryDword();
+				uint32_t numVertices = parser.readBinaryDWord();
 				m_Vertices.clear();
-				m_Vertices.reserve(numVertices);
 
 				// Read vertex data and emplace into m_Vertices
-				parser.readMultipleStructures(numVertices, m_Vertices);
+				m_Vertices.resize(numVertices);
+				parser.readBinaryRaw(m_Vertices.data(), numVertices * sizeof(float) * 3);
 
 				// Flip x-coord to make up for right handedness
 				//for(auto& v : m_Vertices)
@@ -177,10 +187,11 @@ void zCMesh::readObjectData(Parser& parser, bool fromZen)
 				// zTMSH_FeatureChunk*num - features
 
 				// Read how many feats we have
-				uint32_t numFeats = parser.readBinaryDword();
+				uint32_t numFeats = parser.readBinaryDWord();
 
 				// Read features
-				parser.readMultipleStructures(numFeats, m_Features);
+				m_Features.resize(numFeats);
+				parser.readBinaryRaw(m_Features.data(), numFeats * sizeof(zTMSH_FeatureChunk));
 			}
 			break;
 
@@ -208,11 +219,12 @@ void zCMesh::readObjectData(Parser& parser, bool fromZen)
 				};
 
 				// Read number of polys
-				int numPolys = parser.readBinaryDword();
+				int numPolys = parser.readBinaryDWord();
 
 				// Read block of data
 				std::vector<uint8_t> dataBlock;
-				parser.readMultipleStructures(chunkInfo.length, dataBlock);
+				dataBlock.resize(chunkInfo.length);
+				parser.readBinaryRaw(dataBlock.data(), chunkInfo.length);
 
 				uint8_t* blockPtr = dataBlock.data();
 

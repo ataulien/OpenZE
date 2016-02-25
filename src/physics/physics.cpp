@@ -15,6 +15,7 @@ void Physics::Physics::update(double dt)
 
 void Physics::Physics::init()
 {
+
 }
 
 void Physics::Physics::addRigidBody(btRigidBody *pRigidBody)

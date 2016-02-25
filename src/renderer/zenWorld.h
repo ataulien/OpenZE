@@ -1,6 +1,7 @@
 #pragma once 
 #include <vector>
 #include "utils/mathlib.h"
+#include "vdfs/fileIndex.h"
 
 namespace Renderer
 {
@@ -8,7 +9,8 @@ namespace Renderer
 	class ZenWorld
 	{
 	public:
-		ZenWorld(const std::string& zen);
+		ZenWorld(const std::string& zenFile);
+		ZenWorld(const std::string& zenFile, VDFS::FileIndex& vdfs);
 		~ZenWorld();
 
 		void render(const Math::Matrix& viewProj);

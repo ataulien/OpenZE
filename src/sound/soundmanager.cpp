@@ -1,3 +1,4 @@
+#if 0
 #include <alut.h>
 
 #include "utils/logger.h"
@@ -110,3 +111,4 @@ Sound::SoundManager::~SoundManager()
     if(m_pDevice)
         alcCloseDevice(m_pDevice);
 }
+#endif

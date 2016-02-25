@@ -1,6 +1,7 @@
 #pragma once
 #include "zTypes.h"
-#include "parser.h"
+#include "zenParser.h"
+#include "zenParserPropRead.h"
 
 namespace ZenConvert
 {
@@ -10,52 +11,36 @@ namespace ZenConvert
 		/**
 		* Reads this object from an internal zen
 		*/
-		static MaterialInfo readObjectData(Parser& parser)
+		static zCVobData readObjectData(ZenParser& parser)
 		{
-			std::string matName = parser.readLine(false);
-			//LogInfo() << "Reading material '" << matName << "'";
+			zCVobData info;
 
-			uint32_t chunksize = parser.readBinaryDword();
-			uint16_t version = parser.readBinaryWord();
-			uint32_t objectIndex = parser.readBinaryDword();
+			info.objectClass = "zCVob";
 
-			parser.skipSpaces();
+			ReadObjectProperties(parser,		info.properties, 
+				Prop("Packing",					info.pack),
+				Prop("PresetName",				info.presetName),
+				Prop("BBoxMin",					info.bboxMin),
+				Prop("BBoxMax",					info.bboxMax),
+				Prop("RotationMatrixRow0",		info.rotationMatrixRows[0]),
+				Prop("RotationMatrixRow1",		info.rotationMatrixRows[1]),
+				Prop("RotationMatrixRow2",		info.rotationMatrixRows[2]),
+				Prop("Position",				info.position),
+				Prop("VobName",					info.vobName),
+				Prop("VisualName",				info.visual),
+				Prop("ShowVisual",				info.showVisual),
+				Prop("VisualCamAlign",			info.visualCamAlign),
+				Prop("VisualAniMode",			info.visualAniMode),
+				Prop("VisualAniModeStrength",	info.visualAniModeStrength),
+				Prop("VobFarClipScale",			info.vobFarClipScale),
+				Prop("CollisionDetectionStatic",info.cdStatic),
+				Prop("CollisionDetectionDyn",	info.cdDyn),
+				Prop("StaticVob",				info.staticVob),
+				Prop("DynamicShadow",			info.dynamicShadow),
+				Prop("zBias",					info.zBias),
+				Prop("IsAmbient",				info.isAmbient)); // TODO: References!
 
-			// Skip chunk-header
-			std::string name = parser.readLine();
-			std::string classname = parser.readLine();
-
-			// Read everything the material has to offer
-
-			MaterialInfo materialInfo;
-			materialInfo.matName = parser.readLine(false);
-			materialInfo.matGroup = parser.readBinaryByte();
-			materialInfo.color = parser.readBinaryDword();
-			materialInfo.smoothAngle = parser.readBinaryFloat();
-			materialInfo.texture = parser.readLine(false);
-			materialInfo.texScale = parser.readLine(false);
-			materialInfo.texAniFPS = parser.readBinaryFloat();
-			materialInfo.texAniMapMode = parser.readBinaryByte();
-			materialInfo.texAniMapDir = parser.readLine(false);
-			materialInfo.noCollDet = parser.readBinaryByte();
-			materialInfo.noLighmap = parser.readBinaryByte();
-			materialInfo.loadDontCollapse = parser.readBinaryByte();
-			materialInfo.detailObject = parser.readLine(false);
-			materialInfo.detailTextureScale = parser.readBinaryFloat();
-			materialInfo.forceOccluder = parser.readBinaryByte();
-			materialInfo.environmentMapping = parser.readBinaryByte();
-			materialInfo.environmentalMappingStrength = parser.readBinaryFloat();
-			materialInfo.waveMode = parser.readBinaryByte();
-			materialInfo.waveSpeed = parser.readBinaryByte();
-			materialInfo.waveMaxAmplitude = parser.readBinaryFloat();
-			materialInfo.waveGridSize = parser.readBinaryFloat();
-			materialInfo.ignoreSun = parser.readBinaryByte();
-			materialInfo.alphaFunc = parser.readBinaryByte();
-
-			float defaultMapping_x = parser.readBinaryFloat();
-			float defaultMapping_y = parser.readBinaryFloat();
-
-			return materialInfo;
+			return info;
 		}
 
 	private:

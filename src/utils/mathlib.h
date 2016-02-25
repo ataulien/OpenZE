@@ -3,6 +3,7 @@
 #include <gtc/matrix_transform.hpp>
 #include <string.h>
 #include <iostream>
+#include <string>
 
 namespace Math
 {    
@@ -43,7 +44,7 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, t_float2 &v);
     };
 
-	std::ostream& operator<< (std::ostream &out, t_float2 &v)
+	static std::ostream& operator<< (std::ostream &out, t_float2 &v)
 	{
 		out << "[" + std::to_string(v.x) + ", " + std::to_string(v.y) + "]";
 		return out;
@@ -74,7 +75,7 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, t_float3 &v);
     };
 
-	std::ostream& operator<< (std::ostream &out, t_float3 &v)
+	static std::ostream& operator<< (std::ostream &out, t_float3 &v)
 	{
 		out << "[" + std::to_string(v.x) 
 			+ ", " + std::to_string(v.y)
@@ -109,7 +110,7 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, t_float4 &v);
     };
 
-	std::ostream& operator<< (std::ostream &out, t_float4 &v)
+	static std::ostream& operator<< (std::ostream &out, t_float4 &v)
 	{
 		out << "[" + std::to_string(v.x) 
 			+ ", " + std::to_string(v.y)
@@ -352,7 +353,7 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, Matrix &v);
     };
 
-	std::ostream& operator<< (std::ostream &out, Matrix &m)
+	static std::ostream& operator<< (std::ostream &out, Matrix &m)
 	{
 		out << "[";
 		for(size_t i = 0; i < 16; i++)

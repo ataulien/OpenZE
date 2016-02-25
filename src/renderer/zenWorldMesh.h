@@ -16,6 +16,11 @@ namespace ZenConvert
 	class zCProgMeshProto;
 }
 
+namespace VDFS
+{
+	class FileIndex;
+}
+
 namespace Renderer
 {
 	/**
@@ -24,8 +29,8 @@ namespace Renderer
 	class ZenWorldMesh
 	{
 	public:
-		ZenWorldMesh(const ZenConvert::zCMesh& source, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
-		ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
+		ZenWorldMesh(const ZenConvert::zCMesh& source, VDFS::FileIndex& fileIndex, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
+		ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, VDFS::FileIndex& fileIndex, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
 		~ZenWorldMesh();
 
 		struct SubMesh

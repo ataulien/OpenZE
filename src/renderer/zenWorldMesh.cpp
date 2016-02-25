@@ -40,7 +40,7 @@ static RAPI::RTexture* loadTexture(const std::string& name, VDFS::FileIndex& fil
 	return tx;
 }
 
-Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, float scale, const Math::float3& positionOffset)
+Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, VDFS::FileIndex& fileIndex, float scale, const Math::float3& positionOffset)
 {
 	std::unordered_map<std::string, std::vector<Renderer::WorldVertex>> verticesByTexture;
 
@@ -79,7 +79,7 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, float sc
 		m_VerticesAsTriangles[i+2].Normal = nrm;		
 
 		// Get material info
-		const ZenConvert::MaterialInfo& info = source.getMaterials()[source.getTriangleMaterialIndices()[i / 3]];
+		const ZenConvert::zCMaterialData& info = source.getMaterials()[source.getTriangleMaterialIndices()[i / 3]];
 
 		for(size_t j = 0; j < 3; j++)
 			verticesByTexture[info.texture].emplace_back(m_VerticesAsTriangles[i+j]);
@@ -105,8 +105,6 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, float sc
 	Math::Matrix m = Math::Matrix::CreateIdentity();
 	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
-	static VDFS::FileIndex vdfsIndex;
-	vdfsIndex.loadVDF("textures.vdf");
 	for(auto& t : verticesByTexture)
 	{
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
@@ -115,7 +113,7 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, float sc
 		m_BufferMap[t.first] = b;
 
 		sm.SetVertexBuffer(0, b);
-		sm.SetTexture(0, loadTexture(t.first, vdfsIndex), RAPI::ST_PIXEL);
+		sm.SetTexture(0, loadTexture(t.first, fileIndex), RAPI::ST_PIXEL);
 
 		// Make drawcalls
 		SubMesh subMesh;
@@ -124,7 +122,7 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, float sc
 	}
 }
 
-Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, float scale, const Math::float3& positionOffset)
+Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, VDFS::FileIndex& fileIndex, float scale, const Math::float3& positionOffset)
 {
 	std::vector<WorldVertex> vertices;
 	std::vector<uint32_t> subMeshIndexOffsets;
@@ -185,9 +183,6 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, 
 	Math::Matrix m = Math::Matrix::CreateIdentity();
 	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
-	static VDFS::FileIndex vdfsIndex;
-	vdfsIndex.loadVDF("textures.vdf");
-
 	for(auto& t : verticesByTexture)
 	{
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
@@ -196,7 +191,7 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, 
 		m_BufferMap[t.first] = b;
 
 		sm.SetVertexBuffer(0, b);
-		sm.SetTexture(0, loadTexture(t.first, vdfsIndex), RAPI::ST_PIXEL);
+		sm.SetTexture(0, loadTexture(t.first, fileIndex), RAPI::ST_PIXEL);
 
 		// Make drawcalls
 		SubMesh subMesh;

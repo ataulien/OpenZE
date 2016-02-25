@@ -14,7 +14,7 @@
 #include "components.h"
 #include "components/collision.h"
 #include "components/visual.h"
-#include "zenconvert/parser.h"
+#include "zenconvert/zenParser.h"
 #include "zenconvert/vob.h"
 #include "zenconvert/zCMesh.h"
 #include "vdfs/fileIndex.h"
@@ -131,8 +131,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 
 	try
 	{
-		ZenConvert::Parser parser(file, &parentVob, &worldMesh);
-		parser.parse();
+		ZenConvert::ZenParser parser(file);
 	}
 	catch(std::exception &e)
 	{
@@ -435,5 +434,10 @@ void Engine::GameEngine::init()
     RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 
 
-	m_TestWorld = new Renderer::ZenWorld("newworld.zen");
+	VDFS::FileIndex idx;
+	idx.loadVDF("Textures.vdf");
+	idx.loadVDF("Textures_Addon.vdf");
+	idx.loadVDF("Anthera.mod");
+
+	m_TestWorld = new Renderer::ZenWorld("Anthera_Final1.zen", idx);
 }

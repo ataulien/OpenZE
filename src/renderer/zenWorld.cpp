@@ -1,5 +1,5 @@
 #include "ZenWorld.h"
-#include "zenconvert/parser.h"
+#include "zenconvert/zenParser.h"
 #include "utils/logger.h"
 #include <string>
 #include "zenconvert/vob.h"
@@ -8,24 +8,26 @@
 #include "vdfs/fileIndex.h"
 #include <RTools.h>
 #include "zenconvert/zCProgMeshProto.h"
+#include "zenconvert/zenParser.h"
 
 
 using namespace Renderer;
 
 ZenWorld::ZenWorld(const std::string& zen)
 {
-
-
 	// Load a world
 	const std::string zenFile = zen;
 	ZenConvert::Chunk parentVob("parent", "", 0);
-	ZenConvert::zCMesh worldMesh;
+	ZenConvert::zCMesh* worldMesh = nullptr;
+
+	ZenConvert::ZenParser parser(zenFile);
 
 	try
 	{
-		ZenConvert::Parser parser(zenFile, &parentVob, &worldMesh);
-		parser.parse();
-
+		
+		parser.readHeader();
+		parser.readWorld();
+		worldMesh = parser.getWorldMesh();
 	}
 	catch(std::exception &e)
 	{
@@ -34,8 +36,14 @@ ZenWorld::ZenWorld(const std::string& zen)
 	}
 
 	const float scale = 1.0f / 50.0f;
-	/*m_Meshes.emplace_back(new Renderer::ZenWorldMesh(worldMesh, scale));
 
+	VDFS::FileIndex vdfs;
+	vdfs.loadVDF("Textures.vdf");
+	vdfs.loadVDF("Textures_Addon.vdf");
+
+	if(worldMesh)
+		m_Meshes.emplace_back(new Renderer::ZenWorldMesh(*worldMesh, vdfs, scale));
+	/*
 	std::function<void(ZenConvert::Chunk*)> fn = [&](ZenConvert::Chunk* parent){
 		for(uint32_t i = 0; i < parent->childCount(); i++)
 		{
@@ -53,8 +61,9 @@ ZenWorld::ZenWorld(const std::string& zen)
 	fn(&parentVob);*/
 
 
-	VDFS::FileIndex vdfsIndex;
+	/*VDFS::FileIndex vdfsIndex;
 	vdfsIndex.loadVDF("Meshes.vdf");
+	vdfsIndex.loadVDF("Meshes_Addon.vdf");
 
 	float xoff = 0;
 	for(auto& f : vdfsIndex.getKnownFiles())
@@ -89,7 +98,35 @@ ZenWorld::ZenWorld(const std::string& zen)
 		
 
 		LogInfo() << f.fileName << " Size: " << (bbMax - bbMin).length();
+	}*/
+}
+
+Renderer::ZenWorld::ZenWorld(const std::string & zenFile, VDFS::FileIndex & vdfs)
+{
+	// Load zen from vdfs
+	std::vector<uint8_t> data;
+	vdfs.getFileData(zenFile, data);
+
+	// Load a world
+	ZenConvert::zCMesh* worldMesh = nullptr;
+	ZenConvert::ZenParser parser(data.data(), data.size());
+
+	try
+	{
+		parser.readHeader();
+		parser.readWorld();
+		worldMesh = parser.getWorldMesh();
 	}
+	catch(std::exception &e)
+	{
+		LogError() << e.what();
+		return;
+	}
+
+	const float scale = 1.0f / 50.0f;
+
+	if(worldMesh)
+		m_Meshes.emplace_back(new Renderer::ZenWorldMesh(*worldMesh, vdfs, scale));
 }
 
 ZenWorld::~ZenWorld()

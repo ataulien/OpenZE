@@ -1,5 +1,5 @@
 #include "zCProgMeshProto.h"
-#include "parser.h"
+#include "zenParser.h"
 #include "utils/logger.h"
 #include "zTypes.h"
 #include <string>
@@ -53,7 +53,7 @@ zCProgMeshProto::zCProgMeshProto(const std::string& fileName, VDFS::FileIndex& f
 	{
 		// Create parser from memory
 		// FIXME: There is an internal copy of the data here. Optimize!
-		ZenConvert::Parser parser(data, nullptr, nullptr);
+		ZenConvert::ZenParser parser(data.data(), data.size());
 		
 		readObjectData(parser);
 	}
@@ -67,7 +67,7 @@ zCProgMeshProto::zCProgMeshProto(const std::string& fileName, VDFS::FileIndex& f
 /**
 * @brief Reads the mesh-object from the given binary stream
 */
-void zCProgMeshProto::readObjectData(Parser& parser)
+void zCProgMeshProto::readObjectData(ZenParser& parser)
 {
 	// Information about a single chunk 
 	BinaryChunkInfo chunkInfo;
@@ -90,9 +90,10 @@ void zCProgMeshProto::readObjectData(Parser& parser)
 				}*/
 
 				// Read data-pool
-				uint32_t dataSize = parser.readBinaryDword();
+				uint32_t dataSize = parser.readBinaryDWord();
 				std::vector<uint8_t> dataPool;
-				parser.readMultipleStructures(dataSize, dataPool);
+				dataPool.resize(dataSize);
+				parser.readBinaryRaw(dataPool.data(), dataSize);
 
 				// Read how many submeshes we got
 				uint8_t numSubmeshes = parser.readBinaryByte();
@@ -102,35 +103,48 @@ void zCProgMeshProto::readObjectData(Parser& parser)
 
 				// Read offsets to indices data
 				std::vector<MeshOffsetsSubMesh> subMeshOffsets;
-				parser.readMultipleStructures(numSubmeshes, subMeshOffsets);
+				subMeshOffsets.resize(numSubmeshes);
+				parser.readBinaryRaw(subMeshOffsets.data(), numSubmeshes * sizeof(MeshOffsetsSubMesh));
 
 				// Read materials
-				{
+				
 					// ZenArchive - Header
 					// uint32_t - Num materials
 					// For each material:
 					//  - String - Name
 					//  - zCMaterial-Chunk
 
-					Parser::Header tmpHeader;
-					parser.readHeader(&tmpHeader);
+					ZenParser p2(&parser.getData()[parser.getSeek()], parser.getData().size() - parser.getSeek());
+					p2.readHeader();
 
 					// Read every stored material
 					for(uint32_t i = 0; i < numSubmeshes; i++)
 					{
-						zCMaterial mat;
-						mat.readObjectData(parser);
+						p2.readLine(false); // Read unused material name (Stored a second time later)
+
+						// Skip chunk headers - we know these are zCMaterial
+						uint32_t chunksize = p2.readBinaryDWord();
+						uint16_t version = p2.readBinaryWord();
+						uint32_t objectIndex = p2.readBinaryDWord();
+
+						p2.skipSpaces();
+
+						// Skip chunk-header
+						std::string name = p2.readLine();
+						std::string classname = p2.readLine();
 
 						// Save into vector
-						m_Materials.emplace_back(mat.getMaterialInfo());
-					}		
-				}
+						m_Materials.emplace_back(zCMaterial::readObjectData(p2));
+					}
+				
+
+				parser.setSeek(p2.getSeek() + parser.getSeek());
 
 				// Read whether we want to have alphatesting
 				m_IsUsingAlphaTest = parser.readBinaryByte() != 0;
 				
 				// Read boundingbox
-				Math::float4 min, max;
+				Math::float3 min, max;
 				parser.readStructure(min);
 				parser.readStructure(max);
 
