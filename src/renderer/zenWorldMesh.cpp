@@ -105,6 +105,7 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, VDFS::Fi
 	Math::Matrix m = Math::Matrix::CreateIdentity();
 	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
+	vdfsIndex.loadVDF("Textures.vdf");
 	for(auto& t : verticesByTexture)
 	{
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
@@ -183,6 +184,7 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, 
 	Math::Matrix m = Math::Matrix::CreateIdentity();
 	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
+	vdfsIndex.loadVDF("Textures.vdf");
 	for(auto& t : verticesByTexture)
 	{
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
@@ -210,7 +212,7 @@ Renderer::ZenWorldMesh::~ZenWorldMesh()
 
 void Renderer::ZenWorldMesh::render(const Math::Matrix& viewProj, RAPI::RRenderQueueID queue)
 {
-	m_pObjectBuffer->UpdateData(&viewProj);
+    m_pObjectBuffer->UpdateData(const_cast<Math::Matrix *>(&viewProj));
 
 	for(size_t i = 0, end = m_SubMeshes.size(); i < end; ++i)
 	{

@@ -1,5 +1,6 @@
 #pragma once 
 #include <vector>
+#include <string>
 #include "utils/mathlib.h"
 #include "vdfs/fileIndex.h"
 

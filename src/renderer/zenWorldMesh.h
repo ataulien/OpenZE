@@ -38,7 +38,7 @@ namespace Renderer
 			RAPI::RPipelineState* state;
 		};
 
-		void render(const Math::Matrix& viewProj, RAPI::RRenderQueueID queue);
+        void render(const Math::Matrix& viewProj, RAPI::RRenderQueueID queue);
 
 	private:
 		std::vector<SubMesh> m_SubMeshes;

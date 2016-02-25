@@ -143,17 +143,17 @@ namespace Utils
 			switch(m_TypeID)
 			{
 			case MT_Info:
-				//std::cout << m_Info.str() << m_Message.str() << std::endl;
+                std::cout << m_Info.str() << m_Message.str() << std::endl;
                 if(m_MessageBox) InfoBox(m_Message.str().c_str());
 				break;
 
 			case MT_Warning:
-				//std::cerr << m_Info.str() << m_Message.str() << std::endl;
+                std::cerr << m_Info.str() << m_Message.str() << std::endl;
 				if(m_MessageBox) WarnBox(m_Message.str().c_str());
 				break;
 
 			case MT_Error:
-				//std::cerr << m_Info.str() << m_Message.str() << std::endl;
+                std::cerr << m_Info.str() << m_Message.str() << std::endl;
 				if(m_MessageBox) ErrorBox(m_Message.str().c_str());
 				break;
 			}

@@ -1,6 +1,7 @@
 #include "GLFW_window.h"
 #include <GLFW/glfw3.h>
 #include "logger.h"
+#include <string.h>
 
 #ifdef WIN32
 #define GLFW_EXPOSE_NATIVE_WGL

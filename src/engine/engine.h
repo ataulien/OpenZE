@@ -7,6 +7,8 @@
 #include "objectfactory.h"
 #include "physics/physics.h"
 #include "utils/timer.h"
+#include "components/collision.h"
+#include "components/visual.h"
 
 
 
