@@ -58,7 +58,8 @@ static const char* fragment_shader =
 		"in vec4 f_color;\n"
         "void main () {"
 		"  vec4 tx = texture2D(texture0, f_uv.xy);"
-		"  frag_colour = vec4(tx.rgb,1) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
+		"  if(tx.a < 0.5) discard;"
+		"  frag_colour = vec4(tx.rgb,1) * f_color;"
         "}";
 #else
 const char* vertex_shader =
@@ -162,9 +163,9 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 
 		if(idx < worldMesh.getFeatures().size())
 		{
-			vx[i].Color = worldMesh.getFeatures()[idx].lightStat;
+			vx[i].Color = worldMesh.getFeatures()[featidx].lightStat;
 			vx[i].TexCoord = Math::float2(worldMesh.getFeatures()[featidx].uv[0], worldMesh.getFeatures()[featidx].uv[1]);
-			vx[i].Normal = worldMesh.getFeatures()[idx].vertNormal;
+			vx[i].Normal = worldMesh.getFeatures()[featidx].vertNormal;
 		}
 
 		zenIndices.emplace_back(idx);
@@ -186,9 +187,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 
 	loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
 
-	RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-	buffer->Init(&vx[0], sizeof(Renderer::WorldVertex) * vx.size(), sizeof(Renderer::WorldVertex));
-	return buffer;
+	return nullptr;
 }
 
 RAPI::RBuffer* MakeBox(float extends)

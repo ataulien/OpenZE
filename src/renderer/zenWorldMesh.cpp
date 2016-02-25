@@ -57,11 +57,11 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, VDFS::Fi
 		m_VerticesAsTriangles[i].Position *= scale;
 		m_VerticesAsTriangles[i].Position += positionOffset;
 
-		if(idx < source.getFeatures().size())
+		if(featidx < source.getFeatures().size())
 		{
-			m_VerticesAsTriangles[i].Color = source.getFeatures()[idx].lightStat;
+			m_VerticesAsTriangles[i].Color = source.getFeatures()[featidx].lightStat;
 			m_VerticesAsTriangles[i].TexCoord = Math::float2(source.getFeatures()[featidx].uv[0], source.getFeatures()[featidx].uv[1]);
-			m_VerticesAsTriangles[i].Normal = source.getFeatures()[idx].vertNormal;
+			m_VerticesAsTriangles[i].Normal = source.getFeatures()[featidx].vertNormal;
 		}
 	}
 
@@ -105,7 +105,6 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, VDFS::Fi
 	Math::Matrix m = Math::Matrix::CreateIdentity();
 	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
-	vdfsIndex.loadVDF("Textures.vdf");
 	for(auto& t : verticesByTexture)
 	{
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
@@ -184,7 +183,6 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, 
 	Math::Matrix m = Math::Matrix::CreateIdentity();
 	m_pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
-	vdfsIndex.loadVDF("Textures.vdf");
 	for(auto& t : verticesByTexture)
 	{
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
