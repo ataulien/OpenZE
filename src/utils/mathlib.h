@@ -2,6 +2,7 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <string.h>
+#include <iostream>
 
 namespace Math
 {    
@@ -38,7 +39,15 @@ namespace Math
 
             glm::vec2 _glmt_vector;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, t_float2 &v);
     };
+
+	std::ostream& operator<< (std::ostream &out, t_float2 &v)
+	{
+		out << "[" + std::to_string(v.x) + ", " + std::to_string(v.y) + "]";
+		return out;
+	}
 
     struct t_float3
     {
@@ -61,7 +70,17 @@ namespace Math
 
             glm::vec3 _glmt_vector;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, t_float3 &v);
     };
+
+	std::ostream& operator<< (std::ostream &out, t_float3 &v)
+	{
+		out << "[" + std::to_string(v.x) 
+			+ ", " + std::to_string(v.y)
+			+ ", " + std::to_string(v.z) + "]";
+		return out;
+	}
 
     struct t_float4
     {
@@ -86,7 +105,18 @@ namespace Math
 
             glm::vec4 _glmt_vector;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, t_float4 &v);
     };
+
+	std::ostream& operator<< (std::ostream &out, t_float4 &v)
+	{
+		out << "[" + std::to_string(v.x) 
+			+ ", " + std::to_string(v.y)
+			+ ", " + std::to_string(v.z)
+			+ ", " + std::to_string(v.w) + "]";
+		return out;
+	}
 
     template<typename T, typename... S>
     struct t_vector : public T
@@ -180,6 +210,12 @@ namespace Math
     struct Matrix
     {
         Matrix(){}
+
+		Matrix(float* pm)
+		{
+			memcpy(m, pm, sizeof(m));
+		}
+
         Matrix(const glm::mat4x4& m)
         {
             _glmMatrix = m;
@@ -308,10 +344,28 @@ namespace Math
                 float _31, _32, _33, _34;
                 float _41, _42, _43, _44;
             };
-            float m[4][4];
+			float m[4][4];
+			float mv[16];
             glm::mat4x4 _glmMatrix;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, Matrix &v);
     };
+
+	std::ostream& operator<< (std::ostream &out, Matrix &m)
+	{
+		out << "[";
+		for(size_t i = 0; i < 16; i++)
+		{
+			out << std::to_string(m.mv[i]);
+
+			// Only add "," when not at the last value
+			if(i != 15)
+				out << ", ";
+		}
+		out << "]";
+		return out;
+	}
 
     static Matrix operator* (const Matrix& M1, const Matrix& M2)
     {
