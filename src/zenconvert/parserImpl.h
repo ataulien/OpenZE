@@ -1,0 +1,75 @@
+#pragma once
+#include "zenParser.h"
+
+namespace ZenConvert
+{
+	class ParserImpl
+	{
+	public:
+
+		/**
+		* @brief Type of data in front of the chunks of the binSave-format
+		*/
+		enum EZenValueType
+		{
+			ZVT_0 = 0,
+			ZVT_STRING = 0x1,
+			ZVT_INT = 0x2,
+			ZVT_FLOAT = 0x3,
+			ZVT_BYTE = 0x4,
+			ZVT_WORD = 0x5,
+			ZVT_BOOL = 0x6,
+			ZVT_VEC3 = 0x7,
+			ZVT_COLOR = 0x8,
+			ZVT_RAW = 0x9,
+			ZVT_HASH = 0x12,
+			ZVT_10,
+			ZVT_11,
+			ZVT_12,
+			ZVT_13,
+			ZVT_14,
+			ZVT_15,
+			ZVT_RAW_FLOAT = 0x10,
+			ZVT_ENUM = 0x11,
+		};
+
+		ParserImpl(ZenParser* parser);
+
+		/**
+		 * @brief Read the implementation specific header and stores it in the parsers main-header struct
+		 */
+		virtual void readImplHeader() = 0;
+
+		/**
+		 * @brief Read the start of a chunk. [...]
+		 */
+		virtual void readChunkStart(ZenParser::ChunkHeader& header)=0;
+
+		/**
+		 * @brief Read the end of a chunk. []
+		 */
+		virtual void readChunkEnd()=0;
+
+		/**
+		 * @brief Reads a string
+		 */
+		virtual std::string readString()=0;
+
+		/**
+		 * @brief Reads data of the expected type. Throws if the read type is not the same as specified and not 0
+		 */
+		virtual void readEntry(const std::string& name, void* target, size_t targetSize, EZenValueType expectedType = ZVT_0) = 0;
+
+		/**
+		 * @brief Reads the type of a single entry
+		 */
+		virtual void readEntryType(EZenValueType& type, size_t& size) = 0;
+
+	protected:
+
+		/**
+		 * @brief Parser-Object this operates on
+		 */
+		ZenParser* m_pParser;
+	};
+}

@@ -65,6 +65,7 @@ void Engine::ObjectFactory::test_createObjects()
         wm->addTriangle(v[0], v[1], v[2]);
     }
 
+    return;
     Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false));
     pCollision->rigidBody.initPhysics(m_pEngine->physicsSystem(), cShape, Math::float3(0.0f, 0.0f, 0.0f));
     pCollision->rigidBody.setRestitution(0.1f);
@@ -82,7 +83,7 @@ void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &positio
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
     RAPI::RBuffer *b = MakeBox(1.0f);
 
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 
     Components::Visual *pVisual = m_Storage.addComponent<Components::Visual>(handle);
     if(!pVisual)

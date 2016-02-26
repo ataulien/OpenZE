@@ -2,6 +2,8 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <string.h>
+#include <iostream>
+#include <string>
 
 namespace Math
 {    
@@ -38,7 +40,11 @@ namespace Math
 
             glm::vec2 _glmt_vector;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, t_float2 &v);
     };
+
+    std::ostream& operator<< (std::ostream &out, t_float2 &v);
 
     struct t_float3
     {
@@ -61,7 +67,11 @@ namespace Math
 
             glm::vec3 _glmt_vector;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, t_float3 &v);
     };
+
+    std::ostream& operator<< (std::ostream &out, t_float3 &v);
 
     struct t_float4
     {
@@ -86,7 +96,11 @@ namespace Math
 
             glm::vec4 _glmt_vector;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, t_float4 &v);
     };
+
+    std::ostream& operator<< (std::ostream &out, t_float4 &v);
 
     template<typename T, typename... S>
     struct t_vector : public T
@@ -180,6 +194,12 @@ namespace Math
     struct Matrix
     {
         Matrix(){}
+
+		Matrix(float* pm)
+		{
+			memcpy(m, pm, sizeof(m));
+		}
+
         Matrix(const glm::mat4x4& m)
         {
             _glmMatrix = m;
@@ -308,13 +328,18 @@ namespace Math
                 float _31, _32, _33, _34;
                 float _41, _42, _43, _44;
             };
-            float m[4][4];
+			float m[4][4];
+			float mv[16];
             glm::mat4x4 _glmMatrix;
         };
+
+		friend std::ostream& operator<< (std::ostream &out, Matrix &v);
     };
+
+    std::ostream& operator<< (std::ostream &out, Matrix &m);
 
     static Matrix operator* (const Matrix& M1, const Matrix& M2)
     {
         return M1._glmMatrix * M2._glmMatrix;
     }
-};
+}

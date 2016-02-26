@@ -45,7 +45,7 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bott
 	}
 
     glfwSetInputMode(m_pWindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(m_pWindowHandle, cursorMoved);
+    glfwSetCursorPosCallback(m_pWindowHandle, [](GLFWwindow* pWindow, double posX, double posY){(void)pWindow; LogInfo() << posX << " " << posY;});
 }
 
 /**
@@ -153,10 +153,4 @@ void* GLFW_Window::getNativeHandle()
 void GLFW_Window::setWindowTitle(const std::string& title)
 {
     glfwSetWindowTitle(m_pWindowHandle, title.c_str());
-}
-
-void GLFW_Window::cursorMoved(GLFWwindow *pWindow, double posX, double posY)
-{
-    (void)pWindow;
-    LogInfo() << posX << " " << posY;
 }

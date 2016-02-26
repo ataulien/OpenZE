@@ -15,7 +15,7 @@
 #include "components.h"
 #include "components/collision.h"
 #include "components/visual.h"
-#include "zenconvert/parser.h"
+#include "zenconvert/zenParser.h"
 #include "zenconvert/vob.h"
 #include "zenconvert/zCMesh.h"
 #include "vdfs/fileIndex.h"
@@ -59,7 +59,8 @@ static const char* fragment_shader =
 		"in vec4 f_color;\n"
         "void main () {"
 		"  vec4 tx = texture2D(texture0, f_uv.xy);"
-		"  frag_colour = vec4(tx.rgb,1) * max(0.2, dot(normalize(f_nrm), -vec3(-0.333,0.333,-0.333)));"
+		"  if(tx.a < 0.5) discard;"
+        "  frag_colour = vec4(tx.rgb,1) * f_color;"
         "}";
 #else
 const char* vertex_shader =
@@ -127,13 +128,13 @@ RAPI::RTexture* loadVDFTexture(const std::string& file)
 
 RAPI::RBuffer* loadZENMesh(const std::string& file, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices, float scale)
 {
+    return nullptr;
     ZenConvert::Chunk parentVob("parent", "", 0);
 	ZenConvert::zCMesh worldMesh;
 
 	try
 	{
-		ZenConvert::Parser parser(file, &parentVob, &worldMesh);
-		parser.parse();
+        ZenConvert::ZenParser parser(file);
 	}
 	catch(std::exception &e)
 	{
@@ -164,9 +165,9 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, std::vector<Math::float3>& z
 
 		if(idx < worldMesh.getFeatures().size())
 		{
-			vx[i].Color = worldMesh.getFeatures()[idx].lightStat;
+			vx[i].Color = worldMesh.getFeatures()[featidx].lightStat;
 			vx[i].TexCoord = Math::float2(worldMesh.getFeatures()[featidx].uv[0], worldMesh.getFeatures()[featidx].uv[1]);
-			vx[i].Normal = worldMesh.getFeatures()[idx].vertNormal;
+			vx[i].Normal = worldMesh.getFeatures()[featidx].vertNormal;
 		}
 
 		zenIndices.emplace_back(idx);
@@ -184,11 +185,8 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, std::vector<Math::float3>& z
 		vx[i+0].Normal = nrm;
 		vx[i+1].Normal = nrm;
 		vx[i+2].Normal = nrm;			
-	}
-
-	RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-	buffer->Init(&vx[0], sizeof(Renderer::WorldVertex) * vx.size(), sizeof(Renderer::WorldVertex));
-	return buffer;
+    }
+    return nullptr;
 }
 
 RAPI::RBuffer* MakeBox(float extends)
@@ -301,7 +299,7 @@ bool Engine::GameEngine::render(float alpha)
 
 	// Grab window-events
     // TODO: Do this in an update-function, not the render-one!
-    const float MOVEMENT_SPEED = 140.0f;
+    const float MOVEMENT_SPEED = 50.0f;
     const float ZOOM_SPEED = 40.0f;
 	const float TURN_SPEED = Math::DegToRad(70);
 	float movement = MOVEMENT_SPEED * m_MainLoopTimer.getAvgDelta().count();
@@ -345,10 +343,10 @@ bool Engine::GameEngine::render(float alpha)
 		m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_Q))
-		m_CameraCenter.y += movement;
+        m_CameraCenter.y += movement * 0.5f;
 	
-	if(m_Window.getKeyPressed(Utils::EKey::KEY_Y) || m_Window.getKeyPressed(Utils::EKey::KEY_Z))
-		m_CameraCenter.y -= movement;
+    if(m_Window.getKeyPressed(Utils::EKey::KEY_Z))
+        m_CameraCenter.y -= movement * 0.5f;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_SPACE))
 	{
@@ -391,7 +389,7 @@ bool Engine::GameEngine::render(float alpha)
                 trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
             }
             else
-                std::cout << __PRETTY_FUNCTION__ << ": Invalid collision object" << std::endl;
+                LogWarn() << "Invalid collision object";
         }
 
         Math::Matrix viewProj = projection * view * model;
@@ -435,5 +433,11 @@ void Engine::GameEngine::init()
     RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 
 
-	m_TestWorld = new Renderer::ZenWorld("newworld.zen");
+	VDFS::FileIndex idx;
+	idx.loadVDF("vdf/Worlds.vdf");
+	idx.loadVDF("vdf/Textures.vdf");
+	//idx.loadVDF("vdf/Textures_Addon.vdf");
+	//
+
+    m_TestWorld = new Renderer::ZenWorld("newworld.zen", idx);
 }

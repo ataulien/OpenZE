@@ -66,13 +66,5 @@ namespace Utils
          * @brief indicates if a menu is opened
          */
         bool m_InMenu;
-
-        /**
-         * @brief is called when mouse moves
-         * @param window
-         * @param xpos
-         * @param ypos
-         */
-        static void cursorMoved(GLFWwindow* pWindow, double posX, double posY);
 	};
 }

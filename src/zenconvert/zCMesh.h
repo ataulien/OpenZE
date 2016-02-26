@@ -10,7 +10,7 @@ namespace VDFS
 
 namespace ZenConvert
 {
-	class Parser;
+	class ZenParser;
 	class zCMesh
 	{
 	public:
@@ -25,7 +25,7 @@ namespace ZenConvert
 		 * @brief Reads the mesh-object from the given binary stream
 		 * @param fromZen Whether this mesh is supposed to be read from a zenfile. In this case, information about the binary chunk is also read.
 		 */
-		void readObjectData(Parser& parser, bool fromZen);
+		void readObjectData(ZenParser& parser, bool fromZen);
 
 		/**
 		@ brief returns the vector of vertex-positions
@@ -56,7 +56,7 @@ namespace ZenConvert
 		/**
 		 * @brief returns the vector of the materials used by this mesh
 		 */
-		const std::vector<MaterialInfo>& getMaterials() const { return m_Materials; }
+		const std::vector<zCMaterialData>& getMaterials() const { return m_Materials; }
 
 		/**
 		 * @brief getter for the boudingboxes
@@ -94,7 +94,7 @@ namespace ZenConvert
 		/**
 		 * @brief All materials used by this mesh
 		 */
-		std::vector<MaterialInfo> m_Materials;
+		std::vector<zCMaterialData> m_Materials;
 
 		/**
 		 * @brief Bounding-box of this mesh

@@ -1,4 +1,5 @@
-//#include <alut.h>
+#if 0
+#include <alut.h>
 
 #include "utils/logger.h"
 #include "soundmanager.h"
@@ -74,7 +75,7 @@ Sound::SoundManager::SoundManager() :
     ALvoid *data;
     ALboolean loop = AL_FALSE;
 
-    //alutLoadWAVFile(reinterpret_cast<ALbyte *>(const_cast<char *>("test.wav")), &format, &data, &size, &freq, &loop);
+    alutLoadWAVFile(reinterpret_cast<ALbyte *>(const_cast<char *>("test.wav")), &format, &data, &size, &freq, &loop);
     error = alGetError();
     if (error != AL_NO_ERROR)
         LogError() << error;
@@ -110,3 +111,4 @@ Sound::SoundManager::~SoundManager()
     if(m_pDevice)
         alcCloseDevice(m_pDevice);
 }
+#endif
