@@ -306,7 +306,7 @@ namespace Math
 
         static Matrix CreatePerspectiveGL( float fov_rad, float width, float height, float nearPlane, float farPlane )
         {
-            return Matrix(glm::perspective(fov_rad, width / height, nearPlane, farPlane));
+            return Matrix(glm::perspectiveLH(fov_rad, width / height, nearPlane, farPlane));
         }
 
         static Matrix CreatePerspectiveDX( float fov_deg, float width, float height, float nearPlane, float farPlane )

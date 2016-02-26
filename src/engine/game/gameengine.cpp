@@ -102,7 +102,7 @@ const char* fragment_shader =
         "float4 PSMain (VS_OUTPUT input) : SV_TARGET {"
 		"  float4 tx = TX_Texture0.Sample(SS_Linear, frac(input.texCoord));"
 		"  clip(tx.a - 0.5f);"
-		"  return 2 * input.color * float4(tx.rgb, 1.0);"
+		"  return input.color * float4(tx.rgb, 1.0);"
         "}";
 #endif
 
@@ -318,10 +318,10 @@ bool Engine::GameEngine::render(float alpha)
     });
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_LEFT))
-		m_CameraAngle += turn;
+		m_CameraAngle -= turn;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_RIGHT))
-		m_CameraAngle -= turn;
+		m_CameraAngle += turn;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_UP))
 		m_CameraZoom -= m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
@@ -333,13 +333,13 @@ bool Engine::GameEngine::render(float alpha)
 		m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_A))
-		m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;	
+		m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;	
 
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_S))
 		m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_D))
-		m_CameraCenter += Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
+		m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_Q))
 		m_CameraCenter.y += movement;
@@ -354,7 +354,7 @@ bool Engine::GameEngine::render(float alpha)
 		m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
 	}
 
-	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), m_CameraCenter, Math::float3(0,1,0));
+	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter, m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), Math::float3(0,1,0));
 
 	RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
 
