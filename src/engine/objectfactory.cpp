@@ -117,7 +117,7 @@ void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &positio
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
     RAPI::RBuffer *b = MakeBox(1.0f);
 
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::SimpleVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 
     Components::Visual *pVisual = m_Storage.addComponent<Components::Visual>(handle);
     if(!pVisual)

@@ -184,9 +184,7 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		vx[i+1].Normal = nrm;
 		vx[i+2].Normal = nrm;			
 	}
-
-	loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
-
+	
 	return nullptr;
 }
 
@@ -434,9 +432,10 @@ void Engine::GameEngine::init()
 
 
 	VDFS::FileIndex idx;
-	idx.loadVDF("Textures.vdf");
-	idx.loadVDF("Textures_Addon.vdf");
-	idx.loadVDF("Anthera.mod");
+	idx.loadVDF("vdf/Worlds.vdf");
+	idx.loadVDF("vdf/Textures.vdf");
+	//idx.loadVDF("vdf/Textures_Addon.vdf");
+	//
 
-	m_TestWorld = new Renderer::ZenWorld("Anthera_Final1.zen", idx);
+	m_TestWorld = new Renderer::ZenWorld("newworld.zen", idx);
 }
