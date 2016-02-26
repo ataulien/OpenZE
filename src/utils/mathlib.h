@@ -304,13 +304,15 @@ namespace Math
 
         static Matrix CreateFromAxisAngle( const float3& axis, float angle ) {return Matrix(glm::rotate(glm::mat4x4(), angle, axis._glmt_vector)); }
 
-        static Matrix CreatePerspectiveGL( float fov_rad, float width, float height, float nearPlane, float farPlane )
+        static Matrix CreatePerspectiveGL( float fov_deg, float width, float height, float nearPlane, float farPlane )
         {
-            return Matrix(glm::perspectiveLH(fov_rad, width / height, nearPlane, farPlane));
+            return Matrix(glm::perspectiveFovLH(fov_deg, width, height, nearPlane, farPlane));
         }
 
         static Matrix CreatePerspectiveDX( float fov_deg, float width, float height, float nearPlane, float farPlane )
         {
+			return Matrix(glm::perspectiveFovLH(fov_deg, width, height, nearPlane, farPlane));
+
             const float fov_rad = glm::radians<float>(fov_deg);
             const float aspectRatio = width / height;
             const float yScale = 1 / tan(fov_rad / 2.0f);
@@ -318,12 +320,11 @@ namespace Math
 
             glm::mat4x4 ret(0.0f);
 
-            ret[0][0] = xScale;
-            ret[1][1] = yScale;
-            ret[2][2] = farPlane / (nearPlane - farPlane);
-            ret[2][3] = -1;
-            ret[3][2] = nearPlane * farPlane / (nearPlane - farPlane);
-
+			ret[0][0] = xScale;
+			ret[1][1] = yScale;
+			ret[2][2] = farPlane / (nearPlane - farPlane);
+			ret[2][3] = -1;
+			ret[3][2] = nearPlane * farPlane / (nearPlane - farPlane);
 
             return Matrix(ret);
         }
