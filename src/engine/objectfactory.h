@@ -34,7 +34,7 @@ namespace Engine
 
         void test_createPhysicsEntity(const Math::float3& position, const Math::float3& impulse);
 
-    ObjectStorage<COMPONENTS> &storage()
+        ObjectStorage<COMPONENTS> &storage()
         {
             return m_Storage;
         }

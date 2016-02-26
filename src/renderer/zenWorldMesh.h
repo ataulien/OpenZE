@@ -2,6 +2,7 @@
 #include <vector>
 #include "utils/mathlib.h"
 #include "vertextypes.h"
+#include "zenconvert/export.h"
 #include <REngine.h>
 
 namespace RAPI
@@ -24,8 +25,8 @@ namespace Renderer
 	class ZenWorldMesh
 	{
 	public:
-		ZenWorldMesh(const ZenConvert::zCMesh& source, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
-		ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, float scale = 1.0f / 50.0f, const Math::float3& positionOffset = Math::float3(0,0,0));
+        ZenWorldMesh(const ZenConvert::zCMesh& source, float scale = ZEN_SCALE_FACTOR, const Math::float3& positionOffset = Math::float3(0,0,0));
+        ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, float scale = ZEN_SCALE_FACTOR, const Math::float3& positionOffset = Math::float3(0,0,0));
 		~ZenWorldMesh();
 
 		struct SubMesh

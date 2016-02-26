@@ -33,8 +33,7 @@ ZenWorld::ZenWorld(const std::string& zen)
 		return;
 	}
 
-	const float scale = 1.0f / 50.0f;
-    m_Meshes.emplace_back(new Renderer::ZenWorldMesh(worldMesh, scale));
+    m_Meshes.emplace_back(new Renderer::ZenWorldMesh(worldMesh));
 /*
 	std::function<void(ZenConvert::Chunk*)> fn = [&](ZenConvert::Chunk* parent){
 		for(uint32_t i = 0; i < parent->childCount(); i++)
@@ -68,7 +67,7 @@ ZenWorld::ZenWorld(const std::string& zen)
 			proto.getBoundingBox(bbMin, bbMax);
 			xoff += bbMax.x - bbMin.x;
 
-			m_Meshes.emplace_back(new Renderer::ZenWorldMesh(proto, scale, Math::float3(xoff * scale, 0, 0)));
+            m_Meshes.emplace_back(new Renderer::ZenWorldMesh(proto, ZEN_SCALE_FACTOR, Math::float3(xoff * ZEN_SCALE_FACTOR, 0, 0)));
 
 			continue;
 		}
@@ -85,7 +84,7 @@ ZenWorld::ZenWorld(const std::string& zen)
 		msh.getBoundingBox(bbMin, bbMax);
 		xoff += bbMax.x - bbMin.x;
 
-		m_Meshes.emplace_back(new Renderer::ZenWorldMesh(msh, scale, Math::float3(xoff * scale, 0, 0)));
+        m_Meshes.emplace_back(new Renderer::ZenWorldMesh(msh, ZEN_SCALE_FACTOR, Math::float3(xoff * ZEN_SCALE_FACTOR, 0, 0)));
 
 		
 

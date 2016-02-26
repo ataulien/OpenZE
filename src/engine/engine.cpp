@@ -35,7 +35,7 @@ void Engine::Engine::mainLoop()
     m_Factory.test_createObjects();
 
 	// Define the updaterate for the game-logic
-    const float update_fps = 128;
+    const float update_fps = 64;
     auto update_dt = std::chrono::duration<double>(1 / update_fps);
 	auto max_dt_seconds = std::chrono::duration<double>(0.2f);
 	std::chrono::duration<double> accumulator = std::chrono::duration<double>::zero();

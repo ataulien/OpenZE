@@ -12,6 +12,6 @@ namespace Engine
     {
         C_NONE = 0,
         C_COLLISION = 1 << 0,
-        C_VISUAL = 1 << 1,
+        C_VISUAL = 1 << 1
     };
 }

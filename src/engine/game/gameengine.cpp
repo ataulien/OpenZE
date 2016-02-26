@@ -7,6 +7,7 @@
 #include <RVertexShader.h>
 #include <RInputLayout.h>
 
+#include "gameengine.h"
 #include "utils/GLFW_window.h"
 #include "utils/mathlib.h"
 #include "renderer/vertextypes.h"
@@ -124,7 +125,7 @@ RAPI::RTexture* loadVDFTexture(const std::string& file)
 	return nullptr;
 }
 
-RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices)
+RAPI::RBuffer* loadZENMesh(const std::string& file, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices, float scale)
 {
     ZenConvert::Chunk parentVob("parent", "", 0);
 	ZenConvert::zCMesh worldMesh;
@@ -184,8 +185,6 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		vx[i+1].Normal = nrm;
 		vx[i+2].Normal = nrm;			
 	}
-
-	loadVDFTexture("NW_DUNGEON_WALL_01-C.TEX");
 
 	RAPI::RBuffer* buffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
 	buffer->Init(&vx[0], sizeof(Renderer::WorldVertex) * vx.size(), sizeof(Renderer::WorldVertex));
@@ -295,7 +294,7 @@ bool Engine::GameEngine::render(float alpha)
 		// Update header
 		double frameDeltaSec = m_MainLoopTimer.getAvgDelta().count();
 		double frameDeltaMS = m_MainLoopTimer.getAvgDelta().count() * 1000.0f;
-		m_Window.setWindowTitle("openZE - FPS: " + std::to_string(1.0 / frameDeltaSec) + " (" + std::to_string(frameDeltaMS) + "ms)");
+        m_Window.setWindowTitle("openZE - FPS: " + std::to_string(1.0 / frameDeltaSec) + " (" + std::to_string(frameDeltaMS) + "ms) Vobs: " + std::to_string(m_Factory.storage().getEntities().size()));
 
 		s_TitleUpdateMod = 0.0;
 	}
@@ -355,7 +354,8 @@ bool Engine::GameEngine::render(float alpha)
 	{
 		Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
 		Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
-		m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+        for(int i = 0; i < 20; ++i)
+            m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
 	}
 
 	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), m_CameraCenter, Math::float3(0,1,0));

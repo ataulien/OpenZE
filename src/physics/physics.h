@@ -12,7 +12,7 @@ namespace Physics
         /**
          * @brief Physics
          */
-        Physics(float gravity = -9.81f);
+        Physics(float gravity = -10.f);
 
         /**
          * @brief update

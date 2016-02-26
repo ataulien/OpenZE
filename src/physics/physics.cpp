@@ -10,7 +10,7 @@ Physics::Physics::Physics(float gravity) :
 
 void Physics::Physics::update(double dt)
 {
-    m_DynamicsWorld.stepSimulation((btScalar)dt, 3, 1.0f/128.0f);
+    m_DynamicsWorld.stepSimulation((btScalar)dt, 10);
 }
 
 void Physics::Physics::init()

@@ -4,11 +4,12 @@
 #include <tuple>
 
 #include "utils/vector.h"
-#include "components/collision.h"
-#include "components/visual.h"
 #include "objecthandle.h"
 #include "entity.h"
 #include "utils/tuple.h"
+
+#include "components/collision.h"
+#include "components/visual.h"
 
 namespace Engine
 {
