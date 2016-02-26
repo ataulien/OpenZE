@@ -92,9 +92,10 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCMesh & source, VDFS::Fi
 
 	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 	RAPI::RSamplerState* ss;
-	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
+	RAPI::RRasterizerState* rs;
+	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, &rs);
 	sm.SetSamplerState(ss);
-
+	sm.SetRasterizerState(rs);
 	sm.SetPixelShader(ps);
 	sm.SetVertexShader(vs);
 	sm.SetInputLayout(inputLayout);
@@ -170,9 +171,10 @@ Renderer::ZenWorldMesh::ZenWorldMesh(const ZenConvert::zCProgMeshProto& source, 
 
 	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 	RAPI::RSamplerState* ss;
-	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
+	RAPI::RRasterizerState* rs;
+	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, &rs);
 	sm.SetSamplerState(ss);
-
+	sm.SetRasterizerState(rs);
 	sm.SetPixelShader(ps);
 	sm.SetVertexShader(vs);
 	sm.SetInputLayout(inputLayout);
