@@ -14,8 +14,9 @@ using namespace Utils;
 /**
 * @brief Creates the window using the given parameters. The window will stay open as long as the object exists
 */
-GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bottomX, unsigned int bottomY, const std::string& title) 
-	: Window(topX, topY, bottomX, bottomY, title)
+GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bottomX, unsigned int bottomY, const std::string& title) :
+    Window(topX, topY, bottomX, bottomY, title),
+    m_InMenu(false)
 {
 	// Init key-array
 	memset(m_KeyPresses, 0, sizeof(m_KeyPresses));
@@ -42,6 +43,9 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bott
 		glfwTerminate();
 		return;
 	}
+
+    glfwSetInputMode(m_pWindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(m_pWindowHandle, cursorMoved);
 }
 
 /**
@@ -74,6 +78,7 @@ void GLFW_Window::pollEvent(const std::function<void(Event)>& callback)
 	// Assign callbacks
 	glfwSetKeyCallback(m_pWindowHandle, [](GLFWwindow* wnd, int key, int scancode, int action, int mods)
 	{
+        (void)mods;
 		hlpStruct* hlp = reinterpret_cast<hlpStruct*>(glfwGetWindowUserPointer(wnd));
 
 		// Get our callback funktion back
@@ -147,5 +152,11 @@ void* GLFW_Window::getNativeHandle()
 */
 void GLFW_Window::setWindowTitle(const std::string& title)
 {
-	glfwSetWindowTitle(m_pWindowHandle, title.c_str());
+    glfwSetWindowTitle(m_pWindowHandle, title.c_str());
+}
+
+void GLFW_Window::cursorMoved(GLFWwindow *pWindow, double posX, double posY)
+{
+    (void)pWindow;
+    LogInfo() << posX << " " << posY;
 }
