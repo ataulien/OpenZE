@@ -45,7 +45,9 @@ namespace Engine
 		 */
 		float m_CameraAngle;
 		float m_CameraZoom;
+		bool m_IsFlying;
         Math::float3 m_CameraCenter;
 		ZenWorld* m_TestWorld;
+		RAPI::RBuffer* m_pCameraBuffer;
     };
 }

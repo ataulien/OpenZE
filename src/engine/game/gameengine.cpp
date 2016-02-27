@@ -33,10 +33,15 @@ static const char* vertex_shader =
         "#extension GL_ARB_enhanced_layouts : enable\n"
         "#extension GL_ARB_explicit_uniform_location : enable\n"
         ""
-        "layout (std140, binding = 0) uniform shader_data\n"
-        "{ \n "
-        "	mat4 V_Transform;\n "
-        "}; \n "
+		"layout (std140, binding = 0) uniform buffer0\n"
+		"{ \n "
+		"	mat4 PF_ViewProj;\n "
+		"}; \n "
+		"layout (std140, binding = 1) uniform buffer1\n"
+		"{ \n "
+		"	mat4 V_WorldMatrix;\n "
+		"   vec4 V_Color;"
+		"}; \n "
         "\n "
         "\n "
 		"in vec3 vp;\n"
@@ -47,10 +52,10 @@ static const char* vertex_shader =
 		"out vec2 f_uv;\n"
 		"out vec4 f_color;\n"
         "void main () {\n"
-		"	gl_Position = V_Transform * vec4(vp, 1.0);\n"
-		"	f_nrm = mat3(V_Transform) * vnorm;"
+		"	gl_Position = PF_ViewProj * V_WorldMatrix * vec4(vp, 1.0);\n"
+		"	f_nrm = mat3(V_WorldMatrix) * vnorm;"
 		"	f_uv = vuv;"
-		"	f_color = vcolor;"
+		"	f_color = vcolor * V_Color;"
         "}\n";
 
 static const char* fragment_shader =
@@ -67,10 +72,19 @@ static const char* fragment_shader =
         "}";
 #else
 const char* vertex_shader =
-        "cbuffer cb : register(b0)"
-        "{"
-        "Matrix V_Transform;"
-        "};"
+
+
+		"cbuffer cb : register(b0)"
+		"{"
+		"Matrix PF_ViewProj;"
+		"};"
+
+		"cbuffer cb : register(b1)"
+		"{"
+		"Matrix V_WorldMatrix;"
+		"float4 V_Color;"
+		"};"
+
 		"struct VS_INPUT"
 		"{"
 		"	float3 vp : POSITION;"
@@ -87,9 +101,9 @@ const char* vertex_shader =
 		"};"
         "VS_OUTPUT VSMain (VS_INPUT input) {"
 		"  VS_OUTPUT output = (VS_OUTPUT)0;"	
-        "  output.position = mul(V_Transform, float4(input.vp, 1.0));"
-		"  output.normal = mul((float3x3)V_Transform, input.normal);"
-		"  output.color = input.color;"
+		"  output.position = mul(mul(PF_ViewProj, V_WorldMatrix), float4(input.vp, 1.0));"
+		"  output.normal = mul((float3x3)V_WorldMatrix, input.normal);"
+		"  output.color = input.color * V_Color;"
 		"  output.texCoord = input.texCoord;"
 		"  return output;"
         "}";
@@ -269,7 +283,9 @@ Engine::GameEngine::GameEngine(int argc, char *argv[]) :
     m_Window(200, 200, 800, 600, "OpenZE"),
 	m_CameraZoom(1.0f),
 	m_CameraAngle(0.0f),
-	m_TestWorld(nullptr)
+	m_CameraCenter(100,0,0),
+	m_TestWorld(nullptr),
+	m_IsFlying(true)
 {
 }
 
@@ -295,14 +311,16 @@ bool Engine::GameEngine::render(float alpha)
 		// Update header
 		double frameDeltaSec = m_MainLoopTimer.getAvgDelta().count();
 		double frameDeltaMS = m_MainLoopTimer.getAvgDelta().count() * 1000.0f;
-        m_Window.setWindowTitle("openZE - FPS: " + std::to_string(1.0 / frameDeltaSec) + " (" + std::to_string(frameDeltaMS) + "ms) Vobs: " + std::to_string(m_Factory.storage().getEntities().size()));
+        m_Window.setWindowTitle("openZE - FPS: " + std::to_string(1.0 / frameDeltaSec) 
+			+ " (" + std::to_string(frameDeltaMS) + "ms) Vobs: " + std::to_string(m_Factory.storage().getEntities().size())
+			+ " Camera: " + (m_IsFlying ? "Flying" : "Walking"));
 
 		s_TitleUpdateMod = 0.0;
 	}
 
 	// Grab window-events
     // TODO: Do this in an update-function, not the render-one!
-    const float MOVEMENT_SPEED = 50.0f;
+    float MOVEMENT_SPEED = 30.0f * (m_Window.getKeyPressed(Utils::EKey::KEY_LEFT_SHIFT) ? 2.0f : 1.0f) * (m_IsFlying ? 1.0f : 0.25f);
     const float ZOOM_SPEED = 40.0f;
 	const float TURN_SPEED = Math::DegToRad(70);
 	float movement = MOVEMENT_SPEED * m_MainLoopTimer.getAvgDelta().count();
@@ -318,6 +336,16 @@ bool Engine::GameEngine::render(float alpha)
         case Utils::Window::E_Resized:
             LogInfo() << "Resized window!";
             break;
+
+		case Utils::Window::E_KeyEvent:
+			switch(ev.KeyboardEvent.key)
+			{
+			case Utils::EKey::KEY_F6:
+				if(ev.KeyboardEvent.action == Utils::Window::EA_Pressed)
+					m_IsFlying = !m_IsFlying;
+				break;
+			}
+			break;
         }
     });
 	
@@ -359,6 +387,17 @@ bool Engine::GameEngine::render(float alpha)
             m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
 	}
 
+	// Try to put camera on the ground if not flying
+	if(!m_IsFlying)
+	{
+		Math::float3 hit = physicsSystem()->rayTest(m_CameraCenter, m_CameraCenter + Math::float3(0,-100,0));
+
+		if(hit != m_CameraCenter)
+		{
+			m_CameraCenter.y = hit.y + 1.7f;
+		}
+	}
+
 	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter, m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), Math::float3(0,1,0));
 
 	RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
@@ -375,6 +414,8 @@ bool Engine::GameEngine::render(float alpha)
 
     Math::Matrix model = Math::Matrix::CreateIdentity();
 	Math::Matrix viewProj = projection * view;
+
+	m_pCameraBuffer->UpdateData(&viewProj);
 
 	// Fixme: Don't update visuals sharing one object-buffer more than once. Better than this.
 	RAPI::RBuffer* lastObjectBuffer = nullptr;
@@ -396,34 +437,25 @@ bool Engine::GameEngine::render(float alpha)
             {
                 static_cast<Physics::MotionState*>(pCollision->rigidBody.getMotionState())->openGLMatrix(reinterpret_cast<float*>(&model));
 
-				modelViewProj = viewProj * model;
+				ZenConvert::VobObjectInfo ocb;
+				ocb.color = Math::float4(1.0f,1.0f,1.0f,1.0f);
+				ocb.worldMatrix = model;
+				pVisual->pObjectBuffer->UpdateData(&ocb);
 
             }
             else
                 LogWarn() << "Invalid collision object";
-		}
-		else
-		{
-			modelViewProj = viewProj * pVisual->tmpWorld;
-		}
-
-        
-        
-		if(pVisual->pObjectBuffer != lastObjectBuffer)
-		{
-			pVisual->pObjectBuffer->UpdateData(&modelViewProj);
-			lastObjectBuffer = pVisual->pObjectBuffer;
-		}
-
-		
-
+		}      
+    
         RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
     }
 
 	RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
 
+#ifdef RND_D3D11
 	//Math::Matrix viewProj = projection * view;
 	RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
+#endif
 
 	m_TestWorld->render(projection * view);
 
@@ -456,14 +488,21 @@ void Engine::GameEngine::init()
 	// Clear with a sky-blue color
 	RAPI::REngine::RenderingDevice->SetMainClearValues(RAPI::RFloat4(0.0f, 0.53f, 1.0f, 0.0f));
 
+	// Create camera-buffer // TODO: Make class for this
+	m_pCameraBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
+	m_pCameraBuffer->Init(nullptr, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
+	RAPI::REngine::ResourceCache->AddToCache("PerFrameCB", m_pCameraBuffer);
+
+
 	VDFS::FileIndex idx;
-	idx.loadVDF("vdf/Worlds.vdf");
+	//idx.loadVDF("vdf/Worlds.vdf");
+	idx.loadVDF("vdf/Worlds_Addon.vdf");
 	idx.loadVDF("vdf/Textures.vdf");
 	idx.loadVDF("vdf/Meshes.vdf");
 	idx.loadVDF("vdf/Meshes_Addon.vdf");
 	idx.loadVDF("vdf/Textures_Addon.vdf");
-	idx.loadVDF("vdf/Anthera.mod");
+	//idx.loadVDF("vdf/Anthera.mod");
 
-	m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", idx);
-	//m_TestWorld = new ZenWorld(*this, "addonworld.zen", idx);
+	//m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", idx);
+	m_TestWorld = new ZenWorld(*this, "addonworld.zen", idx);
 }

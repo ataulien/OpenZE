@@ -39,7 +39,7 @@ btDiscreteDynamicsWorld *Physics::Physics::world()
 * @brief Shoots a simple trace through the physics-world
 * @return Distance to the hit-surface
 */
-float Physics::Physics::rayTest(const Math::float3& start, const Math::float3& end)
+Math::float3 Physics::Physics::rayTest(const Math::float3& start, const Math::float3& end)
 {
 	struct FilteredRayResultCallback : public btCollisionWorld::RayResultCallback
 	{
@@ -85,10 +85,11 @@ float Physics::Physics::rayTest(const Math::float3& start, const Math::float3& e
 	FilteredRayResultCallback r;
 	r.m_rayFromWorld = btVector3(start.x, start.y, start.z);
 	r.m_rayToWorld = btVector3(end.x, end.y, end.z);
+	r.m_hitPointWorld = r.m_rayFromWorld;
 
 	btVector3 from = {start.x, start.y, start.z};
 	btVector3 to = {end.x, end.y, end.z};
 	m_DynamicsWorld.rayTest(from, to, r);
 
-	return Math::float3(r.m_hitPointWorld.x,r.m_hitPointWorld.y,r.m_hitPointWorld.z);
+	return Math::float3(r.m_hitPointWorld.x(),r.m_hitPointWorld.y(),r.m_hitPointWorld.z());
 }

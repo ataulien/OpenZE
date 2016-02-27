@@ -5,7 +5,7 @@ include(ExternalProject)
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "")
 
 option(OPENZE_D3D11 "Enable D3D11-Build" OFF)
-option(OPENZE_OPENAL "Enable OpenAL-Build" ON)
+option(OPENZE_OPENAL "Enable OpenAL-Build" OFF)
 
 if(MSVC)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)

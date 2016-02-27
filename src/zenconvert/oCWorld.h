@@ -57,7 +57,7 @@ namespace ZenConvert
 				ZenParser::ChunkHeader header;
 				parser.readChunkStart(header);
 
-				LogInfo() << "oCWorld reading chunk: " << header.name << ", " << header.classname;
+				LogInfo() << "oCWorld reading chunk: " << header.name;
 
 				if(header.name == "MeshAndBsp")
 				{

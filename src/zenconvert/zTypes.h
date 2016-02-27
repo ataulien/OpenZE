@@ -187,6 +187,13 @@ namespace ZenConvert
 #pragma pack(pop)
 
 #pragma pack(push, 4)
+
+	struct VobObjectInfo
+	{
+		Math::Matrix worldMatrix;
+		Math::float4 color;
+	};
+
 	struct zDate
 	{
 		uint32_t year;

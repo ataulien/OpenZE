@@ -38,6 +38,7 @@ namespace Math
                 float y;
             };
 
+			float v[2];
             glm::vec2 _glmt_vector;
         };
 
@@ -74,6 +75,8 @@ namespace Math
                 float z;
             };
 
+
+			float v[3];
             glm::vec3 _glmt_vector;
         };
 
@@ -113,6 +116,8 @@ namespace Math
                 float w;
             };
 
+			float v[4];
+
             glm::vec4 _glmt_vector;
         };
 
@@ -146,12 +151,12 @@ namespace Math
         // Comparision operators
         bool operator == (const t_vector<T, S...>& v) const
         {
-            return T::_glmt_vector == v;
+            return memcmp(T::v, v.v, sizeof(v.v)) == 0;
         }
 
         bool operator != (const t_vector<T, S...>& v) const
         {
-            return T::_glmt_vector != v;
+            return !(*this == v);
         }
 
         // Assignment operators

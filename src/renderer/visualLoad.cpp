@@ -75,10 +75,14 @@ void Renderer::createVisualsFor(const ZenConvert::PackedMesh& packedMesh, Engine
 	sm.SetInputLayout(inputLayout);
 
 	RAPI::RBuffer* pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-	sm.SetConstantBuffer(0, pObjectBuffer, RAPI::ST_VERTEX);
+	sm.SetConstantBuffer(1, pObjectBuffer, RAPI::ST_VERTEX);
+	sm.SetConstantBuffer(0, RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("PerFrameCB"), RAPI::ST_VERTEX);
 
 	Math::Matrix m = Math::Matrix::CreateIdentity();
-	pObjectBuffer->Init(&m, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
+	ZenConvert::VobObjectInfo ocb;
+	ocb.worldMatrix = m;
+	ocb.color = Math::float4(1,1,1,1);
+	pObjectBuffer->Init(&ocb, sizeof(ZenConvert::VobObjectInfo), sizeof(ZenConvert::VobObjectInfo), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
 	size_t eIdx = 0;
 	for(auto& s : packedMesh.subMeshes)

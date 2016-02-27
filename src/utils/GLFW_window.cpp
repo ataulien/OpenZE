@@ -31,7 +31,7 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bott
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_FALSE);
 	m_pWindowHandle = glfwCreateWindow(1280, 720, "--- Test ---", nullptr, nullptr);
 
 	// Turn off vsync

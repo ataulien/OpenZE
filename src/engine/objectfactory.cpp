@@ -93,12 +93,15 @@ void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &positio
         return;
     }
     pVisual->pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-    pVisual->pObjectBuffer->Init(nullptr, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::EUsageFlags::U_DYNAMIC, RAPI::ECPUAccessFlags::CA_WRITE);
-    sm.SetVertexBuffer(0, b);
+	
+	ZenConvert::VobObjectInfo ocb;
+	ocb.color = Math::float4(1.0f,1.0f,1.0f,1.0f);
+	pVisual->pObjectBuffer->Init(&ocb, sizeof(ZenConvert::VobObjectInfo), sizeof(ZenConvert::VobObjectInfo), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);    sm.SetVertexBuffer(0, b);
     sm.SetPixelShader(ps);
     sm.SetVertexShader(vs);
     sm.SetInputLayout(inputLayout);
-    sm.SetConstantBuffer(0, pVisual->pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
+    sm.SetConstantBuffer(1, pVisual->pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
+	sm.SetConstantBuffer(0, RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("PerFrameCB"), RAPI::ST_VERTEX);
 
     pVisual->pPipelineState = sm.MakeDrawCall(b->GetSizeInBytes() / b->GetStructuredByteSize());
 #endif
