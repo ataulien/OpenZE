@@ -133,7 +133,15 @@ void ZenParser::readHeader()
 */
 void ZenParser::readWorld()
 {
-	readChunkTest();
+	oCWorldData worldData;
+
+	ChunkHeader header;
+	readChunkStart(header);
+
+	if(header.classname != "oCWorld:zCWorld")
+		throw std::runtime_error("Expected oCWorld:zCWorld-Chunk not found!");
+
+	oCWorld::readObjectData(*this);
 }
 
 void ZenParser::readWorldMesh()
@@ -206,17 +214,63 @@ void ZenParser::readChunkTest()
 /**
 * @brief Reads a chunk-header
 */
-void ZenParser::readChunkStart(ChunkHeader& header)
+bool ZenParser::readChunkStart(ChunkHeader& header)
 {
-	m_pParserImpl->readChunkStart(header);
+	return m_pParserImpl->readChunkStart(header);
 }
 
 /**
-* @brief Reads the end of a chunk
-*/
-void ZenParser::readChunkEnd()
+ * @brief Reads the end of a chunk. Returns true if there actually was an end. 
+ *		  Otherwise it will leave m_Seek untouched and return false.
+ */
+bool ZenParser::readChunkEnd()
 {
-	m_pParserImpl->readChunkEnd();
+	return m_pParserImpl->readChunkEnd();
+}
+
+/**
+ * @brief  Skips an already started chunk
+ */
+void ZenParser::skipChunk()
+{
+	size_t level = 1;
+
+	do
+	{
+		ChunkHeader header;
+		if(readChunkStart(header))
+		{
+			level++;
+		}
+		else if(readChunkEnd())
+		{
+			level--;
+		}
+		else
+		{
+			skipEntry();
+		}
+
+	}while(level > 0);
+}
+
+/**
+* @brief Skips an entry
+*/
+void ZenParser::skipEntry()
+{
+	ParserImpl::EZenValueType type;
+	size_t size;
+	size_t ts = m_Seek;
+
+	// Read type and size first, so we can allocate the data
+	m_pParserImpl->readEntryType(type, size);
+
+	if(type == ParserImpl::EZenValueType::ZVT_BYTE)
+		sinf(1.0f);
+
+	// Skip the entry
+	m_Seek += size;
 }
 
 /**

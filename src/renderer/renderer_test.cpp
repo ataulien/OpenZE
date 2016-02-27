@@ -1,13 +1,8 @@
 #include <iostream>
 #include <REngine.h>
-#include <GLFW/glfw3.h>
 
-#ifdef RND_D3D11
-#define GLFW_EXPOSE_NATIVE_WGL
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
-#endif
 
+#include "RDevice.h"
 #include <RTools.h>
 #include <RBuffer.h>
 #include <REngine.h>
@@ -15,6 +10,13 @@
 #include <RStateMachine.h>
 #include <RPixelShader.h>
 #include <RVertexShader.h>
+#include <GLFW/glfw3.h>
+#ifdef RND_D3D11
+#define GLFW_EXPOSE_NATIVE_WGL
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#endif
+
 
 #include <RInputLayout.h>
 #include "utils/logger.h"

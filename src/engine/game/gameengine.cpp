@@ -6,6 +6,7 @@
 #include <RPixelShader.h>
 #include <RVertexShader.h>
 #include <RInputLayout.h>
+#include <RDevice.h>
 
 #include "utils/GLFW_window.h"
 #include "utils/mathlib.h"
@@ -20,6 +21,7 @@
 #include "vdfs/fileIndex.h"
 #include "zenconvert/ztex2dds.h"
 #include <RTexture.h>
+#include "zenWorld.h"
 
 #define RENDER_MASK (::Engine::C_VISUAL)
 
@@ -369,6 +371,10 @@ bool Engine::GameEngine::render(float alpha)
     RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue();
 
     Math::Matrix model = Math::Matrix::CreateIdentity();
+	Math::Matrix viewProj = projection * view;
+
+	// Fixme: Don't update visuals sharing one object-buffer more than once. Better than this.
+	RAPI::RBuffer* lastObjectBuffer = nullptr;
 
     Utils::Vector<Entity> &entities = m_Factory.storage().getEntities();
     for(uint32_t i = 0, end = entities.size(); i < end; ++i)
@@ -377,6 +383,7 @@ bool Engine::GameEngine::render(float alpha)
         if((entity.mask & C_VISUAL) != C_VISUAL)
             continue;
 
+		Math::Matrix modelViewProj;
         if((entity.mask & C_COLLISION) == C_COLLISION)
         {
             btTransform trans;
@@ -385,19 +392,32 @@ bool Engine::GameEngine::render(float alpha)
             {
                 pCollision->rigidBody.getMotionState()->getWorldTransform(trans);
                 trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
+
+				modelViewProj = viewProj * model;
+
             }
             else
                 LogWarn() << "Invalid collision object";
-        }
+		}
+		else
+		{
+			modelViewProj = viewProj;
+		}
 
-        Math::Matrix viewProj = projection * view * model;
+        
         Components::Visual *pVisual = m_Factory.storage().getComponent<Components::Visual>(entity.handle);
-        pVisual->pObjectBuffer->UpdateData(&viewProj);
+		if(pVisual->pObjectBuffer != lastObjectBuffer)
+		{
+			pVisual->pObjectBuffer->UpdateData(&modelViewProj);
+			lastObjectBuffer = pVisual->pObjectBuffer;
+		}
+
+		
 
         RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
-
-        RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
     }
+
+	RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
 
 	//Math::Matrix viewProj = projection * view;
 	//RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
@@ -437,5 +457,5 @@ void Engine::GameEngine::init()
 	//idx.loadVDF("vdf/Textures_Addon.vdf");
 	//
 
-	m_TestWorld = new Renderer::ZenWorld("newworld.zen", idx);
+	m_TestWorld = new ZenWorld(*this, "newworld.zen", idx);
 }

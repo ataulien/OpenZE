@@ -5,10 +5,13 @@
 
 #include "utils/vector.h"
 #include "components/collision.h"
-#include "components/visual.h"
 #include "objecthandle.h"
 #include "entity.h"
 #include "utils/tuple.h"
+
+#ifdef ZE_GAME
+#include "components/visual.h"
+#endif
 
 namespace Engine
 {
@@ -130,6 +133,7 @@ namespace Engine
                 return static_cast<uint32_t>(-1);
 
             m_Entities.m_Data.emplace_back(m_Entities.size());
+			m_Entities.m_Data.back().mask = C_IN_USE;
 
             Utils::for_each_in_tuple(m_Components, [&](auto &v)
             {

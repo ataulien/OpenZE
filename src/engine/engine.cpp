@@ -76,3 +76,8 @@ Physics::Physics *Engine::Engine::physicsSystem()
 {
     return &m_PhysicsSystem;
 }
+
+Engine::ObjectFactory & Engine::Engine::objectFactory()
+{
+	return m_Factory;
+}

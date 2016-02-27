@@ -8,7 +8,10 @@
 #include "physics/physics.h"
 #include "utils/timer.h"
 #include "components/collision.h"
+
+#ifdef ZE_GAME
 #include "components/visual.h"
+#endif
 
 
 
@@ -48,11 +51,16 @@ namespace Engine
          */
         void mainLoop();
 
-        /**
-         * @brief physicsSystem
-         * @return
-         */
-        Physics::Physics *physicsSystem();
+		/**
+		* @brief physicsSystem
+		* @return
+		*/
+		Physics::Physics *physicsSystem();
+
+		/**
+		* @brief Getter for object factory
+		*/
+		ObjectFactory& objectFactory();
 
         /**
          * @brief init

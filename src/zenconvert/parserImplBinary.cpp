@@ -10,7 +10,7 @@ ParserImplBinary::ParserImplBinary(ZenParser * parser) : ParserImpl(parser)
 /**
  * @brief Read the start of a chunk. [...]
  */
-void ParserImplBinary::readChunkStart(ZenParser::ChunkHeader& header)
+bool ParserImplBinary::readChunkStart(ZenParser::ChunkHeader& header)
 {
 	// Skip chunk headers - we know these are zCMaterial
 	uint32_t chunksize = m_pParser->readBinaryDWord();
@@ -29,14 +29,16 @@ void ParserImplBinary::readChunkStart(ZenParser::ChunkHeader& header)
 	header.objectID = objectIndex;
 	header.size = chunksize;
 	header.version = version;
+
+	return true;
 }
 
 /**
  * @brief Read the end of a chunk. []
  */
-void ParserImplBinary::readChunkEnd()
+bool ParserImplBinary::readChunkEnd()
 {
-	
+	return true;
 }
 
 /**

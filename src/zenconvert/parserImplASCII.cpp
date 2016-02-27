@@ -10,116 +10,133 @@ ParserImplASCII::ParserImplASCII(ZenParser * parser) : ParserImpl(parser)
 /**
  * @brief Read the start of a chunk. [...]
  */
-void ParserImplASCII::readChunkStart(ZenParser::ChunkHeader& header)
+bool ParserImplASCII::readChunkStart(ZenParser::ChunkHeader& header)
 {
-	// Check chunk-header
-	m_pParser->skipSpaces();
-	if(m_pParser->m_Data[m_pParser->m_Seek] != '[')
-		throw std::runtime_error("Invalid format");
+	size_t seek = m_pParser->getSeek();
+	try{
+		// Check chunk-header
+		m_pParser->skipSpaces();
+		if(m_pParser->m_Data[m_pParser->m_Seek] != '[')
+			throw std::runtime_error("Invalid format");
 
-	m_pParser->m_Seek++;
+		m_pParser->m_Seek++;
 
-	size_t tmpSeek = m_pParser->m_Seek;
-	while(m_pParser->m_Data[tmpSeek] != ']')
-	{
-		if(m_pParser->m_Data[tmpSeek] == '\r' && m_pParser->m_Data[tmpSeek] == '\n')
-			throw std::runtime_error("Invalid vob descriptor");
-
-		++tmpSeek;
-	}
-
-	// Save chunks starting-position (right after chunk-header)
-	header.startPosition = m_pParser->m_Seek;
-
-	// Parse chunk-header
-	std::string vobDescriptor(reinterpret_cast<char *>(&m_pParser->m_Data[m_pParser->m_Seek]), tmpSeek - m_pParser->m_Seek);
-	std::vector<std::string> vec = Utils::split(vobDescriptor, ' ');
-	m_pParser->m_Seek = tmpSeek + 1;
-
-	std::string name;
-	std::string className;
-	int classVersion = 0;
-	int objectID = 0;
-	bool createObject = false;
-	enum State
-	{
-		S_OBJECT_NAME,
-		S_REFERENCE,
-		S_CLASS_NAME,
-		S_CLASS_VERSION,
-		S_OBJECT_ID,
-		S_FINISHED
-	} state = S_OBJECT_NAME;
-
-	for(auto &arg : vec)
-	{
-		switch(state)
+		size_t tmpSeek = m_pParser->m_Seek;
+		while(m_pParser->m_Data[tmpSeek] != ']')
 		{
-		case S_OBJECT_NAME:
-			if(arg != "%")
-			{
-				name = arg;
-				state = S_REFERENCE;
-				break;
-			}
-		case S_REFERENCE:
-			if(arg == "%")
-			{
-				createObject = true;
-				state = S_CLASS_NAME;
-				break;
-			}
-			else if(arg == "\xA7")
-			{
-				createObject = false;
-				state = S_CLASS_NAME;
-				break;
-			}
-			else
-				createObject = true;
-		case S_CLASS_NAME:
-			if(!m_pParser->isNumber(arg))
-			{
-				className = arg;
-				state = S_CLASS_VERSION;
-				break;
-			}
-		case S_CLASS_VERSION:
-			classVersion = std::atoi(arg.c_str());
-			state = S_OBJECT_ID;
-			break;
-		case S_OBJECT_ID:
-			objectID = std::atoi(arg.c_str());
-			state = S_FINISHED;
-			break;
-		default:
-			throw std::runtime_error("Strange parser state");
+			if(m_pParser->m_Data[tmpSeek] == '\r' && m_pParser->m_Data[tmpSeek] == '\n')
+				throw std::runtime_error("Invalid vob descriptor");
+
+			++tmpSeek;
 		}
+
+		// Save chunks starting-position (right after chunk-header)
+		header.startPosition = m_pParser->m_Seek;
+
+		// Parse chunk-header
+		std::string vobDescriptor(reinterpret_cast<char *>(&m_pParser->m_Data[m_pParser->m_Seek]), tmpSeek - m_pParser->m_Seek);
+		std::vector<std::string> vec = Utils::split(vobDescriptor, ' ');
+		m_pParser->m_Seek = tmpSeek + 1;
+
+		std::string name;
+		std::string className;
+		int classVersion = 0;
+		int objectID = 0;
+		bool createObject = false;
+		enum State
+		{
+			S_OBJECT_NAME,
+			S_REFERENCE,
+			S_CLASS_NAME,
+			S_CLASS_VERSION,
+			S_OBJECT_ID,
+			S_FINISHED
+		} state = S_OBJECT_NAME;
+
+		for(auto &arg : vec)
+		{
+			switch(state)
+			{
+			case S_OBJECT_NAME:
+				if(arg != "%")
+				{
+					name = arg;
+					state = S_REFERENCE;
+					break;
+				}
+			case S_REFERENCE:
+				if(arg == "%")
+				{
+					createObject = true;
+					state = S_CLASS_NAME;
+					break;
+				}
+				else if(arg == "\xA7")
+				{
+					createObject = false;
+					state = S_CLASS_NAME;
+					break;
+				}
+				else
+					createObject = true;
+			case S_CLASS_NAME:
+				if(!m_pParser->isNumber(arg))
+				{
+					className = arg;
+					state = S_CLASS_VERSION;
+					break;
+				}
+			case S_CLASS_VERSION:
+				classVersion = std::atoi(arg.c_str());
+				state = S_OBJECT_ID;
+				break;
+			case S_OBJECT_ID:
+				objectID = std::atoi(arg.c_str());
+				state = S_FINISHED;
+				break;
+			default:
+				throw std::runtime_error("Strange parser state");
+			}
+		}
+
+		if(state != S_FINISHED)
+			throw std::runtime_error("Parser did not finish");
+
+		header.classname = className;
+		header.createObject = createObject;
+		header.name = name;
+		header.objectID = objectID;
+		header.size = 0; // Doesn't matter in ASCII
+		header.version = classVersion;
+
+		// Skip the last newline
+		m_pParser->skipSpaces();
+	}
+	catch(std::runtime_error e)
+	{
+		m_pParser->setSeek(seek);
+		return false;
 	}
 
-	if(state != S_FINISHED)
-		throw std::runtime_error("Parser did not finish");
-
-	header.classname = className;
-	header.createObject = createObject;
-	header.name = name;
-	header.objectID = objectID;
-	header.size = 0; // Doesn't matter in ASCII
-	header.version = classVersion;
-
-	// Skip the last newline
-	m_pParser->skipSpaces();
+	return true;
 }
 
 /**
  * @brief Read the end of a chunk. []
  */
-void ParserImplASCII::readChunkEnd()
+bool ParserImplASCII::readChunkEnd()
 {
+	size_t seek = m_pParser->getSeek();
+
 	std::string l = readString();
 
 	if(l != "[]")
-		throw std::runtime_error("Failed to find Chunk-End");
+	{
+		m_pParser->setSeek(seek); // Next property isn't a string or the end
+		return false;
+	}
+
+	return true;
 }
 
 /**

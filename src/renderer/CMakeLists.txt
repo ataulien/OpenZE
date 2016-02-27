@@ -8,7 +8,7 @@ file(GLOB SRC
 
 add_library(renderer_gl STATIC ${SRC})
 set_target_properties(renderer_gl PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(renderer_gl PROPERTIES COMPILE_FLAGS "-DRND_GL")
+set_target_properties(renderer_gl PROPERTIES COMPILE_FLAGS "-DRND_GL -DZE_GAME")
 
 if(OPENZE_D3D11)
 	if( WIN32 )
@@ -70,5 +70,5 @@ if(OPENZE_D3D11)
 
 	add_library(renderer_dx STATIC ${SRC})
 	set_target_properties(renderer_dx PROPERTIES LINKER_LANGUAGE C)
-	set_target_properties(renderer_dx PROPERTIES COMPILE_FLAGS "-DRND_D3D11")
+	set_target_properties(renderer_dx PROPERTIES COMPILE_FLAGS "-DRND_D3D11 -DZE_GAME")
 endif()

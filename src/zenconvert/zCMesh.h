@@ -2,6 +2,7 @@
 #include <vector>
 #include "utils/mathlib.h"
 #include "zTypes.h"
+#include "renderer/vertextypes.h"
 
 namespace VDFS
 {
@@ -14,6 +15,19 @@ namespace ZenConvert
 	class zCMesh
 	{
 	public:
+
+		struct PackedMesh
+		{
+			struct SubMesh
+			{
+				zCMaterialData material;			
+				std::vector<uint32_t> indices;
+			};
+
+			std::vector<Renderer::WorldVertex> vertices;
+			std::vector<SubMesh> subMeshes;
+		};
+
 		zCMesh(){}
 
 		/**
@@ -63,6 +77,10 @@ namespace ZenConvert
 		 */
 		void getBoundingBox(Math::float3& min, Math::float3& max){min = m_BBMin; max = m_BBMax;}
 
+		/**
+		 * @brief Creates packed submesh-data
+		 */
+		void packMesh(PackedMesh& mesh, float scale = 1.0f);
 	private:
 
 		/**

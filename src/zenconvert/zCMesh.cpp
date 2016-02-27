@@ -6,6 +6,7 @@
 #include "vdfs/fileIndex.h"
 #include "vob.h"
 #include "zCMaterial.h"
+#include <map>
 
 using namespace ZenConvert;
 
@@ -283,4 +284,91 @@ void zCMesh::readObjectData(ZenParser& parser, bool fromZen)
 
 	// Skip to possible next section of the underlaying file, in case there is more data we don't process
 	parser.setSeek(binFileEnd);
+}
+
+
+/**
+* @brief Creates packed submesh-data
+*/
+void zCMesh::packMesh(PackedMesh& mesh, float scale)
+{
+	std::vector<Renderer::WorldVertex>& newVertices = mesh.vertices;
+	std::vector<uint32_t> newIndices;
+
+	// Map of vertex-indices and their used feature-indices to a vertex in "newVertices"
+	std::map<std::pair<uint32_t, uint32_t>, uint32_t> vfToNewVx;
+
+	// Map of the new indices and the old indices to the index-vector
+	std::unordered_map<uint32_t, uint32_t> newToOldIdxIdx;
+
+	// Get vertices
+	for(size_t i = 0, end = m_Indices.size(); i < end; i++)
+	{
+		uint32_t featidx = m_FeatureIndices[i];
+		uint32_t vertidx = m_Indices[i];
+
+		// Check if we already got this pair of vertex/feature
+		auto it = vfToNewVx.find(std::make_pair(vertidx, featidx));
+		if(it == vfToNewVx.end())
+		{
+			// Add new entry
+			vfToNewVx[std::make_pair(vertidx, featidx)] = newVertices.size();
+			Renderer::WorldVertex vx;
+
+			// Extract vertex information
+			vx.Position = m_Vertices[vertidx] * scale;
+			vx.Color = m_Features[featidx].lightStat;
+			vx.TexCoord = Math::float2(m_Features[featidx].uv[0], m_Features[featidx].uv[1]);
+			vx.Normal = m_Features[featidx].vertNormal;
+
+			// Add index to this very vertex
+			newIndices.push_back(newVertices.size());
+
+			newVertices.push_back(vx);
+		}
+		else
+		{
+			// Simply put an index to the existing new vertex
+			newIndices.push_back((*it).second);
+		}
+
+		// Store what this new index was before
+		newToOldIdxIdx[newIndices.back()] = i;
+	}
+
+	
+	
+	// Filter textures
+	std::unordered_map<std::string, uint32_t> materialsByTexture;
+	std::unordered_map<uint32_t, uint32_t> newMaterialSlotsByMatIndex;
+	for(size_t i = 0, end = m_Materials.size(); i < end; i++)
+	{
+		materialsByTexture[m_Materials[i].texture] = i;
+		
+	}
+
+	// Assign materials to packed mesh
+	uint32_t mc = 0;
+	for(auto& m : materialsByTexture)
+	{
+		newMaterialSlotsByMatIndex[m.second] = mc++;
+		mesh.subMeshes.emplace_back();
+		mesh.subMeshes.back().material = m_Materials[m.second];
+	}
+
+	mesh.subMeshes.resize(materialsByTexture.size());
+
+	// Add triangles
+	for(size_t i = 0, end = newIndices.size(); i < end; i += 3)
+	{
+		// Get material info of this triangle
+		uint32_t matIdx = m_TriangleMaterialIndices[i / 3];
+
+		// Find texture of this material
+		matIdx = newMaterialSlotsByMatIndex[materialsByTexture[m_Materials[matIdx].texture]];
+
+		// Add this triangle to its submesh
+		for(size_t j = 0; j < 3; j++)
+			mesh.subMeshes[matIdx].indices.push_back(newIndices[i+j]);
+	}
 }

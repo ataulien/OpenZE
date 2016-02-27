@@ -15,14 +15,16 @@ namespace ZenConvert
 		virtual void readImplHeader();
 
 		/**
-		 * @brief Read the start of a chunk. [...]
-		 */
-		virtual void readChunkStart(ZenParser::ChunkHeader& header);
+		* @brief Read the start of a chunk. [...] Returns true if there actually was a start. 
+		*		  Otherwise it will leave m_Seek untouched and return false.
+		*/
+		virtual bool readChunkStart(ZenParser::ChunkHeader& header);
 
 		/**
-		 * @brief Read the end of a chunk. []
-		 */
-		virtual void readChunkEnd();
+		* @brief Reads the end of a chunk. Returns true if there actually was an end. 
+		*		  Otherwise it will leave m_Seek untouched and return false.
+		*/
+		virtual bool readChunkEnd();
 
 		/**
 		 * @brief Reads a string

@@ -2,6 +2,7 @@
 #include <vector>
 #include "utils/mathlib.h"
 #include "zTypes.h"
+#include "renderer/vertextypes.h"
 
 namespace VDFS
 {
@@ -26,6 +27,18 @@ namespace ZenConvert
 			std::vector<zEdge> m_EdgeList;
 			std::vector<float> m_EdgeScoreList;	
 			std::vector<uint16_t> m_WedgeMap;			
+		};
+
+		struct PackedMesh
+		{
+			struct SubMesh
+			{
+				zCMaterialData material;			
+				std::vector<uint32_t> indices;
+			};
+
+			std::vector<Renderer::WorldVertex> vertices;
+			std::vector<SubMesh> subMeshes;
 		};
 		
 		zCProgMeshProto(){}

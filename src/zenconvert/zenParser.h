@@ -164,14 +164,26 @@ namespace ZenConvert
 		}
 
 		/**
-		 * @brief Reads a chunk-header
+		 * @brief Reads a chunk-header. Returns true if there actually was a start. 
+		 *		  Otherwise it will leave m_Seek untouched and return false.
 		 */
-		void readChunkStart(ChunkHeader& header);
+		bool readChunkStart(ChunkHeader& header);
 
 		/**
-		 * @brief Reads the end of a chunk
+		 * @brief Reads the end of a chunk. Returns true if there actually was an end. 
+		 *		  Otherwise it will leave m_Seek untouched and return false.
 		 */
-		void readChunkEnd();
+		bool readChunkEnd();
+
+		/**
+		 * @brief Skips an already started chunk
+		 */
+		void skipChunk();
+
+		/**
+		 * @brief Skips an entry
+		 */
+		void skipEntry();
 
 		/**
 		* @brief Reads the main ZEN-Header
@@ -182,12 +194,14 @@ namespace ZenConvert
 		 * @brief reads the main oCWorld-Object, found in the level-zens
 		 */
 		void readWorld();
-	private:	
 
 		/**
 		* @brief reads the worldmesh-chunk
 		*/
 		void readWorldMesh();
+	private:	
+
+		
 
 		/**
 		 * @brief Read the given file and places the data in the given vector
