@@ -5,6 +5,7 @@
 
 #include "collisionshape.h"
 #include "physics.h"
+#include "motionstate.h"
 #include "utils/mathlib.h"
 
 namespace Physics
@@ -58,7 +59,7 @@ namespace Physics
             if(m_pRigidBody)
                 return false;
 
-            btMotionState *pMotionState = new btDefaultMotionState(btTransform(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f), btVector3(pos.x, pos.y, pos.z)));
+            btMotionState *pMotionState = new MotionState(pos);
             btVector3 inertia;
             if(mass)
                 collisionShape.shape()->calculateLocalInertia(mass, inertia);

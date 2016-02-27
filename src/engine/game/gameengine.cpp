@@ -12,6 +12,7 @@
 #include "utils/mathlib.h"
 #include "renderer/vertextypes.h"
 #include "gameengine.h"
+#include "physics/motionstate.h"
 #include "components.h"
 #include "components/collision.h"
 #include "components/visual.h"
@@ -381,13 +382,9 @@ bool Engine::GameEngine::render(float alpha)
 
         if((entity.mask & C_COLLISION) == C_COLLISION)
         {
-            btTransform trans;
             Components::Collision *pCollision = m_Factory.storage().getComponent<Components::Collision>(entity.handle);
             if(pCollision)
-            {
-                pCollision->rigidBody.getMotionState()->getWorldTransform(trans);
-                trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
-            }
+                static_cast<Physics::MotionState *>(pCollision->rigidBody.getMotionState())->openGLMatrix(reinterpret_cast<float *>(&model));
             else
                 LogWarn() << "Invalid collision object";
         }

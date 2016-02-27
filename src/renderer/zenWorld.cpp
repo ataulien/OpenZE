@@ -121,10 +121,8 @@ Renderer::ZenWorld::ZenWorld(const std::string & zenFile, VDFS::FileIndex & vdfs
 		return;
 	}
 
-	const float scale = 1.0f / 50.0f;
-
 	if(worldMesh)
-		m_Meshes.emplace_back(new Renderer::ZenWorldMesh(*worldMesh, vdfs, scale));
+        m_Meshes.emplace_back(new Renderer::ZenWorldMesh(*worldMesh, vdfs));
 }
 
 ZenWorld::~ZenWorld()

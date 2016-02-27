@@ -20,7 +20,14 @@ void Physics::Physics::init()
 
 void Physics::Physics::addRigidBody(btRigidBody *pRigidBody)
 {
-    m_DynamicsWorld.addRigidBody(pRigidBody);
+    m_RigidBodyQueue.enqueue(pRigidBody);
+}
+
+void Physics::Physics::updateRigidBodies()
+{
+    btRigidBody *pRigidBody;
+    while(m_RigidBodyQueue.try_dequeue(pRigidBody))
+        m_DynamicsWorld.addRigidBody(pRigidBody);
 }
 
 btDiscreteDynamicsWorld *Physics::Physics::world()

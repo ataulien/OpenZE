@@ -9,6 +9,7 @@
 #include "utils/tuple.h"
 
 #include "components/collision.h"
+#include "components/movement.h"
 #include "components/visual.h"
 
 namespace Engine
