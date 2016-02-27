@@ -41,6 +41,15 @@ namespace Math
             glm::vec2 _glmt_vector;
         };
 
+		std::string toString()
+		{
+			std::string out;
+			out = "[" + std::to_string(x)
+				+ ", " + std::to_string(y) + "]";
+
+			return out;
+		}
+
 		friend std::ostream& operator<< (std::ostream &out, t_float2 &v);
     };
 
@@ -67,6 +76,16 @@ namespace Math
 
             glm::vec3 _glmt_vector;
         };
+
+		std::string toString()
+		{
+			std::string out;
+			out = "[" + std::to_string(x)
+				+ ", " + std::to_string(y)
+				+ ", " + std::to_string(z) + "]";
+
+			return out;
+		}
 
 		friend std::ostream& operator<< (std::ostream &out, t_float3 &v);
     };
@@ -96,6 +115,17 @@ namespace Math
 
             glm::vec4 _glmt_vector;
         };
+
+		std::string toString()
+		{
+			std::string out;
+			out = "[" + std::to_string(x)
+				+ ", " + std::to_string(y)
+				+ ", " + std::to_string(z)
+				+ ", " + std::to_string(w) + "]";
+
+			return out;
+		}
 
 		friend std::ostream& operator<< (std::ostream &out, t_float4 &v);
     };
@@ -333,6 +363,23 @@ namespace Math
 			float mv[16];
             glm::mat4x4 _glmMatrix;
         };
+
+		std::string toString()
+		{
+			std::string out;
+			out = "[";
+			for(size_t i = 0; i < 16; i++)
+			{
+				out += std::to_string(mv[i]);
+
+				// Only add "," when not at the last value
+				if(i != 15)
+					out += ", ";
+			}
+			out += "]";
+
+			return out;
+		}
 
 		friend std::ostream& operator<< (std::ostream &out, Matrix &v);
     };

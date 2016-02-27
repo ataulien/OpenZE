@@ -4,9 +4,34 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "renderer/vertextypes.h"
 
 namespace ZenConvert
 {
+	struct zMAT3
+	{
+		float v[3][3];
+
+		Math::float3 getUpVector()const { return Math::float3(v[0][1], v[1][1], v[2][1]); };
+		Math::float3 getRightVector()const { return Math::float3(v[0][0], v[1][0], v[2][0]); };
+		Math::float3 getAtVector()const { return Math::float3(v[0][2], v[1][2], v[2][2]); };
+		
+		void setAtVector (const Math::float3& a) { v[0][2] = a.x; v[1][2] = a.y; v[2][2] = a.z; }
+		void setUpVector(const Math::float3& a) { v[0][1] = a.x; v[1][1] = a.y; v[2][1] = a.z; }
+		void setRightVector (const Math::float3& a) { v[0][0] = a.x; v[1][0] = a.y;	v[2][0] = a.z;}
+
+		Math::Matrix toMatrix(const Math::float3& position = Math::float3(0,0,0)) const 
+		{
+			Math::Matrix m = Math::Matrix::CreateIdentity();
+			m.Up(getUpVector());
+			m.Forward(-1.0f * getAtVector());
+			m.Right(getRightVector());
+			m.Translation(position);
+
+			return m;
+		}
+	};
+
 	/**
 	 * @brief Base for an object parsed from a zen-file.
 	 *		  Contains a map of all properties and their values as text
@@ -64,6 +89,7 @@ namespace ZenConvert
 
 	};
 
+#pragma pack(push, 1)
 	/**
 	 * @brief Data of zCVob
 	 */
@@ -71,9 +97,10 @@ namespace ZenConvert
 	{
 		uint32_t pack;
 		std::string presetName;
-		Math::float3 bboxMin;
-		Math::float3 bboxMax;
-		Math::float3 rotationMatrixRows[3];
+		Math::float3 bbox[2];
+		Math::Matrix rotationMatrix;
+		zMAT3 rotationMatrix3x3;
+		Math::Matrix worldMatrix;
 		Math::float3 position;
 		std::string vobName;
 		std::string visual;
@@ -98,13 +125,29 @@ namespace ZenConvert
 
 		std::vector<zCVobData> childVobs;
 	};
+#pragma pack(pop)
+
+	/**
+	* @brief Simple generic packed mesh, containing all useful information of a (lod-level of) zCMesh and zCProgMeshProto
+	*/
+	struct PackedMesh
+	{
+		struct SubMesh
+		{
+			zCMaterialData material;			
+			std::vector<uint32_t> indices;
+		};
+
+		std::vector<Renderer::WorldVertex> vertices;
+		std::vector<SubMesh> subMeshes;
+	};
 
 	/**
 	* @brief All kinds of information found in a oCWorld
 	*/
 	struct oCWorldData : public ParsedZenObject
 	{
-		zCVobData rootVob;
+		std::vector<zCVobData> rootVobs;
 	};
 
 #pragma pack(push, 1)

@@ -4,6 +4,7 @@
 #include <RResourceCache.h>
 
 #include "components.h"
+#include "utils/mathlib.h"
 
 namespace RAPI
 {
@@ -21,6 +22,7 @@ namespace Engine
 
             RAPI::RBuffer *pObjectBuffer;
             RAPI::RPipelineState *pPipelineState;
+			Math::Matrix tmpWorld; // TODO: Put this into some kind of Transform-Component!
 
             void cleanUp()
             {

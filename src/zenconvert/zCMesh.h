@@ -16,18 +16,6 @@ namespace ZenConvert
 	{
 	public:
 
-		struct PackedMesh
-		{
-			struct SubMesh
-			{
-				zCMaterialData material;			
-				std::vector<uint32_t> indices;
-			};
-
-			std::vector<Renderer::WorldVertex> vertices;
-			std::vector<SubMesh> subMeshes;
-		};
-
 		zCMesh(){}
 
 		/**

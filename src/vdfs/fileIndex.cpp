@@ -113,7 +113,7 @@ bool FileIndex::getFileByName(const std::string& name, FileInfo* outinf)
 		return false;
 
 	// Output the file information
-	*outinf = m_KnownFiles[(*it).second];
+	if(outinf)*outinf = m_KnownFiles[(*it).second];
 
 	return true;
 }

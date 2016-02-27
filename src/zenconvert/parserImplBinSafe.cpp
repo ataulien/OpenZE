@@ -36,6 +36,20 @@ bool ParserImplBinSafe::readChunkStart(ZenParser::ChunkHeader& header)
 
 		vobDescriptor = vobDescriptor.substr(1, vobDescriptor.size() - 2);
 
+		// Special case for camera keyframes
+		if(vobDescriptor.find('%') != std::string::npos && vobDescriptor.find('\xA7') != std::string::npos)
+		{
+			// Make a header with createObject = true and ref as classname
+			auto parts = Utils::split(vobDescriptor, ' ');
+			header.createObject = true;
+			header.classname = "\xA7";
+			header.name = "%";
+			header.size = 0;
+			header.version = 0;
+			header.objectID = std::stoi(parts.back());
+			return true;
+		}
+
 		// Save chunks starting-position (right after chunk-header)
 		header.startPosition = m_pParser->m_Seek;
 
@@ -112,6 +126,7 @@ bool ParserImplBinSafe::readChunkStart(ZenParser::ChunkHeader& header)
 		header.objectID = objectID;
 		header.size = 0; // Doesn't matter in ASCII
 		header.version = classVersion;
+
 	}
 	catch(std::runtime_error e)
 	{
@@ -219,6 +234,13 @@ std::string ParserImplBinSafe::readString()
 	std::string str; str.resize(size);
 	m_pParser->readBinaryRaw(&str[0], size);
 
+	// Skip potential hash-value at the end of the string
+	EZenValueType t = static_cast<EZenValueType>(m_pParser->readBinaryByte());
+	if(t != ZVT_HASH)
+		m_pParser->m_Seek -= sizeof(uint8_t);
+	else
+		m_pParser->m_Seek += sizeof(uint32_t);
+
 	return str;
 }
 
@@ -316,6 +338,13 @@ void ParserImplBinSafe::readEntry(const std::string& expectedName, void* target,
 	case ZVT_15: break;
 	case ZVT_ENUM: *reinterpret_cast<uint8_t*>(target) = m_pParser->readBinaryDWord(); break;
 	}
+
+	// Skip potential hash-value at the end of the entry
+	EZenValueType t = static_cast<EZenValueType>(m_pParser->readBinaryByte());
+	if(t != ZVT_HASH)
+		m_pParser->m_Seek -= sizeof(uint8_t);
+	else
+		m_pParser->m_Seek += sizeof(uint32_t);
 }
 
 /**

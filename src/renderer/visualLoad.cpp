@@ -10,12 +10,16 @@
 #include <RDevice.h>
 #include <RBuffer.h>
 #include "engine/components/visual.h"
+#include "zenconvert/zTypes.h"
 
 /**
 * @brief Loads a texture from the given VDF-Index
 */
 RAPI::RTexture* Renderer::loadTexture(const std::string& name, VDFS::FileIndex& fileIndex)
 {
+	if(name.empty())
+		return nullptr;
+
 	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RTexture>(name);
 	if(tx)
 		return tx;
@@ -46,7 +50,7 @@ RAPI::RTexture* Renderer::loadTexture(const std::string& name, VDFS::FileIndex& 
 /**
 * @brief Creates entities for the given packed zCMesh
 */
-void Renderer::createVisualsFor(const ZenConvert::zCMesh::PackedMesh& packedMesh, Engine::ObjectFactory& factory, VDFS::FileIndex& vdfs, const std::vector<Engine::ObjectHandle>& handles)
+void Renderer::createVisualsFor(const ZenConvert::PackedMesh& packedMesh, Engine::ObjectFactory& factory, VDFS::FileIndex& vdfs, const std::vector<Engine::ObjectHandle>& handles)
 {
 	// Create buffers and states for each texture
 	RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");
@@ -102,8 +106,13 @@ void Renderer::createVisualsFor(const ZenConvert::zCMesh::PackedMesh& packedMesh
 		factory.storage().addComponent<Engine::Components::Visual>(e);
 
 		Engine::Components::Visual* visual = factory.storage().getComponent<Engine::Components::Visual>(e);
-		visual->pObjectBuffer = pObjectBuffer;
-		visual->pPipelineState = sm.MakeDrawCall(vxs.size());
+
+		if(visual)
+		{
+			visual->pObjectBuffer = pObjectBuffer;
+			visual->pPipelineState = sm.MakeDrawCall(vxs.size());
+			visual->tmpWorld = Math::Matrix::CreateIdentity();
+		}
 
 		eIdx++;
 	}

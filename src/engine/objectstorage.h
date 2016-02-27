@@ -3,14 +3,19 @@
 #include <utility>
 #include <tuple>
 
-#include "utils/vector.h"#include "objecthandle.h"
+#include "utils/vector.h"
+#include "objecthandle.h"
 #include "entity.h"
 #include "utils/tuple.h"
 
 #ifdef ZE_GAME
 #include "components/visual.h"
-#endif#include "components/collision.h"
-#include "components/movement.h"namespace Engine
+#endif
+
+#include "components/collision.h"
+#include "components/movement.h"
+
+namespace Engine
 {
     template<typename... C>
     class ObjectStorage

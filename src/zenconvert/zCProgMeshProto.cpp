@@ -198,3 +198,69 @@ void zCProgMeshProto::readObjectData(ZenParser& parser)
 		}
 	}
 }
+
+/**
+ * @brief Packs vertices only
+ */
+void ZenConvert::zCProgMeshProto::packVertices(std::vector<Renderer::WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale)
+{
+	for(size_t s=0;s<m_SubMeshes.size();s++)
+	{
+
+		SubMesh& sm = m_SubMeshes[s];
+
+		unsigned int meshVxStart = vxs.size();
+
+		// Get data
+		for(size_t i=0;i<sm.m_WedgeList.size();i++)
+		{
+			zWedge& wedge = sm.m_WedgeList[i];
+
+			Renderer::WorldVertex v;
+			v.Position = m_Vertices[wedge.m_VertexIndex] * scale;
+			v.Normal = wedge.m_Normal;
+			v.TexCoord = wedge.m_Texcoord;
+			//v.TexCoord2 = float2(0,0);
+			v.Color = 0xFFFFFFFF; // TODO: Apply color from material!
+			vxs.push_back(v);
+		}
+
+		// Mark when the submesh starts
+		submeshIndexStarts.push_back(ixs.size());
+
+		// And get the indices
+		for(size_t i=0;i<sm.m_TriangleList.size();i++)
+		{
+			//for(int j=2;j>=0;j--)
+			for(int j=0;j<3;j++)
+			{
+				ixs.push_back((sm.m_TriangleList[i].m_Wedges[j]) // Take wedge-index of submesh
+					+ indexStart // Add our custom offset
+					+ meshVxStart); // And add the starting location of the vertices for this submesh
+			}
+		}		
+	}
+}
+
+/**
+* @brief Creates packed submesh-data
+*/
+void zCProgMeshProto::packMesh(PackedMesh& mesh, float scale)
+{
+	std::vector<uint32_t> submeshIndexStarts;
+	std::vector<uint32_t> indices;
+	packVertices(mesh.vertices, indices, 0, submeshIndexStarts, scale);
+
+	// Create objects for all submeshes
+	for(size_t i=0;i<m_SubMeshes.size();i++)
+	{		
+		mesh.subMeshes.emplace_back();
+		mesh.subMeshes.back().material = m_SubMeshes[i].m_Material;
+
+		// Get indices
+		for(size_t j = submeshIndexStarts[i]; j < submeshIndexStarts[i] + m_SubMeshes[i].m_TriangleList.size() * 3; j++)
+		{
+			mesh.subMeshes.back().indices.push_back(indices[j]);
+		}
+	}
+}

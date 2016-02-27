@@ -44,8 +44,8 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bott
 		return;
 	}
 
-    glfwSetInputMode(m_pWindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(m_pWindowHandle, [](GLFWwindow* pWindow, double posX, double posY){(void)pWindow; LogInfo() << posX << " " << posY;});
+    //glfwSetInputMode(m_pWindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetCursorPosCallback(m_pWindowHandle, [](GLFWwindow* pWindow, double posX, double posY){(void)pWindow; LogInfo() << posX << " " << posY;});
 }
 
 /**

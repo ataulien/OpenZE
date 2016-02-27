@@ -29,18 +29,7 @@ namespace ZenConvert
 			std::vector<uint16_t> m_WedgeMap;			
 		};
 
-		struct PackedMesh
-		{
-			struct SubMesh
-			{
-				zCMaterialData material;			
-				std::vector<uint32_t> indices;
-			};
-
-			std::vector<Renderer::WorldVertex> vertices;
-			std::vector<SubMesh> subMeshes;
-		};
-		
+			
 		zCProgMeshProto(){}
 
 		/**
@@ -83,7 +72,17 @@ namespace ZenConvert
 		 * @brief Returns the global position-list
 		 */
 		const std::vector<Math::float3> getPositionList()const{return m_Vertices;}
+
+		/**
+		* @brief Creates packed submesh-data
+		*/
+		void packMesh(PackedMesh& mesh, float scale = 1.0f);
 	private:
+
+		/**
+		 * @brief Packs vertices only
+		 */
+		void packVertices(std::vector<Renderer::WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart = 0, std::vector<uint32_t>& submeshIndexStarts = std::vector<uint32_t>(), float scale = 1.0f);
 
 		/**
 		 * @brief vector of vertex-positions for this mesh

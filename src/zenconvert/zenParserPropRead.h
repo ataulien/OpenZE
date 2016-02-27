@@ -64,9 +64,7 @@ namespace ZenConvert
 	template<> 
     inline void read<Math::float3>(ZenParser& p, std::string& outStr, Math::float3& outData)
 	{ 
-		p.getImpl()->readEntry("", &outData.x, sizeof(float), ParserImpl::ZVT_FLOAT);
-		p.getImpl()->readEntry("", &outData.y, sizeof(float), ParserImpl::ZVT_FLOAT);
-		p.getImpl()->readEntry("", &outData.z, sizeof(float), ParserImpl::ZVT_FLOAT);
+		p.getImpl()->readEntry("", &outData, sizeof(float) * 3, ParserImpl::ZVT_VEC3);
 		outStr = "[" + std::to_string(outData.x) 
 			+ ", " + std::to_string(outData.y)
 			+ ", " + std::to_string(outData.z) + "]";

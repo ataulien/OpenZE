@@ -50,11 +50,12 @@ void Engine::Engine::mainLoop()
 	// Start the timer
 	m_MainLoopTimer.update();
 
-    std::thread physicsThread([this]()
+	bool isRunning = true;
+    std::thread physicsThread([this, &isRunning]()
     {
         Utils::Timer<double> timer;
         std::chrono::duration<double> delta = std::chrono::duration<double>::zero();
-        while(true)
+        while(isRunning)
         {
             delta = timer.update();
             m_PhysicsSystem.updateRigidBodies();
@@ -63,7 +64,7 @@ void Engine::Engine::mainLoop()
         }
     });
 
-    bool isRunning = true;
+    
     while(isRunning)
     {
 		delta =  m_MainLoopTimer.update();

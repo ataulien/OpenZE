@@ -30,12 +30,12 @@ void Physics::MotionState::openGLMatrix(float *m)
 
 void Physics::MotionState::getWorldTransform(btTransform &centerOfMassWorldTrans) const
 {
-    std::shared_lock<std::shared_timed_mutex> exclusive(m_Mutex, std::defer_lock);
+    std::shared_lock<std::shared_timed_mutex> shared(m_Mutex, std::defer_lock);
     btDefaultMotionState::getWorldTransform(centerOfMassWorldTrans);
 }
 
 void Physics::MotionState::setWorldTransform(const btTransform &centerOfMassWorldTrans)
 {
-    std::unique_lock<std::shared_timed_mutex> shared(m_Mutex, std::defer_lock);
+    std::unique_lock<std::shared_timed_mutex> exclusive(m_Mutex, std::defer_lock);
     btDefaultMotionState::setWorldTransform(centerOfMassWorldTrans);
 }

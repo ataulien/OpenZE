@@ -25,6 +25,7 @@ extern RAPI::RBuffer* MakeBox(float extends);
 
 void Engine::ObjectFactory::test_createObjects()
 {
+	return;
     //Groundplane
     ObjectHandle planeHandle = m_Storage.createEntity();
     Components::Collision *pPlaneCollision = m_Storage.addComponent<Components::Collision>(planeHandle);

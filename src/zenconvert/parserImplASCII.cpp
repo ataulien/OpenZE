@@ -12,12 +12,22 @@ ParserImplASCII::ParserImplASCII(ZenParser * parser) : ParserImpl(parser)
  */
 bool ParserImplASCII::readChunkStart(ZenParser::ChunkHeader& header)
 {
+	m_pParser->skipSpaces();
+
 	size_t seek = m_pParser->getSeek();
 	try{
 		// Check chunk-header
 		m_pParser->skipSpaces();
-		if(m_pParser->m_Data[m_pParser->m_Seek] != '[')
-			throw std::runtime_error("Invalid format");
+
+		// Early exit if this is a chunk-end or not a chunk header
+		if(m_pParser->m_Data[m_pParser->m_Seek] != '[' || m_pParser->m_Data[m_pParser->m_Seek+1] == ']')
+		{
+			m_pParser->setSeek(seek);
+			return false;
+		}
+
+		//if(m_pParser->m_Data[m_pParser->m_Seek] != '[')
+		//	throw std::runtime_error("Invalid format");
 
 		m_pParser->m_Seek++;
 
@@ -29,6 +39,7 @@ bool ParserImplASCII::readChunkStart(ZenParser::ChunkHeader& header)
 
 			++tmpSeek;
 		}
+
 
 		// Save chunks starting-position (right after chunk-header)
 		header.startPosition = m_pParser->m_Seek;
@@ -128,6 +139,7 @@ bool ParserImplASCII::readChunkEnd()
 {
 	size_t seek = m_pParser->getSeek();
 
+	m_pParser->skipSpaces();
 	std::string l = readString();
 
 	if(l != "[]")
@@ -135,6 +147,8 @@ bool ParserImplASCII::readChunkEnd()
 		m_pParser->setSeek(seek); // Next property isn't a string or the end
 		return false;
 	}
+
+	m_pParser->skipSpaces();
 
 	return true;
 }
@@ -190,7 +204,7 @@ void ParserImplASCII::readEntry(const std::string& expectedName, void* target, s
 	const std::string& value = parts.size() > 2 ? parts[2] : "";
 
 	// Split value as well, if possible
-	auto vparts = Utils::split(line, ' ');
+	auto vparts = Utils::split(value, ' ');
 
 	if(!expectedName.empty() && valueName != expectedName)
 		throw std::runtime_error("Value name does not match expected name. Value:" + valueName + " Expected: " + expectedName);
@@ -214,6 +228,16 @@ void ParserImplASCII::readEntry(const std::string& expectedName, void* target, s
 			break;
 
 		case ZVT_RAW_FLOAT:
+			{
+				size_t i=0;
+				for(auto& v : vparts)
+				{
+					float* data = reinterpret_cast<float*>(target);
+					data[i] = std::stof(v);
+					i++;
+				}
+			}
+			break;
 		case ZVT_RAW: 
 			{
 				uint8_t* data = reinterpret_cast<uint8_t*>(target);
@@ -253,7 +277,7 @@ void ParserImplASCII::readEntryType(EZenValueType& outtype, size_t& size)
 	if(line == "[]" || (line.front() == '[' && line.back() == ']'))
 	{
 		outtype = ZVT_STRING;
-		size = line.length();
+		size = 0;
 		return;
 	}
 
@@ -265,17 +289,18 @@ void ParserImplASCII::readEntryType(EZenValueType& outtype, size_t& size)
 		throw std::runtime_error("Failed to read property type");
 
 	const std::string& type = parts[1];
+	size_t cLoc = line.find_first_of(':') == std::string::npos ? 0 : line.find_first_of(':');
 
-	if(type == "string") { outtype = ZVT_STRING; size = line.length(); }
-	else if(type == "int") { outtype = ZVT_INT; size = sizeof(int32_t); }
-	else if(type == "float") { outtype = ZVT_FLOAT; size = sizeof(float); }
-	else if(type == "byte") { outtype = ZVT_BYTE; size = sizeof(uint8_t); }
-	else if(type == "word") { outtype = ZVT_WORD; size = sizeof(int16_t); }
-	else if(type == "bool") { outtype = ZVT_BOOL; size = sizeof(uint8_t); }
-	else if(type == "vec3") { outtype = ZVT_VEC3; size = sizeof(Math::float3); }
-	else if(type == "color") { outtype = ZVT_COLOR; size = sizeof(uint32_t); }
-	else if(type == "rawFloat") { outtype = ZVT_RAW_FLOAT; size = line.length(); }
-	else if(type == "raw") { outtype = ZVT_RAW; size = line.length(); }
-	else if(type == "enum") { outtype = ZVT_ENUM; size = sizeof(uint8_t); }
+	if(type == "string") { outtype = ZVT_STRING; size = 0; }
+	else if(type == "int") { outtype = ZVT_INT; size = 0; }
+	else if(type == "float") { outtype = ZVT_FLOAT; size = 0; }
+	else if(type == "byte") { outtype = ZVT_BYTE; size = 0; }
+	else if(type == "word") { outtype = ZVT_WORD; size = 0; }
+	else if(type == "bool") { outtype = ZVT_BOOL; size = 0; }
+	else if(type == "vec3") { outtype = ZVT_VEC3; size = 0; }
+	else if(type == "color") { outtype = ZVT_COLOR; size = 0; }
+	else if(type == "rawFloat") { outtype = ZVT_RAW_FLOAT; size = 0; }
+	else if(type == "raw") { outtype = ZVT_RAW; size = 0; }
+	else if(type == "enum") { outtype = ZVT_ENUM; size = 0; }
 	else throw std::runtime_error("Unknown type");
 }

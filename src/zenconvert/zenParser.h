@@ -6,6 +6,7 @@
 #include "utils/mathlib.h"
 #include "utils/tuple.h"
 #include "utils/split.h"
+#include "zTypes.h"
 
 namespace ZenConvert
 {
@@ -193,7 +194,7 @@ namespace ZenConvert
 		/**
 		 * @brief reads the main oCWorld-Object, found in the level-zens
 		 */
-		void readWorld();
+		oCWorldData readWorld();
 
 		/**
 		* @brief reads the worldmesh-chunk

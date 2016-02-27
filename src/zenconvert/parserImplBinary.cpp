@@ -62,7 +62,8 @@ void ParserImplBinary::readImplHeader()
  */
 std::string ParserImplBinary::readString()
 {
-	return m_pParser->readLine();
+	std::string ret = m_pParser->readLine();
+	return ret;
 }
 
 /**

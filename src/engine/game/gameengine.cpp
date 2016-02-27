@@ -386,14 +386,15 @@ bool Engine::GameEngine::render(float alpha)
         if((entity.mask & C_VISUAL) != C_VISUAL)
             continue;
 
+		Components::Visual *pVisual = m_Factory.storage().getComponent<Components::Visual>(entity.handle);
+
 		Math::Matrix modelViewProj;
         if((entity.mask & C_COLLISION) == C_COLLISION)
         {
             Components::Collision *pCollision = m_Factory.storage().getComponent<Components::Collision>(entity.handle);
             if(pCollision)
             {
-                pCollision->rigidBody.getMotionState()->getWorldTransform(trans);
-                trans.getOpenGLMatrix(reinterpret_cast<float *>(&model));
+                static_cast<Physics::MotionState*>(pCollision->rigidBody.getMotionState())->openGLMatrix(reinterpret_cast<float*>(&model));
 
 				modelViewProj = viewProj * model;
 
@@ -403,11 +404,11 @@ bool Engine::GameEngine::render(float alpha)
 		}
 		else
 		{
-			modelViewProj = viewProj;
+			modelViewProj = viewProj * pVisual->tmpWorld;
 		}
 
         
-        Components::Visual *pVisual = m_Factory.storage().getComponent<Components::Visual>(entity.handle);
+        
 		if(pVisual->pObjectBuffer != lastObjectBuffer)
 		{
 			pVisual->pObjectBuffer->UpdateData(&modelViewProj);
@@ -422,7 +423,7 @@ bool Engine::GameEngine::render(float alpha)
 	RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
 
 	//Math::Matrix viewProj = projection * view;
-	//RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
+	RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
 
 	m_TestWorld->render(projection * view);
 
@@ -452,12 +453,17 @@ void Engine::GameEngine::init()
     RAPI::RVertexShader* vs = RAPI::RTools::LoadShaderFromString<RAPI::RVertexShader>(vertex_shader, "simpleVS");
     RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
 
+	// Clear with a sky-blue color
+	RAPI::REngine::RenderingDevice->SetMainClearValues(RAPI::RFloat4(0.0f, 0.53f, 1.0f, 0.0f));
 
 	VDFS::FileIndex idx;
 	idx.loadVDF("vdf/Worlds.vdf");
 	idx.loadVDF("vdf/Textures.vdf");
-	//idx.loadVDF("vdf/Textures_Addon.vdf");
-	//
+	idx.loadVDF("vdf/Meshes.vdf");
+	idx.loadVDF("vdf/Meshes_Addon.vdf");
+	idx.loadVDF("vdf/Textures_Addon.vdf");
+	idx.loadVDF("vdf/Anthera.mod");
 
-	m_TestWorld = new ZenWorld(*this, "newworld.zen", idx);
+	m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", idx);
+	//m_TestWorld = new ZenWorld(*this, "addonworld.zen", idx);
 }

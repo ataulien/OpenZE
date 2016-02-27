@@ -234,34 +234,38 @@ void zCMesh::readObjectData(ZenParser& parser, bool fromZen)
 				{
 					polyData2* p = (polyData2 *)blockPtr;
 
-					// TODO: Triangulate polygons!
-					if(p->polyNumVertices == 3) 
+					// TODO: Store these somewhere else
+					if(!p->flags.ghostOccluder && !p->flags.portalPoly)
 					{
-						// Write indices directly to a vector
-						for(int v = 0; v < p->polyNumVertices; v++)
+						if(p->polyNumVertices == 3)
 						{
-							m_Indices.emplace_back(p->indices[v].VertexIndex);
-							m_FeatureIndices.emplace_back(p->indices[v].FeatIndex);
-						}
-
-						// Save material index for the written triangle
-						m_TriangleMaterialIndices.emplace_back(p->materialIndex);
-					}
-					else
-					{
-						// Triangulate a triangle-fan
-						for (unsigned int i = 1; i < p->polyNumVertices - 1; i++)
-						{
-							m_Indices.emplace_back(p->indices[0].VertexIndex);
-							m_Indices.emplace_back(p->indices[i + 1].VertexIndex);
-							m_Indices.emplace_back(p->indices[i].VertexIndex);
-
-							m_FeatureIndices.emplace_back(p->indices[0].FeatIndex);
-							m_FeatureIndices.emplace_back(p->indices[i + 1].FeatIndex);
-							m_FeatureIndices.emplace_back(p->indices[i].FeatIndex);
+							// Write indices directly to a vector
+							for(int v = 0; v < p->polyNumVertices; v++)
+							{
+								m_Indices.emplace_back(p->indices[v].VertexIndex);
+								m_FeatureIndices.emplace_back(p->indices[v].FeatIndex);
+							}
 
 							// Save material index for the written triangle
 							m_TriangleMaterialIndices.emplace_back(p->materialIndex);
+						}
+						else
+						{
+							// Triangulate a triangle-fan
+							//for(unsigned int i = p->polyNumVertices - 2; i >= 1; i--)
+							for(unsigned int i = 1; i < p->polyNumVertices - 1; i++)
+							{
+								m_Indices.emplace_back(p->indices[0].VertexIndex);
+								m_Indices.emplace_back(p->indices[i].VertexIndex);
+								m_Indices.emplace_back(p->indices[i+1].VertexIndex);
+
+								m_FeatureIndices.emplace_back(p->indices[0].FeatIndex);
+								m_FeatureIndices.emplace_back(p->indices[i].FeatIndex);
+								m_FeatureIndices.emplace_back(p->indices[i+1].FeatIndex);
+
+								// Save material index for the written triangle
+								m_TriangleMaterialIndices.emplace_back(p->materialIndex);
+							}
 						}
 					}
 

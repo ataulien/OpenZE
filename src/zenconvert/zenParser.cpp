@@ -131,7 +131,7 @@ void ZenParser::readHeader()
 /**
 * @brief reads the main oCWorld-Object, found in the level-zens
 */
-void ZenParser::readWorld()
+oCWorldData ZenParser::readWorld()
 {
 	oCWorldData worldData;
 
@@ -141,7 +141,7 @@ void ZenParser::readWorld()
 	if(header.classname != "oCWorld:zCWorld")
 		throw std::runtime_error("Expected oCWorld:zCWorld-Chunk not found!");
 
-	oCWorld::readObjectData(*this);
+	return oCWorld::readObjectData(*this);
 }
 
 void ZenParser::readWorldMesh()
@@ -266,9 +266,6 @@ void ZenParser::skipEntry()
 	// Read type and size first, so we can allocate the data
 	m_pParserImpl->readEntryType(type, size);
 
-	if(type == ParserImpl::EZenValueType::ZVT_BYTE)
-		sinf(1.0f);
-
 	// Skip the entry
 	m_Seek += size;
 }
@@ -359,9 +356,8 @@ bool ZenParser::skipString(const std::string &pattern)
 void ZenParser::skipSpaces()
 {
 	bool search = true;
-	while(search)
+	while(search && m_Seek < m_Data.size())
 	{
-		checkArraySize();
 		switch(m_Data[m_Seek])
 		{
 		case ' ':
@@ -437,7 +433,8 @@ std::string ZenParser::readLine(bool skip)
 	}
 
 	// Skip trailing \n\r\0
-	m_Seek++;
+	if(m_Header.fileType == FT_BINARY)
+		m_Seek++;
 
 	if(skip)
 		skipSpaces();

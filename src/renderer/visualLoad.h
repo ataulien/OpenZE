@@ -3,6 +3,7 @@
 #include <RFwdDecl.h>
 #include <vector>
 #include "engine/objecthandle.h"
+#include "zenconvert/zCProgMeshProto.h"
 
 namespace Engine
 {
@@ -14,6 +15,11 @@ namespace VDFS
 	class FileIndex;
 }
 
+namespace ZenConvert
+{
+	struct PackedMesh;
+}
+
 namespace Renderer
 {
 	/**
@@ -22,7 +28,7 @@ namespace Renderer
 	RAPI::RTexture* loadTexture(const std::string& name, VDFS::FileIndex& fileIndex);
 
 	/**
-	 * @brief Creates entities for the given packed zCMesh. The handles are expected to be in the order matching the submeshes.
-	 */
-	void createVisualsFor(const ZenConvert::zCMesh::PackedMesh& packedMesh, Engine::ObjectFactory& factory, VDFS::FileIndex& vdfs, const std::vector<Engine::ObjectHandle>& handles);
+	* @brief Creates entities for the given packed zCMesh. The handles are expected to be in the order matching the submeshes.
+	*/
+	void createVisualsFor(const ZenConvert::PackedMesh& packedMesh, Engine::ObjectFactory& factory, VDFS::FileIndex& vdfs, const std::vector<Engine::ObjectHandle>& handles);
 }
