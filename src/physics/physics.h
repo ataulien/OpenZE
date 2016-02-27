@@ -4,6 +4,7 @@
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
 #include "utils/queue.h"
+#include "utils/mathlib.h"
 
 namespace Physics
 {
@@ -29,6 +30,12 @@ namespace Physics
 
         void addRigidBody(btRigidBody *pRigidBody);
         void updateRigidBodies();
+
+		/**
+		 * @brief Shoots a simple trace through the physics-world
+		 * @return Hitpoint
+		 */
+		Math::float3 rayTest(const Math::float3& start, const Math::float3& end);
 
         btDiscreteDynamicsWorld *world();
     private:

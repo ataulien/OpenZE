@@ -34,3 +34,61 @@ btDiscreteDynamicsWorld *Physics::Physics::world()
 {
     return &m_DynamicsWorld;
 }
+
+/**
+* @brief Shoots a simple trace through the physics-world
+* @return Distance to the hit-surface
+*/
+float Physics::Physics::rayTest(const Math::float3& start, const Math::float3& end)
+{
+	struct FilteredRayResultCallback : public btCollisionWorld::RayResultCallback
+	{
+		FilteredRayResultCallback(){}
+		virtual	btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult,bool normalInWorldSpace)
+		{
+			const btRigidBody* rb = btRigidBody::upcast(rayResult.m_collisionObject);
+			if(rb)	
+				return addSingleResult_close(rayResult, normalInWorldSpace);	
+
+			return 0;
+		}
+
+		btVector3	m_rayFromWorld;
+		btVector3	m_rayToWorld;
+
+		btVector3	m_hitNormalWorld;
+		btVector3	m_hitPointWorld;
+
+		virtual	btScalar	addSingleResult_close(btCollisionWorld::LocalRayResult& rayResult,bool normalInWorldSpace)
+		{
+			//caller already does the filter on the m_closestHitFraction
+			btAssert(rayResult.m_hitFraction <= m_closestHitFraction);
+
+			m_closestHitFraction = rayResult.m_hitFraction;
+			m_collisionObject = rayResult.m_collisionObject;
+			if (normalInWorldSpace)
+			{
+				m_hitNormalWorld = rayResult.m_hitNormalLocal;
+			} else
+			{
+				///need to transform normal into worldspace
+				m_hitNormalWorld = m_collisionObject->getWorldTransform().getBasis()*rayResult.m_hitNormalLocal;
+			}
+			m_hitPointWorld.setInterpolate3(m_rayFromWorld,m_rayToWorld,rayResult.m_hitFraction);
+
+
+			return rayResult.m_hitFraction;
+		}
+
+	};
+
+	FilteredRayResultCallback r;
+	r.m_rayFromWorld = btVector3(start.x, start.y, start.z);
+	r.m_rayToWorld = btVector3(end.x, end.y, end.z);
+
+	btVector3 from = {start.x, start.y, start.z};
+	btVector3 to = {end.x, end.y, end.z};
+	m_DynamicsWorld.rayTest(from, to, r);
+
+	return Math::float3(r.m_hitPointWorld.x,r.m_hitPointWorld.y,r.m_hitPointWorld.z);
+}
