@@ -6,6 +6,9 @@
 //#include "sound/soundmanager.h"
 
 #include "zenWorld.h"
+#include "zenconvert/export.h"
+
+RAPI::RBuffer* loadZENMesh(const std::string& file, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices, float scale = ZEN_SCALE_FACTOR);
 
 namespace Engine
 {

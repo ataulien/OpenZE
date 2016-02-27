@@ -3,6 +3,8 @@
 #include <inttypes.h>
 #include <fstream>
 
+#define ZEN_SCALE_FACTOR (1.0f / 100.0f)
+
 namespace ZenConvert
 {
     class Chunk;

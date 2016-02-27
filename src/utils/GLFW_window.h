@@ -44,7 +44,7 @@ namespace Utils
 		/**
 		* @brief Gets the current keystate
 		*/
-		virtual bool getKeyPressed(EKey key) override {return m_KeyPresses[key];};
+        virtual bool getKeyPressed(EKey key) override {return m_KeyPresses[key];}
 
 		/**
 		 * @brief Semi-Private function to set a key.
@@ -61,5 +61,10 @@ namespace Utils
 		 * @brief state of all keys
 		 */
 		bool m_KeyPresses[KEY_LAST];
+
+        /**
+         * @brief indicates if a menu is opened
+         */
+        bool m_InMenu;
 	};
 }

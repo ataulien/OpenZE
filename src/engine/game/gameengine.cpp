@@ -8,10 +8,12 @@
 #include <RInputLayout.h>
 #include <RDevice.h>
 
+#include "gameengine.h"
 #include "utils/GLFW_window.h"
 #include "utils/mathlib.h"
 #include "renderer/vertextypes.h"
 #include "gameengine.h"
+#include "physics/motionstate.h"
 #include "components.h"
 #include "components/collision.h"
 #include "components/visual.h"
@@ -61,7 +63,7 @@ static const char* fragment_shader =
         "void main () {"
 		"  vec4 tx = texture2D(texture0, f_uv.xy);"
 		"  if(tx.a < 0.5) discard;"
-		"  frag_colour = vec4(tx.rgb,1) * f_color;"
+        "  frag_colour = vec4(tx.rgb,1) * f_color;"
         "}";
 #else
 const char* vertex_shader =
@@ -127,14 +129,15 @@ RAPI::RTexture* loadVDFTexture(const std::string& file)
 	return nullptr;
 }
 
-RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices)
+RAPI::RBuffer* loadZENMesh(const std::string& file, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices, float scale)
 {
+    return nullptr;
     ZenConvert::Chunk parentVob("parent", "", 0);
 	ZenConvert::zCMesh worldMesh;
 
 	try
 	{
-		ZenConvert::ZenParser parser(file);
+        ZenConvert::ZenParser parser(file);
 	}
 	catch(std::exception &e)
 	{
@@ -185,9 +188,8 @@ RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Mat
 		vx[i+0].Normal = nrm;
 		vx[i+1].Normal = nrm;
 		vx[i+2].Normal = nrm;			
-	}
-	
-	return nullptr;
+    }
+    return nullptr;
 }
 
 RAPI::RBuffer* MakeBox(float extends)
@@ -293,14 +295,14 @@ bool Engine::GameEngine::render(float alpha)
 		// Update header
 		double frameDeltaSec = m_MainLoopTimer.getAvgDelta().count();
 		double frameDeltaMS = m_MainLoopTimer.getAvgDelta().count() * 1000.0f;
-		m_Window.setWindowTitle("openZE - FPS: " + std::to_string(1.0 / frameDeltaSec) + " (" + std::to_string(frameDeltaMS) + "ms)");
+        m_Window.setWindowTitle("openZE - FPS: " + std::to_string(1.0 / frameDeltaSec) + " (" + std::to_string(frameDeltaMS) + "ms) Vobs: " + std::to_string(m_Factory.storage().getEntities().size()));
 
 		s_TitleUpdateMod = 0.0;
 	}
 
 	// Grab window-events
     // TODO: Do this in an update-function, not the render-one!
-    const float MOVEMENT_SPEED = 140.0f;
+    const float MOVEMENT_SPEED = 50.0f;
     const float ZOOM_SPEED = 40.0f;
 	const float TURN_SPEED = Math::DegToRad(70);
 	float movement = MOVEMENT_SPEED * m_MainLoopTimer.getAvgDelta().count();
@@ -344,16 +346,17 @@ bool Engine::GameEngine::render(float alpha)
 		m_CameraCenter -= Math::float3::cross(Math::float3(0,1,0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_Q))
-		m_CameraCenter.y += movement;
+        m_CameraCenter.y += movement * 0.5f;
 	
-	if(m_Window.getKeyPressed(Utils::EKey::KEY_Y) || m_Window.getKeyPressed(Utils::EKey::KEY_Z))
-		m_CameraCenter.y -= movement;
+    if(m_Window.getKeyPressed(Utils::EKey::KEY_Z))
+        m_CameraCenter.y -= movement * 0.5f;
 	
 	if(m_Window.getKeyPressed(Utils::EKey::KEY_SPACE))
 	{
 		Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
 		Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
-		m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+        for(int i = 0; i < 20; ++i)
+            m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
 	}
 
 	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter, m_CameraCenter + Math::float3(sinf(m_CameraAngle),0,cosf(m_CameraAngle)), Math::float3(0,1,0));
@@ -386,7 +389,6 @@ bool Engine::GameEngine::render(float alpha)
 		Math::Matrix modelViewProj;
         if((entity.mask & C_COLLISION) == C_COLLISION)
         {
-            btTransform trans;
             Components::Collision *pCollision = m_Factory.storage().getComponent<Components::Collision>(entity.handle);
             if(pCollision)
             {

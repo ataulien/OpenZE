@@ -44,11 +44,7 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, t_float2 &v);
     };
 
-	static std::ostream& operator<< (std::ostream &out, t_float2 &v)
-	{
-		out << "[" + std::to_string(v.x) + ", " + std::to_string(v.y) + "]";
-		return out;
-	}
+    std::ostream& operator<< (std::ostream &out, t_float2 &v);
 
     struct t_float3
     {
@@ -75,13 +71,7 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, t_float3 &v);
     };
 
-	static std::ostream& operator<< (std::ostream &out, t_float3 &v)
-	{
-		out << "[" + std::to_string(v.x) 
-			+ ", " + std::to_string(v.y)
-			+ ", " + std::to_string(v.z) + "]";
-		return out;
-	}
+    std::ostream& operator<< (std::ostream &out, t_float3 &v);
 
     struct t_float4
     {
@@ -110,14 +100,7 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, t_float4 &v);
     };
 
-	static std::ostream& operator<< (std::ostream &out, t_float4 &v)
-	{
-		out << "[" + std::to_string(v.x) 
-			+ ", " + std::to_string(v.y)
-			+ ", " + std::to_string(v.z)
-			+ ", " + std::to_string(v.w) + "]";
-		return out;
-	}
+    std::ostream& operator<< (std::ostream &out, t_float4 &v);
 
     template<typename T, typename... S>
     struct t_vector : public T
@@ -354,23 +337,10 @@ namespace Math
 		friend std::ostream& operator<< (std::ostream &out, Matrix &v);
     };
 
-	static std::ostream& operator<< (std::ostream &out, Matrix &m)
-	{
-		out << "[";
-		for(size_t i = 0; i < 16; i++)
-		{
-			out << std::to_string(m.mv[i]);
-
-			// Only add "," when not at the last value
-			if(i != 15)
-				out << ", ";
-		}
-		out << "]";
-		return out;
-	}
+    std::ostream& operator<< (std::ostream &out, Matrix &m);
 
     static Matrix operator* (const Matrix& M1, const Matrix& M2)
     {
         return M1._glmMatrix * M2._glmMatrix;
     }
-};
+}

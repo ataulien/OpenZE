@@ -10,7 +10,7 @@ Physics::Physics::Physics(float gravity) :
 
 void Physics::Physics::update(double dt)
 {
-    m_DynamicsWorld.stepSimulation((btScalar)dt, 3, 1.0f/128.0f);
+    m_DynamicsWorld.stepSimulation((btScalar)dt, 10);
 }
 
 void Physics::Physics::init()
@@ -20,7 +20,14 @@ void Physics::Physics::init()
 
 void Physics::Physics::addRigidBody(btRigidBody *pRigidBody)
 {
-    m_DynamicsWorld.addRigidBody(pRigidBody);
+    m_RigidBodyQueue.enqueue(pRigidBody);
+}
+
+void Physics::Physics::updateRigidBodies()
+{
+    btRigidBody *pRigidBody;
+    while(m_RigidBodyQueue.try_dequeue(pRigidBody))
+        m_DynamicsWorld.addRigidBody(pRigidBody);
 }
 
 btDiscreteDynamicsWorld *Physics::Physics::world()

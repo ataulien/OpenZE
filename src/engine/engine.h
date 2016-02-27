@@ -13,7 +13,11 @@
 #include "components/visual.h"
 #endif
 
-
+//Testing:
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
+#include <BulletDynamics/Character/btKinematicCharacterController.h>
 
 namespace Engine
 {
@@ -88,5 +92,8 @@ namespace Engine
 		 * @brief Timer for the mainloop
 		 */
 		Utils::Timer<double, 20> m_MainLoopTimer;
+
+        //Testing:
+        btKinematicCharacterController *m_pCharacterController;
     };
 }

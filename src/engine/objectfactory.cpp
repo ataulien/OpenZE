@@ -17,20 +17,21 @@
 #include <RTools.h>
 #include <RTexture.h>
 
+#include "game/gameengine.h"
 #include "renderer/vertextypes.h"
 
 extern RAPI::RBuffer* MakeBox(float extends);
-extern RAPI::RBuffer* loadZENMesh(const std::string& file, float scale, std::vector<Math::float3>& zenVertices, std::vector<uint32_t>& zenIndices);
 #endif
 
 void Engine::ObjectFactory::test_createObjects()
 {
-    ObjectHandle handle = m_Storage.createEntity();
-    Components::Collision *pCollision = m_Storage.addComponent<Components::Collision>(handle);
-    Physics::CollisionShape shape(new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 1.0f));
-    pCollision->rigidBody.initPhysics(m_pEngine->physicsSystem(), shape,  Math::float3(0.0f, -100.0f, 0.0f));
-    pCollision->rigidBody.setFriction(1.0f);
-    pCollision->rigidBody.setRestitution(0.1f);
+    //Groundplane
+    ObjectHandle planeHandle = m_Storage.createEntity();
+    Components::Collision *pPlaneCollision = m_Storage.addComponent<Components::Collision>(planeHandle);
+    Physics::CollisionShape shape(new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 0.0f));
+    pPlaneCollision->rigidBody.initPhysics(m_pEngine->physicsSystem(), shape,  Math::float3(0.0f, -500.0f, 0.0f));
+    pPlaneCollision->rigidBody.setFriction(1.0f);
+    pPlaneCollision->rigidBody.setRestitution(0.1f);
 
 #ifdef ZE_GAME
     RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");
@@ -43,12 +44,12 @@ void Engine::ObjectFactory::test_createObjects()
     RAPI::RSamplerState* ss;
     RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
 
-    handle = m_Storage.createEntity();
-    pCollision = m_Storage.addComponent<Components::Collision>(handle);
+    ObjectHandle handle = m_Storage.createEntity();
+    Components::Collision *pCollision = m_Storage.addComponent<Components::Collision>(handle);
 
     std::vector<Math::float3> zenVertices;
     std::vector<uint32_t> zenIndices;
-    RAPI::RBuffer* worldMesh = loadZENMesh("newworld.zen", 1.0f / 50.0f, zenVertices, zenIndices);
+    RAPI::RBuffer* worldMesh = loadZENMesh("newworld.zen", zenVertices, zenIndices);
 
     RAPI::RTexture* tx = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RTexture>("testtexture");
     sm.SetTexture(0, tx, RAPI::ST_PIXEL);
@@ -64,46 +65,11 @@ void Engine::ObjectFactory::test_createObjects()
         wm->addTriangle(v[0], v[1], v[2]);
     }
 
-    Physics::CollisionShape cShape(new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 1.0f));
-    pCollision->rigidBody.initPhysics(m_pEngine->physicsSystem(), cShape, Math::float3(0.0f, -1.0f, 0.0f));
+    return;
+    Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false));
+    pCollision->rigidBody.initPhysics(m_pEngine->physicsSystem(), cShape, Math::float3(0.0f, 0.0f, 0.0f));
     pCollision->rigidBody.setRestitution(0.1f);
     pCollision->rigidBody.setFriction(1.0f);
-
-#if 0
-    const int n = 1;
-    const float turns = 5;
-    const float radius = 4.0f;
-    const float heightmod = 0.7f;
-    for(int i = 0; i < n; i++)
-    {
-        float p = (static_cast<float>(i) / static_cast<float>(n)) * R_PI * turns;
-        btVector3 s = btVector3(sinf(p) * radius, 50.0f + static_cast<float>(i) * heightmod, cosf(p) * radius);
-
-        entity = createEntity();
-        m_Mask[entity] = static_cast<EComponents>(C_COLLISION | C_VISUAL);
-        m_Collision[entity].pCollisionShape = new btBoxShape(btVector3(1.0f, 1.0f, 1.0f));
-        m_Collision[entity].pMotionState = new btDefaultMotionState(btTransform(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f), s));
-        btVector3 inertia;
-        float mass = 500.0f;
-        m_Collision[entity].pCollisionShape->calculateLocalInertia(mass, inertia);
-        m_Collision[entity].pRigidBody = new btRigidBody(mass, m_Collision[entity].pMotionState,
-                                                         m_Collision[entity].pCollisionShape, inertia);
-        m_Collision[entity].pRigidBody->setRestitution(0.1f);
-        m_Collision[entity].pRigidBody->setFriction(1.0f);
-        m_pEngine->physicsSystem()->addRigidBody(m_Collision[entity].pRigidBody);
-
-        m_Visual[entity].pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-        m_Visual[entity].pObjectBuffer->Init(nullptr, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::EUsageFlags::U_DYNAMIC, RAPI::ECPUAccessFlags::CA_WRITE);
-
-        sm.SetVertexBuffer(0, b);
-        sm.SetPixelShader(ps);
-        sm.SetVertexShader(vs);
-        sm.SetInputLayout(inputLayout);
-        sm.SetConstantBuffer(0, m_Visual[entity].pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
-
-        m_Visual[entity].pPipelineState = sm.MakeDrawCall(b->GetSizeInBytes() / b->GetStructuredByteSize());
-    }
-#endif
 #endif
 }
 

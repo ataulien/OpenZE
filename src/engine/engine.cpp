@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 
 #include "engine.h"
 #include "settings.h"
@@ -34,14 +35,33 @@ void Engine::Engine::mainLoop()
 {
     m_Factory.test_createObjects();
 
+    btPairCachingGhostObject *pGhostObject = new btPairCachingGhostObject();
+    pGhostObject->activate();
+    btConvexShape *pShape = new btSphereShape(1.0f);
+    m_pCharacterController = new btKinematicCharacterController(pGhostObject, pShape, 1.0f);
+    //m_PhysicsSystem.world()->addCharacter(m_pCharacterController);
+
 	// Define the updaterate for the game-logic
-    const float update_fps = 128;
+    const float update_fps = 64;
     auto update_dt = std::chrono::duration<double>(1 / update_fps);
 	auto max_dt_seconds = std::chrono::duration<double>(0.2f);
 	std::chrono::duration<double> accumulator = std::chrono::duration<double>::zero();
 	std::chrono::duration<double> delta = std::chrono::duration<double>::zero();
 	// Start the timer
 	m_MainLoopTimer.update();
+
+    std::thread physicsThread([this]()
+    {
+        Utils::Timer<double> timer;
+        std::chrono::duration<double> delta = std::chrono::duration<double>::zero();
+        while(true)
+        {
+            delta = timer.update();
+            m_PhysicsSystem.updateRigidBodies();
+            // Let bullet do it's own fixed timestamp
+            updatePhysics(delta);
+        }
+    });
 
     bool isRunning = true;
     while(isRunning)
@@ -54,12 +74,7 @@ void Engine::Engine::mainLoop()
 
 		// Update the physics as often as we have to
         while(accumulator > update_dt)
-        {       
             accumulator -= update_dt;
-        }
-
-        // Let bullet do it's own fixed timestamp
-        updatePhysics(delta);
 
 		//updatePhysics(accumulator);
 		//accumulator = std::chrono::duration<double>::zero();
@@ -70,6 +85,8 @@ void Engine::Engine::mainLoop()
 		// Draw the current frame
         isRunning = render(alpha);
     }
+
+    physicsThread.join();
 }
 
 Physics::Physics *Engine::Engine::physicsSystem()

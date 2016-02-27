@@ -3,6 +3,7 @@
 #include "utils/mathlib.h"
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace ZenConvert
 {
