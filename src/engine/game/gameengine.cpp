@@ -344,6 +344,13 @@ bool Engine::GameEngine::render(float alpha)
 				if(ev.KeyboardEvent.action == Utils::Window::EA_Pressed)
 					m_IsFlying = !m_IsFlying;
 				break;
+
+#ifdef ZE_GAME
+			case Utils::EKey::KEY_F7:
+				if(ev.KeyboardEvent.action == Utils::Window::EA_Pressed)
+					RAPI::REngine::RenderingDevice->SetDoDrawCalls(false);
+				break;
+#endif
 			}
 			break;
         }
