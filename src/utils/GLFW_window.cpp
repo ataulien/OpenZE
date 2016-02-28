@@ -14,12 +14,18 @@ using namespace Utils;
 /**
 * @brief Creates the window using the given parameters. The window will stay open as long as the object exists
 */
-GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bottomX, unsigned int bottomY, const std::string& title) :
-    Window(topX, topY, bottomX, bottomY, title),
-    m_InMenu(false)
+GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int width, unsigned int height, const std::string& title) :
+    Window(topX, topY, width, height, title),
+    m_InMenu(false),
+	m_IsFullscreen(false)
 {
 	// Init key-array
 	memset(m_KeyPresses, 0, sizeof(m_KeyPresses));
+
+	m_TopX = topX;
+	m_TopY = topY;
+	m_Width = width;
+	m_Height = height;
 
 	/* Initialize the library */
 	if(!glfwInit())
@@ -32,7 +38,10 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bott
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_FALSE);
-	m_pWindowHandle = glfwCreateWindow(1280, 720, "--- Test ---", nullptr, nullptr);
+	m_pWindowHandle = glfwCreateWindow(width, height, "--- Test ---", nullptr, nullptr);
+
+	// Move window
+	glfwSetWindowPos(m_pWindowHandle, m_TopX, m_TopY);
 
 	// Turn off vsync
 	glfwSwapInterval(0);
@@ -55,6 +64,31 @@ GLFW_Window::~GLFW_Window()
 {
 	// We only support one window at a time using glfw
 	glfwTerminate();
+}
+
+/**
+* @brief Switches to fullscreen/windowed
+*/
+void GLFW_Window::switchMode(bool fullscreen)
+{
+	// Get the desktop resolution.
+	int count;
+	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+	m_IsFullscreen = fullscreen;
+
+	if(fullscreen) {
+		// Set window size for "fullscreen windowed" mode to the desktop resolution.
+		glfwSetWindowSize(m_pWindowHandle, mode->width, mode->height);
+		// Move window to the upper left corner.
+		glfwSetWindowPos(m_pWindowHandle, 0, 0);
+	}
+	else {
+		// Use start-up values for "windowed" mode.
+		glfwSetWindowSize(m_pWindowHandle, m_Width, m_Height);
+		glfwSetWindowPos(m_pWindowHandle, m_TopX, m_TopY);
+	}
+
 }
 
 /**
@@ -98,6 +132,17 @@ void GLFW_Window::pollEvent(const std::function<void(Event)>& callback)
 		fn(e);
 	});
 
+	glfwSetWindowSizeCallback(m_pWindowHandle, [](GLFWwindow* wnd, int width, int height)
+	{
+		hlpStruct* hlp = reinterpret_cast<hlpStruct*>(glfwGetWindowUserPointer(wnd));
+
+		Event e(EEvent::E_Resized);
+		e.ResizeEvent.width = width;
+		e.ResizeEvent.height = height;
+
+		hlp->fn(e);
+	});
+
 	glfwPollEvents();
 
 	glfwSetWindowUserPointer(m_pWindowHandle, nullptr);
@@ -138,8 +183,6 @@ GLFWwindow* GLFW_Window::getGLFWwindow()
 void* GLFW_Window::getNativeHandle()
 {
 #if defined(WIN32) || defined(_WIN32)
-	//return m_pWindowHandle;
-	// TODO: OpenGL under Windows is broken because of this!
 	return glfwGetWin32Window(m_pWindowHandle);
 #else
     return m_pWindowHandle;

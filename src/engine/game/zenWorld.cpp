@@ -130,11 +130,13 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 			// TODO: Put this into an other function
 			if(v.visual.find(".3DS") != std::string::npos && v.visual.find(".3DS") != 0) // TODO: Don't find twice
 			{
+				Math::Matrix worldMatrix = v.rotationMatrix3x3.toMatrix((v.position - Math::float3(0,100,0)) * scale); // FIXME: Random as fuck, vobs are hovering 1m above the ground on scale of 1/100;
+				float brightness = 1.0f;
+				
 				std::vector<ObjectHandle> handles;
 
 				auto& it = visualEntities.find(v.visual);
-				//if(it == visualEntities.end())
-				if(true)
+				if(it == visualEntities.end())
 				{
 					// Strip .3DS-Part
 					std::string vname = v.visual.substr(0, v.visual.find(".3DS"));
@@ -165,11 +167,11 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 					for(auto& h : handles)
 					{
 						Components::Visual* pVc = engine.objectFactory().storage().getComponent<Components::Visual>(h);
-						pVc->tmpWorld = v.rotationMatrix3x3.toMatrix((v.position - Math::float3(0,100,0)) * scale); // FIXME: Random as fuck, vobs are hovering 1m above the ground on scale of 1/100
+						pVc->tmpWorld = worldMatrix;
 					
 						ZenConvert::VobObjectInfo ocb;
 						ocb.worldMatrix = pVc->tmpWorld;
-						ocb.color = Math::float4(1,1,1,1);
+						ocb.color = Math::float4(brightness,brightness,brightness,1.0f);
 						pVc->pObjectBuffer->UpdateData(&ocb);
 					}
 
@@ -184,8 +186,8 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 					Math::Matrix m = Math::Matrix::CreateIdentity();
 
 					ZenConvert::VobObjectInfo ocb;
-					ocb.worldMatrix = m;
-					ocb.color = Math::float4(1.0f,1.0f,1.0f,1.0f) * 0.5f;
+					ocb.worldMatrix = worldMatrix;
+					ocb.color = Math::float4(brightness,brightness,brightness,1.0f);
 					pObjectBuffer->Init(&ocb, sizeof(ZenConvert::VobObjectInfo), sizeof(ZenConvert::VobObjectInfo), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
 					// Create entities for each material
@@ -201,12 +203,12 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 						Components::Visual* pVc = engine.objectFactory().storage().addComponent<Components::Visual>(handles.back());
 						pVc->pObjectBuffer = pObjectBuffer;
 
-						pVc->tmpWorld = v.rotationMatrix3x3.toMatrix(v.position * scale);
+						pVc->tmpWorld = worldMatrix;
 
 						// Construct new pipelinestate
 						RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 						sm.SetFromPipelineState(pSourceVc->pPipelineState);
-						sm.SetConstantBuffer(0, pVc->pObjectBuffer, RAPI::EShaderType::ST_PIXEL);
+						sm.SetConstantBuffer(1, pVc->pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
 
 						// Construct pipeline state from source
 						pVc->pPipelineState = sm.MakeDrawCall(pSourceVc->pPipelineState->NumDrawElements, pSourceVc->pPipelineState->StartVertexOffset);

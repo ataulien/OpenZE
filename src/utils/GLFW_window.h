@@ -14,7 +14,7 @@ namespace Utils
 		/**
 		* @brief Creates the window using the given parameters. The window will stay open as long as the object exists
 		*/
-		GLFW_Window(unsigned int topX, unsigned int topY, unsigned int bottomX, unsigned int bottomY, const std::string& title);
+		GLFW_Window(unsigned int topX, unsigned int topY, unsigned int width, unsigned int height, const std::string& title);
 
 		/**
 		* @brief Closes the window 
@@ -50,6 +50,16 @@ namespace Utils
 		 * @brief Semi-Private function to set a key.
 		 */
 		void setKeyPressed(EKey key, bool value){m_KeyPresses[key] = value;}
+
+		/**
+		 * @brief Switches to fullscreen/windowed
+		 */
+		void switchMode(bool fullscreen);
+
+		/** 
+		* @brief Returns whether the window is in fullscreen-mode
+		*/
+		virtual bool isFullscreen(){ return m_IsFullscreen;}
 	private:
 
 		/**
@@ -66,5 +76,15 @@ namespace Utils
          * @brief indicates if a menu is opened
          */
         bool m_InMenu;
+
+		/**
+		 * @brief True, if this is a fullscreen-window
+		 */
+		bool m_IsFullscreen;
+
+		/**
+		 * @brief Start coords for the window
+		 */
+		int m_TopX, m_TopY, m_Width, m_Height;
 	};
 }

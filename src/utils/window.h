@@ -60,13 +60,19 @@ namespace Utils
 
 			}KeyboardEvent;
 
+			struct
+			{
+				int width;
+				int height;
+			}ResizeEvent;
+
 			EEvent EventType;
 		};
 
 		/**
 		 * @brief Creates the window using the given parameters. The window will stay open as long as the object exists
 		 */
-		Window(unsigned int topX, unsigned int topY, unsigned int bottomX, unsigned int bottomY, const std::string& title);
+		Window(unsigned int topX, unsigned int topY, unsigned int width, unsigned int height, const std::string& title);
 
 		/**
 		 * @brief Closes the window 
@@ -92,5 +98,15 @@ namespace Utils
 		 * @brief Gets the current keystate
 		 */
         virtual bool getKeyPressed(EKey key){(void)key; return false;}
+
+		/**
+		* @brief Switches to fullscreen/windowed
+		*/
+		virtual void switchMode(bool fullscreen) = 0;
+
+		/** 
+		 * @brief Returns whether the window is in fullscreen-mode
+		 */
+		virtual bool isFullscreen() = 0;
     };
 }

@@ -68,7 +68,9 @@ static const char* fragment_shader =
         "void main () {"
 		"  vec4 tx = texture2D(texture0, f_uv.xy);"
 		"  if(tx.a < 0.5) discard;"
-        "  frag_colour = vec4(tx.rgb,1) * f_color;"
+		"  vec4 color = mix(f_color * 0.8, f_color, 1.5 * min(1.0, max(0.0,dot(normalize(f_nrm), normalize(vec3(0.333,0.666,0.333))))));"
+		" frag_colour = tx * color;"
+		//"  frag_colour = vec4(tx.rgb,1) * color;"
         "}";
 #else
 const char* vertex_shader =
@@ -334,23 +336,27 @@ bool Engine::GameEngine::render(float alpha)
             break;
 
         case Utils::Window::E_Resized:
-            LogInfo() << "Resized window!";
-            break;
+			LogInfo() << "Resized window!";
+            RAPI::REngine::RenderingDevice->OnResize();
+			break;
 
 		case Utils::Window::E_KeyEvent:
-			switch(ev.KeyboardEvent.key)
+			if(ev.KeyboardEvent.action == Utils::Window::EA_Pressed)
 			{
-			case Utils::EKey::KEY_F6:
-				if(ev.KeyboardEvent.action == Utils::Window::EA_Pressed)
+				switch(ev.KeyboardEvent.key)
+				{
+				case Utils::EKey::KEY_F6:
 					m_IsFlying = !m_IsFlying;
-				break;
+					break;
 
-#ifdef ZE_GAME
-			case Utils::EKey::KEY_F7:
-				if(ev.KeyboardEvent.action == Utils::Window::EA_Pressed)
+				case Utils::EKey::KEY_F7:
 					RAPI::REngine::RenderingDevice->SetDoDrawCalls(false);
-				break;
-#endif
+					break;
+
+				case Utils::EKey::KEY_F8:
+					m_Window.switchMode(!m_Window.isFullscreen());
+					break;
+				}
 			}
 			break;
         }
