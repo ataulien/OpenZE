@@ -12,13 +12,19 @@
 #include "engine/components/visual.h"
 #include "zenconvert/zTypes.h"
 
+const std::string DEFAULT_TEXTURE = "NW_MISC_MAYA_GROUND_01.TGA";
+
 /**
 * @brief Loads a texture from the given VDF-Index
 */
-RAPI::RTexture* Renderer::loadTexture(const std::string& name, const VDFS::FileIndex& fileIndex)
+RAPI::RTexture* Renderer::loadTexture(const std::string& _name, const VDFS::FileIndex& fileIndex)
 {
+	std::string name = _name;
 	if(name.empty())
-		return nullptr;
+	{
+		// Load default texture
+		name = DEFAULT_TEXTURE;
+	}
 
 	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RTexture>(name);
 	if(tx)

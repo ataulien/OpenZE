@@ -283,7 +283,7 @@ RAPI::RBuffer* MakeBox(float extends)
 
 Engine::GameEngine::GameEngine(int argc, char *argv[]) :
     Engine(argc, argv),
-    m_Window(200, 200, 800, 600, "OpenZE"),
+    m_Window(200, 200, 1280, 720, "OpenZE"),
 	m_CameraZoom(1.0f),
 	m_CameraAngle(0.0f),
 	m_CameraCenter(100,0,0),
@@ -477,10 +477,11 @@ bool Engine::GameEngine::render(float alpha)
 
 	RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
 
-#ifdef RND_D3D11
+	RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(0,0,0), 50.0f);
+
 	//Math::Matrix viewProj = projection * view;
 	RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
-#endif
+
 
 	m_TestWorld->render(projection * view);
 

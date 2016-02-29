@@ -19,6 +19,7 @@
 
 #include "game/gameengine.h"
 #include "renderer/vertextypes.h"
+#include "renderer/visualLoad.h"
 
 extern RAPI::RBuffer* MakeBox(float extends);
 #endif
@@ -97,13 +98,15 @@ void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &positio
 	ZenConvert::VobObjectInfo ocb;
 	ocb.color = Math::float4(1.0f,1.0f,1.0f,1.0f);
 	pVisual->pObjectBuffer->Init(&ocb, sizeof(ZenConvert::VobObjectInfo), sizeof(ZenConvert::VobObjectInfo), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);    sm.SetVertexBuffer(0, b);
-    sm.SetPixelShader(ps);
+    sm.SetPrimitiveTopology(RAPI::PT_TRIANGLE_LIST);
+	sm.SetPixelShader(ps);
     sm.SetVertexShader(vs);
     sm.SetInputLayout(inputLayout);
-    sm.SetConstantBuffer(1, pVisual->pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
 	sm.SetConstantBuffer(0, RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("PerFrameCB"), RAPI::ST_VERTEX);
-
+	sm.SetConstantBuffer(1, pVisual->pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
+	sm.SetTexture(0, Renderer::loadTexture("", m_pEngine->vdfsFileIndex()), RAPI::ST_PIXEL);
     pVisual->pPipelineState = sm.MakeDrawCall(b->GetSizeInBytes() / b->GetStructuredByteSize());
+
 #endif
 
     Components::Collision *pCollision = m_Storage.addComponent<Components::Collision>(handle);
