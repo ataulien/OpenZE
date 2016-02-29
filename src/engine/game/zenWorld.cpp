@@ -16,6 +16,8 @@
 #include <RStateMachine.h>
 #include <RDevice.h>
 #include <RTools.h>
+#include "renderer/renderSystem.h"
+#include "renderer/visuals/visual.h"
 #endif
 
 using namespace Engine;
@@ -61,6 +63,11 @@ ZenWorld::ZenWorld(::Engine::Engine& engine, ZenConvert::ZenParser& parser, VDFS
 		disectWorldMesh(worldMesh, engine, vdfs, scale);
 
 	parseWorldObjects(worldData, engine, vdfs, scale);
+
+#ifdef ZE_GAME
+	engine.renderSystemPtr()->getPagedVertexBuffer<Renderer::WorldVertex>().RebuildPages();
+	engine.renderSystemPtr()->getPagedIndexBuffer<uint32_t>().RebuildPages();
+#endif
 }
 
 ZenWorld::~ZenWorld()
@@ -73,20 +80,21 @@ ZenWorld::~ZenWorld()
 */
 void ZenWorld::disectWorldMesh(ZenConvert::zCMesh* mesh, ::Engine::Engine& engine, VDFS::FileIndex & vdfs, float scale)
 {
+	std::vector<ObjectHandle> handles;
+
 	ZenConvert::PackedMesh packedMesh;
 
 	// Pack the mesh into an easier format
 	mesh->packMesh(packedMesh, scale);
 
-	std::vector<ObjectHandle> handles;
-	// Create entities for each material
-	for(auto& s : packedMesh.subMeshes)
-	{
-		handles.push_back(engine.objectFactory().storage().createEntity());
-	}
+#ifdef ZE_GAME
+	// Create the visual
+	std::hash<std::string> hash;
+	Renderer::Visual* pVisual = engine.renderSystemPtr()->createVisual(hash("__WORLDMESH"), packedMesh);	
 
-	// Create visuals for each submesh
-	Renderer::createVisualsFor(packedMesh, engine.objectFactory(), vdfs, handles);
+	// Create entities for rendering	
+	pVisual->createEntities(handles);
+#endif
 
 	// Create collisionmeshes for each material
 	for(size_t s=0;s<handles.size();s++)
@@ -118,7 +126,6 @@ void ZenWorld::disectWorldMesh(ZenConvert::zCMesh* mesh, ::Engine::Engine& engin
 */
 void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::Engine& engine, VDFS::FileIndex & vdfs, float scale)
 {
-	std::map<std::string, std::vector<ObjectHandle>> visualEntities;
 	std::function<void(const std::vector<ZenConvert::zCVobData>&)> fn = [&](const std::vector<ZenConvert::zCVobData>& vobs)
 	{
 		for(auto& v : vobs)
@@ -133,10 +140,11 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 				Math::Matrix worldMatrix = v.rotationMatrix3x3.toMatrix((v.position - Math::float3(0,100,0)) * scale); // FIXME: Random as fuck, vobs are hovering 1m above the ground on scale of 1/100;
 				float brightness = 1.0f;
 				
-				std::vector<ObjectHandle> handles;
+				std::hash<std::string> hash;
+				size_t visualHash = hash(v.visual);
+				Renderer::Visual* pVisual = engine.renderSystemPtr()->getVisualByHash(visualHash);
 
-				auto& it = visualEntities.find(v.visual);
-				if(it == visualEntities.end())
+				if(!pVisual)
 				{
 					// Strip .3DS-Part
 					std::string vname = v.visual.substr(0, v.visual.find(".3DS"));
@@ -155,66 +163,35 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 					// Pack the mesh into an easier format
 					mesh.packMesh(packedMesh, scale);
 
-					
-					// Create entities for each material
-					for(auto& s : packedMesh.subMeshes)
-					{
-						handles.push_back(engine.objectFactory().storage().createEntity());
-					}
-
-					// Create visuals for each submesh
-					Renderer::createVisualsFor(packedMesh, engine.objectFactory(), vdfs, handles);				
-					for(auto& h : handles)
-					{
-						Components::Visual* pVc = engine.objectFactory().storage().getComponent<Components::Visual>(h);
-						pVc->tmpWorld = worldMatrix;
-					
-						ZenConvert::VobObjectInfo ocb;
-						ocb.worldMatrix = pVc->tmpWorld;
-						ocb.color = Math::float4(brightness,brightness,brightness,1.0f);
-						pVc->pObjectBuffer->UpdateData(&ocb);
-					}
-
-					// Place into cache
-					visualEntities[v.visual] = handles;
+					// Create the visual
+					pVisual = engine.renderSystemPtr()->createVisual(hash(v.visual), packedMesh);								
 				}
-				else
+
+				// Create entities and init visuals
+				std::vector<ObjectHandle> handles;
+				pVisual->createEntities(handles);
+
+				Math::Matrix m = Math::Matrix::CreateIdentity();
+
+				ZenConvert::VobObjectInfo ocb;
+				ocb.worldMatrix = worldMatrix;
+				ocb.color = Math::float4(brightness, brightness, brightness, 1.0f);
+	
+				// Create entities for each material
+				RAPI::RBuffer* pObjectBuffer = nullptr;
+				for(auto& h : handles)
 				{
-					auto& cached = visualEntities[v.visual]; // Old handles of an entity using the needed visual
-
-					RAPI::RBuffer* pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-					Math::Matrix m = Math::Matrix::CreateIdentity();
-
-					ZenConvert::VobObjectInfo ocb;
-					ocb.worldMatrix = worldMatrix;
-					ocb.color = Math::float4(brightness,brightness,brightness,1.0f);
-					pObjectBuffer->Init(&ocb, sizeof(ZenConvert::VobObjectInfo), sizeof(ZenConvert::VobObjectInfo), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
-
-					// Create entities for each material
-					for(auto& h : cached)
+					if(!pObjectBuffer)
 					{
-						handles.push_back(engine.objectFactory().storage().createEntity());
-
-
-						// Get source visual to build this after
-						Components::Visual* pSourceVc = engine.objectFactory().storage().getComponent<Components::Visual>(h);
-
-						// Init visual
-						Components::Visual* pVc = engine.objectFactory().storage().addComponent<Components::Visual>(handles.back());
-						pVc->pObjectBuffer = pObjectBuffer;
-
-						pVc->tmpWorld = worldMatrix;
-
-						// Construct new pipelinestate
-						RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
-						sm.SetFromPipelineState(pSourceVc->pPipelineState);
-						sm.SetConstantBuffer(1, pVc->pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
-
-						// Construct pipeline state from source
-						pVc->pPipelineState = sm.MakeDrawCall(pSourceVc->pPipelineState->NumDrawElements, pSourceVc->pPipelineState->StartVertexOffset);
-
+						Components::Visual* pVisComp = engine.objectFactory().storage().getComponent<Components::Visual>(h);
+						pObjectBuffer = pVisComp->pObjectBuffer;
+						pObjectBuffer->UpdateData(&ocb);
+						break;
 					}
+
+					// TODO: More here
 				}
+				
 #endif
 			}
 		}

@@ -6,7 +6,8 @@
 
 Engine::Engine::Engine(int argc, char *argv[]) :
     m_Factory(this),
-    m_pSettings(new Settings(argc, argv))
+    m_pSettings(new Settings(argc, argv)),
+	m_pRenderSystem(nullptr)
 {
 }
 
@@ -98,4 +99,20 @@ Physics::Physics *Engine::Engine::physicsSystem()
 Engine::ObjectFactory & Engine::Engine::objectFactory()
 {
 	return m_Factory;
+}
+
+/**
+* @brief Getter to the rendering system
+*/
+Renderer::RenderSystem* Engine::Engine::renderSystemPtr()
+{
+	return m_pRenderSystem;
+}
+
+/**
+ * @brief Getter for the main vdfs file index
+ */
+const VDFS::FileIndex& Engine::Engine::vdfsFileIndex()
+{
+	return m_VdfsFileIndex;
 }

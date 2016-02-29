@@ -24,6 +24,7 @@
 #include "zenconvert/ztex2dds.h"
 #include <RTexture.h>
 #include "zenWorld.h"
+#include "renderer/renderSystem.h"
 
 #define RENDER_MASK (::Engine::C_VISUAL)
 
@@ -289,11 +290,13 @@ Engine::GameEngine::GameEngine(int argc, char *argv[]) :
 	m_TestWorld(nullptr),
 	m_IsFlying(true)
 {
+	
 }
 
 Engine::GameEngine::~GameEngine()
 {
 	delete m_TestWorld;
+	delete m_pRenderSystem;
     RAPI::REngine::UninitializeEngine();
 }
 
@@ -350,7 +353,11 @@ bool Engine::GameEngine::render(float alpha)
 					break;
 
 				case Utils::EKey::KEY_F7:
-					RAPI::REngine::RenderingDevice->SetDoDrawCalls(false);
+					{
+						static bool s_enabled = true;
+						s_enabled = !s_enabled;
+						RAPI::REngine::RenderingDevice->SetDoDrawCalls(s_enabled);					
+					}
 					break;
 
 				case Utils::EKey::KEY_F8:
@@ -423,7 +430,7 @@ bool Engine::GameEngine::render(float alpha)
 
 	// Draw frame
     RAPI::REngine::RenderingDevice->OnFrameStart();
-    RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue();
+    RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue(true, "Main Queue");
 
     Math::Matrix model = Math::Matrix::CreateIdentity();
 	Math::Matrix viewProj = projection * view;
@@ -450,10 +457,15 @@ bool Engine::GameEngine::render(float alpha)
             {
                 static_cast<Physics::MotionState*>(pCollision->rigidBody.getMotionState())->openGLMatrix(reinterpret_cast<float*>(&model));
 
-				ZenConvert::VobObjectInfo ocb;
-				ocb.color = Math::float4(1.0f,1.0f,1.0f,1.0f);
-				ocb.worldMatrix = model;
-				pVisual->pObjectBuffer->UpdateData(&ocb);
+				if(pVisual->tmpWorld != model)
+				{
+					ZenConvert::VobObjectInfo ocb;
+					ocb.color = Math::float4(1.0f, 1.0f, 1.0f, 1.0f);
+					ocb.worldMatrix = model;
+					pVisual->pObjectBuffer->UpdateData(&ocb);
+
+					pVisual->tmpWorld = model;
+				}
 
             }
             else
@@ -506,16 +518,16 @@ void Engine::GameEngine::init()
 	m_pCameraBuffer->Init(nullptr, sizeof(Math::Matrix), sizeof(Math::Matrix), RAPI::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 	RAPI::REngine::ResourceCache->AddToCache("PerFrameCB", m_pCameraBuffer);
 
+	m_pRenderSystem = new Renderer::RenderSystem(*this);
 
-	VDFS::FileIndex idx;
-	//idx.loadVDF("vdf/Worlds.vdf");
-	idx.loadVDF("vdf/Worlds_Addon.vdf");
-	idx.loadVDF("vdf/Textures.vdf");
-	idx.loadVDF("vdf/Meshes.vdf");
-	idx.loadVDF("vdf/Meshes_Addon.vdf");
-	idx.loadVDF("vdf/Textures_Addon.vdf");
-	//idx.loadVDF("vdf/Anthera.mod");
+	//m_VdfsFileIndex.loadVDF("vdf/Worlds.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/Worlds_Addon.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/Textures.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/Meshes.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/Meshes_Addon.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/Textures_Addon.vdf");
+	//m_VdfsFileIndex.loadVDF("vdf/Anthera.mod");
 
 	//m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", idx);
-	m_TestWorld = new ZenWorld(*this, "addonworld.zen", idx);
+	m_TestWorld = new ZenWorld(*this, "addonworld.zen", m_VdfsFileIndex);
 }

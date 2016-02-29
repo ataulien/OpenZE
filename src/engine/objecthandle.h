@@ -16,6 +16,14 @@ namespace Engine
             };
             uint32_t handle;
         };
+
+		/**
+		 * @brief <-operator for std maps and set
+		 */
+		bool operator<(const ObjectHandle &rhs) const 
+		{
+			return handle < rhs.handle;
+		}
     };
 }
 

@@ -102,7 +102,7 @@ bool FileIndex::replaceFileByName(const FileInfo& inf)
 * @brief Fills the given pointer with the information about the provided filename.
 * @return False, if the file was not found
 */
-bool FileIndex::getFileByName(const std::string& name, FileInfo* outinf)
+bool FileIndex::getFileByName(const std::string& name, FileInfo* outinf) const
 {
 	// Does the file even exist?
 	std::string upper = name;
@@ -130,12 +130,12 @@ void FileIndex::clearIndex()
 /**
 * @brief Fills a vector with the data of the given file
 */
-bool FileIndex::getFileData(const FileInfo& inf, std::vector<uint8_t>& data)
+bool FileIndex::getFileData(const FileInfo& inf, std::vector<uint8_t>& data) const
 {
 	return inf.targetArchive->extractFile(inf, data);
 }
 
-bool FileIndex::getFileData(const std::string& file, std::vector<uint8_t>& data)
+bool FileIndex::getFileData(const std::string& file, std::vector<uint8_t>& data) const
 {
 	std::string upper = file;
 	std::transform(upper.begin(), upper.end(),upper.begin(), ::toupper);

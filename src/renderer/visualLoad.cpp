@@ -15,7 +15,7 @@
 /**
 * @brief Loads a texture from the given VDF-Index
 */
-RAPI::RTexture* Renderer::loadTexture(const std::string& name, VDFS::FileIndex& fileIndex)
+RAPI::RTexture* Renderer::loadTexture(const std::string& name, const VDFS::FileIndex& fileIndex)
 {
 	if(name.empty())
 		return nullptr;
@@ -50,7 +50,7 @@ RAPI::RTexture* Renderer::loadTexture(const std::string& name, VDFS::FileIndex& 
 /**
 * @brief Creates entities for the given packed zCMesh
 */
-void Renderer::createVisualsFor(const ZenConvert::PackedMesh& packedMesh, Engine::ObjectFactory& factory, VDFS::FileIndex& vdfs, const std::vector<Engine::ObjectHandle>& handles)
+void Renderer::createVisualsFor(RenderSystem& system, const ZenConvert::PackedMesh& packedMesh, Engine::ObjectFactory& factory, VDFS::FileIndex& vdfs, const std::vector<Engine::ObjectHandle>& handles)
 {
 	// Create buffers and states for each texture
 	RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");

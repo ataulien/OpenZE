@@ -51,13 +51,13 @@ namespace VDFS
 		 * @brief Fills the given pointer with the information about the provided filename.
 		 * @return False, if the file was not found
 		 */
-		bool getFileByName(const std::string& name, FileInfo* outinf);
+		bool getFileByName(const std::string& name, FileInfo* outinf) const;
 
 		/**
 		 * @brief Fills a vector with the data of the given file
 		 */
-		bool getFileData(const FileInfo& inf, std::vector<uint8_t>& data);
-		bool getFileData(const std::string& file, std::vector<uint8_t>& data);
+		bool getFileData(const FileInfo& inf, std::vector<uint8_t>& data) const;
+		bool getFileData(const std::string& file, std::vector<uint8_t>& data) const;
 
 		/**
 		 * @brief Clears the complete index and all registered files

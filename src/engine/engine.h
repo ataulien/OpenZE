@@ -7,6 +7,7 @@
 #include "objectfactory.h"
 #include "physics/physics.h"
 #include "utils/timer.h"
+#include "vdfs/fileIndex.h"
 #include "components/collision.h"
 
 #ifdef ZE_GAME
@@ -18,6 +19,11 @@
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
+
+namespace Renderer
+{
+	class RenderSystem;
+}
 
 namespace Engine
 {
@@ -66,6 +72,16 @@ namespace Engine
 		*/
 		ObjectFactory& objectFactory();
 
+		/**
+		 * @brief Getter for the rendering system
+		 */
+		Renderer::RenderSystem* renderSystemPtr();
+
+		/**
+		 * @brief Getter for the main vdfs file index
+		 */
+		const VDFS::FileIndex& vdfsFileIndex();
+
         /**
          * @brief init
          */
@@ -87,6 +103,16 @@ namespace Engine
 		 * @brief Main physics system
 		 */
         Physics::Physics m_PhysicsSystem;
+
+		/**
+		* @brief The main rendering system. Might be nullptr on server.
+		*/
+		Renderer::RenderSystem* m_pRenderSystem;
+
+		/**
+		 * @brief Main VDFS-Index for this session
+		 */
+		VDFS::FileIndex m_VdfsFileIndex;
 
 		/**
 		 * @brief Timer for the mainloop

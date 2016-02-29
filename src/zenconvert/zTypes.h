@@ -130,6 +130,7 @@ namespace ZenConvert
 	/**
 	* @brief Simple generic packed mesh, containing all useful information of a (lod-level of) zCMesh and zCProgMeshProto
 	*/
+	// FIXME: Probably move this to renderer-package
 	struct PackedMesh
 	{
 		struct SubMesh

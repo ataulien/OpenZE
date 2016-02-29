@@ -4,6 +4,8 @@ project(Renderer)
 file(GLOB SRC
     *.cpp
     *.h
+	visuals/*.cpp
+	visuals/*.h
 )
 
 add_library(renderer_gl STATIC ${SRC})
