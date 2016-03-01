@@ -12,7 +12,7 @@
 #include "engine/components/visual.h"
 #include "zenconvert/zTypes.h"
 
-const std::string DEFAULT_TEXTURE = "NW_MISC_MAYA_GROUND_01.TGA";
+const std::string DEFAULT_TEXTURE = "DEFAULT_TEXTURE-C.TEX";
 
 /**
 * @brief Loads a texture from the given VDF-Index
@@ -20,11 +20,8 @@ const std::string DEFAULT_TEXTURE = "NW_MISC_MAYA_GROUND_01.TGA";
 RAPI::RTexture* Renderer::loadTexture(const std::string& _name, const VDFS::FileIndex& fileIndex)
 {
 	std::string name = _name;
-	if(name.empty())
-	{
-		// Load default texture
-		name = DEFAULT_TEXTURE;
-	}
+	if(name.empty())		
+		name = DEFAULT_TEXTURE; // Load default texture
 
 	RAPI::RTexture* tx = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RTexture>(name);
 	if(tx)
@@ -37,7 +34,19 @@ RAPI::RTexture* Renderer::loadTexture(const std::string& _name, const VDFS::File
 	// Read data from vdfs
 	std::vector<uint8_t> textureData;
 	if(!fileIndex.getFileData(fileName, textureData))
-		return nullptr;
+	{
+		tx = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RTexture>(name);
+
+		if(!tx)
+		{
+			if(!fileIndex.getFileData(DEFAULT_TEXTURE, textureData))
+				return nullptr;
+		}
+		else
+		{
+			return tx;
+		}
+	}
 
 	// Convert to actual dds
 	std::vector<uint8_t> ddsData;

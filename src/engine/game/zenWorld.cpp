@@ -99,25 +99,28 @@ void ZenWorld::disectWorldMesh(ZenConvert::zCMesh* mesh, ::Engine::Engine& engin
 	// Create collisionmeshes for each material
 	for(size_t s=0;s<handles.size();s++)
 	{
-		Components::Collision* pCc = engine.objectFactory().storage().addComponent<Components::Collision>(handles[s]);
-		
-		btTriangleMesh* wm = new btTriangleMesh;
-
-		for(size_t i = 0; i < packedMesh.subMeshes[s].indices.size(); i+=3)
+		if(!packedMesh.subMeshes[s].indices.empty())
 		{
-			auto& v0 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i]].Position;
-			auto& v1 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i+1]].Position;
-			auto& v2 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i+2]].Position;
+			Components::Collision* pCc = engine.objectFactory().storage().addComponent<Components::Collision>(handles[s]);
 
-			// Convert to btvector
-			btVector3 v[] = {{v0.x, v0.y, v0.z}, {v1.x, v1.y, v1.z}, {v2.x, v2.y, v2.z}};
-			wm->addTriangle(v[0], v[1], v[2]);
+			btTriangleMesh* wm = new btTriangleMesh;
+
+			for(size_t i = 0; i < packedMesh.subMeshes[s].indices.size(); i += 3)
+			{
+				auto& v0 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i]].Position;
+				auto& v1 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i + 1]].Position;
+				auto& v2 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i + 2]].Position;
+
+				// Convert to btvector
+				btVector3 v[] = { {v0.x, v0.y, v0.z}, {v1.x, v1.y, v1.z}, {v2.x, v2.y, v2.z} };
+				wm->addTriangle(v[0], v[1], v[2]);
+			}
+
+			Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false));
+			pCc->rigidBody.initPhysics(engine.physicsSystem(), cShape, Math::float3(0.0f, -1.0f, 0.0f));
+			pCc->rigidBody.setRestitution(0.1f);
+			pCc->rigidBody.setFriction(1.0f);
 		}
-
-		Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false));
-		pCc->rigidBody.initPhysics(engine.physicsSystem(), cShape, Math::float3(0.0f, -1.0f, 0.0f));
-		pCc->rigidBody.setRestitution(0.1f);
-		pCc->rigidBody.setFriction(1.0f);
 	}
 }
 

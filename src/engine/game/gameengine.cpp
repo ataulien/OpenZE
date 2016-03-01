@@ -69,7 +69,7 @@ static const char* fragment_shader =
         "void main () {"
 		"  vec4 tx = texture2D(texture0, f_uv.xy);"
 		"  if(tx.a < 0.5) discard;"
-		"  vec4 color = mix(f_color * 0.8, f_color, 1.5 * min(1.0, max(0.0,dot(normalize(f_nrm), normalize(vec3(0.333,0.666,0.333))))));"
+		"  vec4 color = mix(f_color * 0.5, f_color, 1.5 * min(1.0, max(0.0,dot(normalize(f_nrm), normalize(vec3(0.333,0.666,0.333))))));"
 		" frag_colour = tx * color;"
 		//"  frag_colour = vec4(tx.rgb,1) * color;"
         "}";
@@ -252,6 +252,11 @@ RAPI::RBuffer* MakeBox(float extends)
 	vx[i++].Position = Math::float3(-1.0f, 1.0f, 1.0f);
 	vx[i++].Position = Math::float3(1.0f,-1.0f, 1.0f );
 
+	for(i = 0; i < n; i++)
+	{
+		vx[i].TexCoord = Math::float2(vx[i].Position.x * 0.5f + 0.5f, vx[i].Position.z * 0.5f + 0.5f);
+	}
+
 	// Generate normals
 	for(i = 0; i < n; i += 3)
 	{
@@ -271,8 +276,7 @@ RAPI::RBuffer* MakeBox(float extends)
     // Loop through all vertices and apply the extends
     for(i = 0; i < n; i++)
     {
-		vx[i].Color = 0xFFFF0000;
-		vx[i].TexCoord = Math::float2(0,0);
+		vx[i].Color = 0xFFFFFFFF;
         vx[i].Position *= extends;
     }
 
@@ -521,14 +525,15 @@ void Engine::GameEngine::init()
 
 	m_pRenderSystem = new Renderer::RenderSystem(*this);
 
-	//m_VdfsFileIndex.loadVDF("vdf/Worlds.vdf");
-	m_VdfsFileIndex.loadVDF("vdf/Worlds_Addon.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/Worlds.vdf");
+	//m_VdfsFileIndex.loadVDF("vdf/Worlds_Addon.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Textures.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Meshes.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Meshes_Addon.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Textures_Addon.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/OpenZE.vdf");
 	//m_VdfsFileIndex.loadVDF("vdf/Anthera.mod");
 
 	//m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", idx);
-	m_TestWorld = new ZenWorld(*this, "addonworld.zen", m_VdfsFileIndex);
+	m_TestWorld = new ZenWorld(*this, "newworld.zen", m_VdfsFileIndex);
 }

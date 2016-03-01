@@ -104,7 +104,7 @@ void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &positio
     sm.SetInputLayout(inputLayout);
 	sm.SetConstantBuffer(0, RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("PerFrameCB"), RAPI::ST_VERTEX);
 	sm.SetConstantBuffer(1, pVisual->pObjectBuffer, RAPI::EShaderType::ST_VERTEX);
-	sm.SetTexture(0, Renderer::loadTexture("", m_pEngine->vdfsFileIndex()), RAPI::ST_PIXEL);
+	sm.SetTexture(0, Renderer::loadTexture("WHITE.TGA", m_pEngine->vdfsFileIndex()), RAPI::ST_PIXEL);
     pVisual->pPipelineState = sm.MakeDrawCall(b->GetSizeInBytes() / b->GetStructuredByteSize());
 
 #endif
