@@ -117,7 +117,7 @@ void ZenWorld::disectWorldMesh(ZenConvert::zCMesh* mesh, ::Engine::Engine& engin
 			}
 
 			Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false));
-			pCc->rigidBody.initPhysics(engine.physicsSystem(), cShape, Math::float3(0.0f, -1.0f, 0.0f));
+			pCc->rigidBody.initPhysics(engine.physicsSystem(), cShape, Math::float3(0.0f, 0.0f, 0.0f));
 			pCc->rigidBody.setRestitution(0.1f);
 			pCc->rigidBody.setFriction(1.0f);
 		}
@@ -140,7 +140,7 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 			// TODO: Put this into an other function
 			if(v.visual.find(".3DS") != std::string::npos && v.visual.find(".3DS") != 0) // TODO: Don't find twice
 			{
-				Math::Matrix worldMatrix = v.rotationMatrix3x3.toMatrix((v.position - Math::float3(0,100,0)) * scale); // FIXME: Random as fuck, vobs are hovering 1m above the ground on scale of 1/100;
+				Math::Matrix worldMatrix = v.rotationMatrix3x3.toMatrix(v.position * scale);
 				float brightness = 1.0f;
 				
 				std::hash<std::string> hash;
@@ -184,15 +184,14 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 				RAPI::RBuffer* pObjectBuffer = nullptr;
 				for(auto& h : handles)
 				{
+					Components::Visual* pVisComp = engine.objectFactory().storage().getComponent<Components::Visual>(h);
 					if(!pObjectBuffer)
-					{
-						Components::Visual* pVisComp = engine.objectFactory().storage().getComponent<Components::Visual>(h);
+					{					
 						pObjectBuffer = pVisComp->pObjectBuffer;
 						pObjectBuffer->UpdateData(&ocb);
-						break;
 					}
 
-					// TODO: More here
+					pVisComp->tmpWorld = worldMatrix;
 				}
 				
 #endif

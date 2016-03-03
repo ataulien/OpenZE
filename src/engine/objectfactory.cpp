@@ -41,7 +41,7 @@ void Engine::ObjectFactory::test_createObjects()
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
     RAPI::RBuffer *b = MakeBox(1.0f);
 
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertexInstanced>(vs);
 
     RAPI::RSamplerState* ss;
     RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, nullptr);
@@ -85,7 +85,7 @@ void Engine::ObjectFactory::test_createPhysicsEntity(const Math::float3 &positio
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
     RAPI::RBuffer *b = MakeBox(1.0f);
 
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertexInstanced>(vs);
 
     Components::Visual *pVisual = m_Storage.addComponent<Components::Visual>(handle);
     if(!pVisual)

@@ -48,6 +48,24 @@ namespace Renderer
 		 * @brief Returns the visual matching the given hash
 		 */
 		Visual* getVisualByHash(size_t hash);
+
+		/**
+		 * @brief clears the instance cache vector
+		 */
+		void clearInstanceCache();
+
+		/**
+		 * @brief Adds an entity for the given visual
+		 * @return current number of instances in the vector
+		 */
+		size_t addEntityForVisual(Engine::ObjectHandle entity, size_t visualId, size_t subVisualId);
+
+		/**
+		 * @brief Builds instancing-data and stores it into the given RBuffer
+		 *		  and modifies the pipelinestate of the main-entities
+		 */
+		void buildInstancingData(RAPI::RBuffer* targetBuffer, std::vector<Engine::ObjectHandle>& mainHandles);
+
 	protected:
 
 		template<RAPI::EBindFlags B>
@@ -78,5 +96,17 @@ namespace Renderer
 		 * @brief cache for loaded visuals
 		 */
 		VisualStorage m_VisualStorage;
+
+		/**
+		 * @brief Instancing-cache for each visual. m_VisualInstanceCache stores VisualIDs, while an InstanceCacheEntry stores the subIds
+		 */
+		struct InstanceCacheEntry
+		{
+			Engine::ObjectHandle mainHandle;
+			std::vector<PerInstanceData> instanceDataPerSubIdx;
+		};
+		std::vector<std::vector<InstanceCacheEntry>> m_VisualInstanceCache;
+		size_t m_NumRegisteredInstances;
+		RAPI::RBuffer* m_pInstancingBuffer;
 	};
 }

@@ -23,6 +23,8 @@ namespace Engine
             RAPI::RBuffer *pObjectBuffer;
             RAPI::RPipelineState *pPipelineState;
 			Math::Matrix tmpWorld; // TODO: Put this into some kind of Transform-Component!
+			size_t visualId;
+			size_t visualSubId;
 
             void cleanUp()
             {

@@ -72,7 +72,7 @@ void Renderer::createVisualsFor(RenderSystem& system, const ZenConvert::PackedMe
 	RAPI::RVertexShader* vs = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RVertexShader>("simpleVS");
 	RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 
-	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertexInstanced>(vs);
 	RAPI::RSamplerState* ss;
 	RAPI::RRasterizerState* rs;
 	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, &rs);

@@ -45,9 +45,6 @@ void Renderer::StaticMeshVisual::createMesh(const ZenConvert::PackedMesh& packed
 		target.indexBuffer = m_pRenderSystem->getPagedIndexBuffer<uint32_t>().AddLogicalBuffer(source.indices.data(), source.indices.size());
 	}
 
-	if(m_pRenderSystem->getPagedVertexBuffer<WorldVertex>().GetBuffer() == m_pRenderSystem->getPagedIndexBuffer<uint32_t>().GetBuffer())
-		LogError() << "ASdfsadf";
-
 	// Register observers, so we can update our pipeline-states accordingly
 	m_pRenderSystem->getPagedVertexBuffer<WorldVertex>().RegisterObserver(this, [this](unsigned int id, void* userptr) { onLogicalVertexBuffersUpdated(userptr); } );
 	m_pRenderSystem->getPagedIndexBuffer<uint32_t>().RegisterObserver(this, [this](unsigned int id, void* userptr) { onLogicalIndexBuffersUpdated(userptr); } );
@@ -101,7 +98,7 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 	RAPI::RVertexShader* vs = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RVertexShader>("simpleVS");
 	RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 
-	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertexInstanced>(vs);
 	RAPI::RSamplerState* ss;
 	RAPI::RRasterizerState* rs;
 	RAPI::RTools::MakeDefaultStates(nullptr, &ss, nullptr, &rs);
@@ -131,11 +128,16 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 	ocb.color = Math::float4(1,1,1,1);
 	pObjectBuffer->Init(&ocb, sizeof(ZenConvert::VobObjectInfo), sizeof(ZenConvert::VobObjectInfo), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
+	// Get global instancing buffer
+	RAPI::RBuffer* instBuffer = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("MainInstancingBuffer");
+
 	// Create an entity for each submesh
 	createdEntities.reserve(m_Submeshes.size());
+	size_t i=0;
 	for(auto& s : m_Submeshes)
 	{
 		sm.SetVertexBuffer(0, m_pRenderSystem->getPagedVertexBuffer<WorldVertex>().GetBuffer());
+		sm.SetVertexBuffer(1, instBuffer);
 		sm.SetIndexBuffer(m_pRenderSystem->getPagedIndexBuffer<uint32_t>().GetBuffer());
 		sm.SetTexture(0, loadTexture(s.material.texture, m_pRenderSystem->getEngine()->vdfsFileIndex()), RAPI::ST_PIXEL);
 
@@ -149,12 +151,16 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 		if(visual)
 		{
 			visual->pObjectBuffer = pObjectBuffer;
-			visual->pPipelineState = sm.MakeDrawCallIndexed(s.indexBuffer->PageNumElements);
+			visual->pPipelineState = sm.MakeDrawCallIndexedInstanced(s.indexBuffer->PageNumElements, 0);
 			visual->tmpWorld = Math::Matrix::CreateIdentity();
+			visual->visualId = m_Id;
+			visual->visualSubId = i;
 		}
 
 		createdEntities.push_back(e);
 		m_ObjectHandles.insert(e);
 		s.submeshObjectHandles.insert(e);
+
+		i++;
 	}
 }

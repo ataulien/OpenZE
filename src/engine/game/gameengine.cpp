@@ -49,12 +49,13 @@ static const char* vertex_shader =
 		"in vec3 vnorm;\n"
 		"in vec2 vuv;\n"
 		"in vec4 vcolor;\n"
+		"in mat4 instanceWorld;\n"
 		"out vec3 f_nrm;\n"
 		"out vec2 f_uv;\n"
 		"out vec4 f_color;\n"
         "void main () {\n"
-		"	gl_Position = PF_ViewProj * V_WorldMatrix * vec4(vp, 1.0);\n"
-		"	f_nrm = mat3(V_WorldMatrix) * vnorm;"
+		"	gl_Position = PF_ViewProj * instanceWorld * vec4(vp, 1.0);\n"
+		"	f_nrm = mat3(instanceWorld) * vnorm;"
 		"	f_uv = vuv;"
 		"	f_color = vcolor * V_Color;"
         "}\n";
@@ -94,6 +95,7 @@ const char* vertex_shader =
 		"	float3 normal : NORMAL;"
 		"	float2 texCoord : TEXCOORD;"
 		"	float4 color : COLOR;"
+		"   Matrix instanceWorld : INSTANCE_WORLD;" 
 		"};"
 		"struct VS_OUTPUT"
 		"{"		
@@ -104,8 +106,8 @@ const char* vertex_shader =
 		"};"
         "VS_OUTPUT VSMain (VS_INPUT input) {"
 		"  VS_OUTPUT output = (VS_OUTPUT)0;"	
-		"  output.position = mul(mul(PF_ViewProj, V_WorldMatrix), float4(input.vp, 1.0));"
-		"  output.normal = mul((float3x3)V_WorldMatrix, input.normal);"
+		"  output.position = mul(mul(PF_ViewProj, input.instanceWorld), float4(input.vp, 1.0));"
+		"  output.normal = mul((float3x3)input.instanceWorld, input.normal);"
 		"  output.color = input.color * V_Color;"
 		"  output.texCoord = input.texCoord;"
 		"  return output;"
@@ -476,8 +478,23 @@ bool Engine::GameEngine::render(float alpha)
                 LogWarn() << "Invalid collision object";
 		}      
     
-        RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
+		// Push visual into instance-cache
+		m_pRenderSystem->addEntityForVisual(entity.handle, pVisual->visualId, pVisual->visualSubId);
+
+        //RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
     }
+
+	// Get global instancing buffer
+	RAPI::RBuffer* instBuffer = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("MainInstancingBuffer");
+	std::vector<ObjectHandle> mainHandles;
+	m_pRenderSystem->buildInstancingData(instBuffer, mainHandles);
+	m_pRenderSystem->clearInstanceCache();
+
+	for(auto& h : mainHandles)
+	{
+		Components::Visual *pVisual = m_Factory.storage().getComponent<Components::Visual>(h);
+		RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
+	}
 
 	RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
 
@@ -513,7 +530,7 @@ void Engine::GameEngine::init()
     RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 
     RAPI::RVertexShader* vs = RAPI::RTools::LoadShaderFromString<RAPI::RVertexShader>(vertex_shader, "simpleVS");
-    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertex>(vs);
+    RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertexInstanced>(vs);
 
 	// Clear with a sky-blue color
 	RAPI::REngine::RenderingDevice->SetMainClearValues(RAPI::RFloat4(0.0f, 0.53f, 1.0f, 0.0f));
@@ -526,14 +543,14 @@ void Engine::GameEngine::init()
 	m_pRenderSystem = new Renderer::RenderSystem(*this);
 
 	m_VdfsFileIndex.loadVDF("vdf/Worlds.vdf");
-	//m_VdfsFileIndex.loadVDF("vdf/Worlds_Addon.vdf");
+	m_VdfsFileIndex.loadVDF("vdf/Worlds_Addon.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Textures.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Meshes.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Meshes_Addon.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/Textures_Addon.vdf");
 	m_VdfsFileIndex.loadVDF("vdf/OpenZE.vdf");
-	//m_VdfsFileIndex.loadVDF("vdf/Anthera.mod");
+	m_VdfsFileIndex.loadVDF("vdf/Anthera.mod");
 
-	//m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", idx);
-	m_TestWorld = new ZenWorld(*this, "newworld.zen", m_VdfsFileIndex);
+	//m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", m_VdfsFileIndex);
+	m_TestWorld = new ZenWorld(*this, "addonworld.zen", m_VdfsFileIndex);
 }

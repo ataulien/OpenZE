@@ -37,6 +37,21 @@ namespace Renderer
 				return;
 			}
 
+			// Assign it a free ID if we have, otherwise generate a new one.
+			if(!m_FreeIDs.empty())
+			{
+				size_t id = *m_FreeIDs.begin();
+				pVisual->setId(id);
+
+				// Remove from set
+				m_FreeIDs.erase(m_FreeIDs.begin());
+			}
+			else
+			{
+				pVisual->setId(m_RegisteredVisuals.size());
+				m_RegisteredVisuals.push_back(pVisual);
+			}
+
 			m_VisualMap[hash] = pVisual;
 		}
 
@@ -66,5 +81,15 @@ namespace Renderer
 		 * @brief Visuals by their hashes
 		 */
 		std::unordered_map<size_t, Visual*> m_VisualMap;
+
+		/**
+		 * @brief Visuals by ID
+		 */
+		std::vector<Visual*> m_RegisteredVisuals;
+
+		/**
+		 * @brief IDs of freed visuals
+		 */
+		std::set<size_t> m_FreeIDs;
 	};
 }
