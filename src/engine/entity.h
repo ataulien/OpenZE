@@ -1,20 +1,51 @@
 #pragma once
 
 #include "components.h"
+#include "utils/mathlib.h"
 
 namespace Engine
 {
-    struct Entity
+	/**
+	 * @brief Single game object. Can have multiple components, accessed by using the same
+	 *		  handle and by checking the mask.
+	 */
+    class Entity
     {
-        Entity(uint32_t offset = 0) :
-        mask(C_NONE)
-    {
-        handle.count = 0;
-        handle.offset = offset;
-    }
+	public:
+        Entity(uint32_t offset = 0)
+		{
+			m_ComponentMask = EComponents::C_NONE;
+			m_Handle.count = 0;
+			m_Handle.offset = offset;
+		}
 
-        ObjectHandle handle;
-        EComponents mask;
+		/**
+		 * Simple getters/setters
+		 */
+		void setHandle(const ObjectHandle& h) { m_Handle = h;}
+		const ObjectHandle& getHandle() const { return m_Handle; }
+
+		void setComponentMask(const EComponents& h) { m_ComponentMask = h;}
+		const EComponents& getComponentMask() const { return m_ComponentMask; }
+
+		void setWorldTransform(const Math::Matrix& h) { m_WorldTransform = h;}
+		const Math::Matrix& getWorldTransform() const { return m_WorldTransform; }
+
+	protected:
+		/**
+		 * @brief Handle for access to the components stored along this entity
+		 */
+        ObjectHandle m_Handle;
+
+		/**
+		 * @brief Valid components for this Entity ORed together
+		 */
+        EComponents m_ComponentMask;
+
+		/**
+		 * @brief World-Transform of this entity
+		 */
+		Math::Matrix m_WorldTransform;
     };
 }
 

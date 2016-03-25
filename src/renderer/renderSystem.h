@@ -6,7 +6,7 @@
 
 namespace Engine
 {
-	class Engine;
+	class GameEngine;
 }
 
 namespace ZenConvert
@@ -20,8 +20,13 @@ namespace Renderer
 	class RenderSystem
 	{
 	public:
-		RenderSystem(Engine::Engine& engine);
+		RenderSystem(Engine::GameEngine& engine);
 		~RenderSystem();
+
+		/**
+		 * @brief Renders a frame
+		 */
+		void renderFrame();
 
 		/**
 		 * @brief Returns a paged buffer of the given type, if one was created.
@@ -37,7 +42,7 @@ namespace Renderer
 		/**
 		 * @brief returns the engine this was created with
 		 */
-		Engine::Engine* getEngine(){return m_pEngine;}
+		Engine::GameEngine* getEngine(){return m_pEngine;}
 
 		/**
 		 * @brief Creates a visual for the given type in the target function overload
@@ -66,7 +71,19 @@ namespace Renderer
 		 */
 		void buildInstancingData(RAPI::RBuffer* targetBuffer, std::vector<Engine::ObjectHandle>& mainHandles);
 
+		/** 
+		 * @brief returns the global visual storage
+		 */
+		VisualStorage& getVisualStorage() { return m_VisualStorage;}
+
+		RAPI::RBuffer* getInstancingBuffer(){ return m_pInstancingBuffer; }
 	protected:
+
+		/**
+		* @brief instancing cache
+		*/
+		std::vector<PerInstanceData> m_InstanceCache;
+		std::vector<size_t> m_MaxEntitiesForVisual;
 
 		template<RAPI::EBindFlags B>
 		struct PagedBuffer
@@ -90,7 +107,7 @@ namespace Renderer
 		/**
 		 * @brief Engine this was created with
 		 */
-		Engine::Engine* m_pEngine;
+		Engine::GameEngine* m_pEngine;
 
 		/**
 		 * @brief cache for loaded visuals

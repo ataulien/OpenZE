@@ -10,8 +10,12 @@ file(GLOB SRC
 
 add_library(renderer_gl STATIC ${SRC})
 set_target_properties(renderer_gl PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(renderer_gl PROPERTIES COMPILE_FLAGS "-DRND_GL -DZE_GAME")
 
+if(ANDROID)
+set_target_properties(renderer_gl PROPERTIES COMPILE_FLAGS "-DRND_GL -DZE_GAME -DRAPI_USE_GLES3")
+else()
+set_target_properties(renderer_gl PROPERTIES COMPILE_FLAGS "-DRND_GL -DZE_GAME")
+endif()
 if(OPENZE_D3D11)
 	if( WIN32 )
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

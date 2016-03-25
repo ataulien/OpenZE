@@ -7,6 +7,11 @@
 
 namespace Renderer
 {
+	/**
+	 * @brief 0-based ID, save to be used in arrays of the same size as number of components
+	 */
+	typedef size_t VisualID;
+
 	class RenderSystem;
 	class Visual
 	{
@@ -22,8 +27,13 @@ namespace Renderer
 		/**
 		 * @brief Returns/Set the ID of this visual
 		 */
-		size_t getId(){return m_Id;}
-		void setId(size_t id){m_Id = id;}
+		VisualID getId(){return m_Id;}
+		void setId(VisualID id){m_Id = id;}
+
+		/**
+		 * @brief Returns the amount of entities created/registered for this visual
+		 */
+		size_t getNumEntities(){return m_NumEntities;}
 
 	protected:
 		/**
@@ -40,6 +50,11 @@ namespace Renderer
 		/**
 		 * @brief ID of this visual. These are always minimalistic, which means they are reused after an object died
 		 */
-		size_t m_Id;
+		VisualID m_Id;
+
+		/**
+		 * @brief Amount of entities created for this visual
+		 */
+		size_t m_NumEntities;
 	};
 }

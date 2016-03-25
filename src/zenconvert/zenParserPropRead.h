@@ -22,7 +22,7 @@ namespace ZenConvert
     inline void read<bool>(ZenParser& p, std::string& outStr, bool& outData)
 	{ 
 		p.getImpl()->readEntry("", &outData, sizeof(bool), ParserImpl::ZVT_BOOL);
-		outStr = std::to_string(outData);
+		outStr = std::to_string(outData ? 1 : 0);
     }
 
 	template<> 

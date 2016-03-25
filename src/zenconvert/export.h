@@ -9,10 +9,11 @@ namespace ZenConvert
 {
     class Chunk;
 
-    class Export
-    {
-    public:
-        Export(const std::string &dirName);
+	class Export
+	{
+	public:
+		Export(const std::string &dirName);
+		virtual ~Export(){}
         virtual void exportVobTree(Chunk *pVob);
         virtual void exportWayNet(Chunk *pVob, std::ostream &stream);
         virtual void exportMaterials(Chunk *pVob, std::ostream &stream);

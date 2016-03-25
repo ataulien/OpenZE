@@ -11,6 +11,11 @@
 
 using namespace ZenConvert;
 
+#ifdef __ANDROID__
+#define ERROR(msg) do{LogError() << msg;}while(0)
+#else 
+#define ERROR(msg) do{ throw std::runtime_error(msg); }while(0)
+#endif
 /**
 * @brief reads a zen from a file
 */
@@ -48,9 +53,15 @@ bool ZenParser::readFile(const std::string& fileName, std::vector<uint8_t>& data
 	file.seekg(0, std::ios::beg);
 
 	if(!file.good())
-		throw std::runtime_error("File does not exist");
+	{	
+		ERROR("File does not exist");
+		ERROR(strerror(errno));
+	}
+	LogInfo() << "Zen-File found! Size: " << size;
 
 	data.resize(size);
+	
+	LogInfo() << "Reading...";
 	file.read(reinterpret_cast<char *>(data.data()), size);
 
 	return true;
@@ -70,10 +81,10 @@ bool ZenParser::isNumber(const std::string &expr)
 void ZenParser::readHeader()
 {
 	if(!skipString("ZenGin Archive"))
-		throw std::runtime_error("Not a valid format");
+		ERROR("Not a valid format");
 
 	if(!skipString("ver"))
-		throw std::runtime_error("Not a valid header");
+		ERROR("Not a valid header");
 
 	// Version should be always 1...
 	m_Header.version = readIntASCII();
@@ -99,11 +110,11 @@ void ZenParser::readHeader()
 		m_pParserImpl = new ParserImplBinSafe(this);
 	}
 	else
-		throw std::runtime_error("Unsupported file format");
+		ERROR("Unsupported file format");
 
 	// Read string of the format "savegame b", where b is 0 or 1
 	if(!skipString("saveGame"))
-		throw std::runtime_error("Unsupported file format");
+		ERROR("Unsupported file format");
 
 	m_Header.saveGame = readBoolASCII();
 
@@ -120,7 +131,7 @@ void ZenParser::readHeader()
 
 	// Reached the end of the main header
 	if(!skipString("END"))
-		throw std::runtime_error("No END in header(1)");
+		ERROR("No END in header(1)");
 
 	// Continue with the implementationspecific header
 	skipSpaces();
@@ -139,7 +150,7 @@ oCWorldData ZenParser::readWorld()
 	readChunkStart(header);
 
 	if(header.classname != "oCWorld:zCWorld")
-		throw std::runtime_error("Expected oCWorld:zCWorld-Chunk not found!");
+		ERROR("Expected oCWorld:zCWorld-Chunk not found!");
 
 	return oCWorld::readObjectData(*this);
 }
@@ -293,7 +304,7 @@ bool ZenParser::readBoolASCII()
 	skipSpaces();
 	bool retVal;
 	if(m_Data[m_Seek] != '0' && m_Data[m_Seek] != '1')
-		throw std::runtime_error("Value is not a bool");
+		ERROR("Value is not a bool");
 	else
 		retVal = m_Data[m_Seek] == '0' ? false : true;
 

@@ -2,7 +2,6 @@
 #include <vector>
 #include "utils/mathlib.h"
 #include "zTypes.h"
-#include "renderer/vertextypes.h"
 
 namespace VDFS
 {
@@ -101,6 +100,11 @@ namespace ZenConvert
 		 * @brief All materials used by this mesh
 		 */
 		std::vector<zCMaterialData> m_Materials;
+
+		/**
+		 * @brief Triangles of the current mesh, containing flags
+		 */
+		std::vector<WorldTriangle> m_Triangles;
 
 		/**
 		 * @brief Bounding-box of this mesh

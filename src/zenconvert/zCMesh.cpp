@@ -240,14 +240,28 @@ void zCMesh::readObjectData(ZenParser& parser, bool fromZen)
 						if(p->polyNumVertices == 3)
 						{
 							// Write indices directly to a vector
-							for(int v = 0; v < p->polyNumVertices; v++)
+							WorldVertex vx[3];
+							for(int v = 0; v < 3; v++)
 							{
 								m_Indices.emplace_back(p->indices[v].VertexIndex);
 								m_FeatureIndices.emplace_back(p->indices[v].FeatIndex);
+
+								// Gather vertex information
+								vx[v].Position = m_Vertices[p->indices[v].VertexIndex];
+								vx[v].Color = m_Features[p->indices[v].FeatIndex].lightStat;
+								vx[v].TexCoord = Math::float2(m_Features[p->indices[v].FeatIndex].uv[0], m_Features[p->indices[v].FeatIndex].uv[1]);
+								vx[v].Normal = m_Features[p->indices[v].FeatIndex].vertNormal;
 							}
 
 							// Save material index for the written triangle
 							m_TriangleMaterialIndices.emplace_back(p->materialIndex);
+
+							WorldTriangle triangle;
+							triangle.flags = p->flags;
+							memcpy(triangle.vertices, vx, sizeof(vx));
+
+							// Save triangle
+							m_Triangles.push_back(triangle);
 						}
 						else
 						{
@@ -265,6 +279,23 @@ void zCMesh::readObjectData(ZenParser& parser, bool fromZen)
 
 								// Save material index for the written triangle
 								m_TriangleMaterialIndices.emplace_back(p->materialIndex);
+
+								WorldTriangle triangle;
+								triangle.flags = p->flags;
+
+								uint32_t idx[] = {p->indices[0].VertexIndex, p->indices[i].VertexIndex, p->indices[i+1].VertexIndex};
+
+								// Gather vertex information
+								for(int v = 0; v < 3; v++)
+								{
+									triangle.vertices[v].Position = m_Vertices[idx[v]];
+									triangle.vertices[v].Color = m_Features[idx[v]].lightStat;
+									triangle.vertices[v].TexCoord = Math::float2(m_Features[idx[v]].uv[0], m_Features[idx[v]].uv[1]);
+									triangle.vertices[v].Normal = m_Features[idx[v]].vertNormal;
+								}
+
+								// Start filling in the flags
+								m_Triangles.push_back(triangle);
 							}
 						}
 					}
@@ -296,7 +327,7 @@ void zCMesh::readObjectData(ZenParser& parser, bool fromZen)
 */
 void zCMesh::packMesh(PackedMesh& mesh, float scale)
 {
-	std::vector<Renderer::WorldVertex>& newVertices = mesh.vertices;
+	std::vector<WorldVertex>& newVertices = mesh.vertices;
 	std::vector<uint32_t> newIndices;
 
 	// Map of vertex-indices and their used feature-indices to a vertex in "newVertices"
@@ -317,7 +348,7 @@ void zCMesh::packMesh(PackedMesh& mesh, float scale)
 		{
 			// Add new entry
 			vfToNewVx[std::make_pair(vertidx, featidx)] = newVertices.size();
-			Renderer::WorldVertex vx;
+			WorldVertex vx;
 
 			// Extract vertex information
 			vx.Position = m_Vertices[vertidx] * scale;
@@ -374,5 +405,15 @@ void zCMesh::packMesh(PackedMesh& mesh, float scale)
 		// Add this triangle to its submesh
 		for(size_t j = 0; j < 3; j++)
 			mesh.subMeshes[matIdx].indices.push_back(newIndices[i+j]);
+	}
+
+	// Store triangles with more information attached as well
+	mesh.triangles.reserve(m_Triangles.size());
+	for(auto& t : m_Triangles)
+	{
+		mesh.triangles.push_back(t);
+
+		for(int v = 0; v < 3; v++)
+			mesh.triangles.back().vertices[v].Position *= scale;
 	}
 }

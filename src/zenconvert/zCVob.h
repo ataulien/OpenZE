@@ -94,17 +94,17 @@ namespace ZenConvert
 				info.properties.insert(std::make_pair("Position", info.position.toString()));
 				info.properties.insert(std::make_pair("VobName", info.vobName));
 				info.properties.insert(std::make_pair("VisualName", info.visual));
-				info.properties.insert(std::make_pair("ShowVisual", std::to_string(info.showVisual)));
+				info.properties.insert(std::make_pair("ShowVisual", std::to_string(info.showVisual ? 1 : 0)));
 				info.properties.insert(std::make_pair("VisualCamAlign", std::to_string(info.visualCamAlign)));
 				info.properties.insert(std::make_pair("VisualAniMode", std::to_string(info.visualAniMode)));
 				info.properties.insert(std::make_pair("VisualAniModeStrength", std::to_string(info.visualAniModeStrength)));
 				info.properties.insert(std::make_pair("VobFarClipScale", std::to_string(info.vobFarClipScale)));
-				info.properties.insert(std::make_pair("CollisionDetectionStatic", std::to_string(info.cdStatic)));
-				info.properties.insert(std::make_pair("CollisionDetectionDyn", std::to_string(info.cdDyn)));
-				info.properties.insert(std::make_pair("StaticVob", std::to_string(info.staticVob)));
-				info.properties.insert(std::make_pair("DynamicShadow", std::to_string(info.dynamicShadow)));
+				info.properties.insert(std::make_pair("CollisionDetectionStatic", std::to_string(info.cdStatic ? 1 : 0)));
+				info.properties.insert(std::make_pair("CollisionDetectionDyn", std::to_string(info.cdDyn ? 1 : 0)));
+				info.properties.insert(std::make_pair("StaticVob", std::to_string(info.staticVob ? 1 : 0)));
+				info.properties.insert(std::make_pair("DynamicShadow", std::to_string(info.dynamicShadow ? 1 : 0)));
 				info.properties.insert(std::make_pair("zBias", std::to_string(info.zBias)));
-				info.properties.insert(std::make_pair("IsAmbient", std::to_string(info.isAmbient)));
+				info.properties.insert(std::make_pair("IsAmbient", std::to_string(info.isAmbient ? 1 : 0)));
 			}
 			else
 			{

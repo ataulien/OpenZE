@@ -4,6 +4,7 @@ Renderer::Visual::Visual(RenderSystem& system, Engine::ObjectFactory& factory)
 {
 	m_pRenderSystem = &system;
 	m_pObjectFactory = &factory;
+	m_NumEntities = 0;
 }
 
 Renderer::Visual::~Visual()

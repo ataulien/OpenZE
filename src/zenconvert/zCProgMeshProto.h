@@ -2,7 +2,6 @@
 #include <vector>
 #include "utils/mathlib.h"
 #include "zTypes.h"
-#include "renderer/vertextypes.h"
 
 namespace VDFS
 {
@@ -35,7 +34,7 @@ namespace ZenConvert
 		/**
 		 * @brief Loads the mesh from the given VDF-Archive
 		 */
-		zCProgMeshProto(const std::string& fileName, VDFS::FileIndex& fileIndex);
+		zCProgMeshProto(const std::string& fileName, const VDFS::FileIndex& fileIndex);
 
 		/**
 		 * @brief Reads the mesh-object from the given binary stream
@@ -82,7 +81,7 @@ namespace ZenConvert
 		/**
 		 * @brief Packs vertices only
 		 */
-		void packVertices(std::vector<Renderer::WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart = 0, std::vector<uint32_t>& submeshIndexStarts = std::vector<uint32_t>(), float scale = 1.0f);
+		void packVertices(std::vector<WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale = 1.0f);
 
 		/**
 		 * @brief vector of vertex-positions for this mesh

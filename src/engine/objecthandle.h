@@ -5,6 +5,11 @@
 
 namespace Engine
 {
+	/**
+	 * @brief Accessor replacing pointers for entities and components.
+	 *		  Do NOT store pointers to objects which can be referenced using these
+	 *		  handles, as they may get invalid over time! Always use the handle for access!
+	 */
     struct ObjectHandle
     {
         union

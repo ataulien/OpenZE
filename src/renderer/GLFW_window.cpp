@@ -1,4 +1,12 @@
 #include "GLFW_window.h"
+
+#ifndef RAPI_USE_GLES3
+#define RAPI_USE_GLFW
+#endif
+
+#ifdef RAPI_USE_GLFW
+
+#include <RDevice.h>
 #include <GLFW/glfw3.h>
 #include "logger.h"
 #include <string.h>
@@ -9,7 +17,7 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-using namespace Utils;
+using namespace Renderer;
 
 /**
 * @brief Creates the window using the given parameters. The window will stay open as long as the object exists
@@ -35,7 +43,7 @@ GLFW_Window::GLFW_Window(unsigned int topX, unsigned int topY, unsigned int widt
 	}
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 	m_pWindowHandle = glfwCreateWindow(width, height, "--- Test ---", nullptr, nullptr);
@@ -120,18 +128,18 @@ void GLFW_Window::pollEvent(const std::function<void(Event)>& callback)
 
 		Event e(EEvent::E_KeyEvent);
 		e.KeyboardEvent.action = (EKeyAction)action;
-		e.KeyboardEvent.key = (EKey)key;
+		e.KeyboardEvent.key = (Utils::EKey)key;
 		e.KeyboardEvent.scancode = scancode;
 
 		// Set key-state (Ignore repeat-events)
 		if(action == EKeyAction::EA_Pressed)
-			hlp->thisptr->setKeyPressed((EKey)key, true);
+			hlp->thisptr->setKeyPressed((Utils::EKey)key, true);
 		else if(action == EKeyAction::EA_Released)
-			hlp->thisptr->setKeyPressed((EKey)key, false);
+			hlp->thisptr->setKeyPressed((Utils::EKey)key, false);
 
 		fn(e);
 	});
-
+	
 	glfwSetWindowSizeCallback(m_pWindowHandle, [](GLFWwindow* wnd, int width, int height)
 	{
 		hlpStruct* hlp = reinterpret_cast<hlpStruct*>(glfwGetWindowUserPointer(wnd));
@@ -197,3 +205,5 @@ void GLFW_Window::setWindowTitle(const std::string& title)
 {
     glfwSetWindowTitle(m_pWindowHandle, title.c_str());
 }
+
+#endif

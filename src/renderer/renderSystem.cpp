@@ -1,12 +1,14 @@
 #include "renderSystem.h"
 #include "visuals/staticMeshVisual.h"
-#include "engine/engine.h"
+#include "engine/game/gameengine.h"
 #include "utils/tuple.h"
 #include <RPipelineState.h>
+#include <REngine.h>
+#include <RDevice.h>
 
 using namespace Renderer;
 
-RenderSystem::RenderSystem(Engine::Engine& engine)
+RenderSystem::RenderSystem(Engine::GameEngine& engine)
 {
 	m_pEngine = &engine;
 
@@ -24,6 +26,97 @@ RenderSystem::~RenderSystem()
 
 	Utils::for_each_in_tuple(m_PagedVertexBuffers.types, [](auto t){delete t;});
 	Utils::for_each_in_tuple(m_PagedIndexBuffers.types, [](auto t){delete t;});
+}
+
+void Renderer::RenderSystem::renderFrame()
+{
+	// Draw frame
+	RAPI::REngine::RenderingDevice->OnFrameStart();
+	RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue(true, "Main Queue");
+
+
+	Utils::Vector<Engine::Entity> &entities = m_pEngine->objectFactory().storage().getEntities();
+	static std::vector<std::pair<std::vector<Engine::ObjectHandle>, std::vector<Renderer::PerInstanceData>>> piDataPerVisual;
+	piDataPerVisual.resize(getVisualStorage().getVisuals().size());
+
+	for(uint32_t i = 0, end = entities.size(); i < end; ++i)
+		//for(uint32_t i = 0, end = 5; i < end; ++i)
+	{
+		Engine::Entity &entity = entities[i];
+		if((entity.getComponentMask() & Engine::C_VISUAL) != Engine::C_VISUAL)
+			continue;
+
+		Engine::Components::Visual *pVisual = m_pEngine->objectFactory().storage().getComponent<Engine::Components::Visual>(entity.getHandle());
+
+		if(entity.getWorldTransform().Translation() != Math::float3(0,0,0) && (m_pEngine->getCameraCenter() - entity.getWorldTransform().Translation()).lengthSquared() > 50.0f * 50.0f)
+			continue;
+
+		Math::Matrix modelViewProj;
+		if((entity.getComponentMask() & Engine::C_COLLISION) == Engine::C_COLLISION)
+		{
+			Engine::Components::Collision *pCollision = m_pEngine->objectFactory().storage().getComponent<Engine::Components::Collision>(entity.getHandle());
+			if(pCollision)
+			{
+				Math::Matrix model;
+				static_cast<Physics::MotionState*>(pCollision->rigidBody.getMotionState())->openGLMatrix(reinterpret_cast<float*>(&model));
+
+				if(entity.getWorldTransform() != model)
+				{
+					ZenConvert::VobObjectInfo ocb;
+					ocb.color = Math::float4(1.0f, 1.0f, 1.0f, 1.0f);
+					ocb.worldMatrix = model;
+					pVisual->pObjectBuffer->UpdateData(&ocb);
+
+					entity.setWorldTransform(model);
+				}
+
+			}
+			else
+				LogWarn() << "Invalid collision object";
+		}
+
+		Renderer::PerInstanceData pid;
+		pid.WorldMatrix = entity.getWorldTransform();
+		pid.Color = pVisual->colorMod;
+
+
+		if(piDataPerVisual[pVisual->visualId].first.size() < pVisual->visualSubId + 1)
+			piDataPerVisual[pVisual->visualId].first.resize(pVisual->visualSubId + 1);
+
+		if(!piDataPerVisual[pVisual->visualId].first[pVisual->visualSubId].handle)
+			piDataPerVisual[pVisual->visualId].first[pVisual->visualSubId] = entity.getHandle();
+
+		if(pVisual->visualSubId == 0)
+			piDataPerVisual[pVisual->visualId].second.push_back(pid);
+		//RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
+	}
+
+	// Update and draw instances
+	for(auto& inst : piDataPerVisual)
+	{
+		if(inst.second.empty())
+			continue;
+
+		Engine::Components::Visual *pVisual = m_pEngine->objectFactory().storage().getComponent<Engine::Components::Visual>(inst.first[0]);
+
+		pVisual->pInstanceBuffer->UpdateData(inst.second.data(), inst.second.size() * sizeof(Renderer::PerInstanceData));
+
+		for(const auto& ent : inst.first)
+		{
+			pVisual = m_pEngine->objectFactory().storage().getComponent<Engine::Components::Visual>(ent);
+			pVisual->pPipelineState->NumInstances = inst.second.size();
+			RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
+		}
+
+		inst.second.clear();
+	}
+
+	RAPI::REngine::RenderingDevice->ProcessRenderQueue(queueID);
+
+	// Process frame
+	RAPI::REngine::RenderingDevice->OnFrameEnd();
+
+	RAPI::REngine::RenderingDevice->Present();
 }
 
 /**
@@ -71,25 +164,23 @@ void RenderSystem::clearInstanceCache()
 /**
  * @brief Adds an entity for the given visual
  */
-size_t RenderSystem::addEntityForVisual(Engine::ObjectHandle entity, size_t visualId, size_t subVisualId)
+size_t RenderSystem::addEntityForVisual(Engine::ObjectHandle entityHandle, size_t visualId, size_t subVisualId)
 {
-	if(visualId > 306)
-		return 0;
-
 	if(m_VisualInstanceCache.size() <= visualId + 1)
 		m_VisualInstanceCache.resize(visualId + 1);
 
-	Engine::Components::Visual* pVisual = m_pEngine->objectFactory().storage().getComponent<Engine::Components::Visual>(entity);
+	Engine::Entity& entity = *m_pEngine->objectFactory().storage().getEntity(entityHandle);
+	Engine::Components::Visual* pVisual = m_pEngine->objectFactory().storage().getComponent<Engine::Components::Visual>(entityHandle);
 
 	PerInstanceData d;
-	d.WorldMatrix = pVisual->tmpWorld;
+	d.WorldMatrix = entity.getWorldTransform();
 
 	// Verify the sub-vectors size
 	if(m_VisualInstanceCache[visualId].size() <= subVisualId + 1)
 		m_VisualInstanceCache[visualId].resize(subVisualId + 1);
 
 	if(m_VisualInstanceCache[visualId][subVisualId].instanceDataPerSubIdx.empty())
-		m_VisualInstanceCache[visualId][subVisualId].mainHandle = entity;
+		m_VisualInstanceCache[visualId][subVisualId].mainHandle = entityHandle;
 
 	
 
@@ -135,6 +226,11 @@ void RenderSystem::buildInstancingData(RAPI::RBuffer* targetBuffer, std::vector<
 				{
 					pVisual->pPipelineState->StartInstanceOffset = inst;
 					pVisual->pPipelineState->NumInstances = m_VisualInstanceCache[i][j].instanceDataPerSubIdx.size();
+
+					// Precompute and store the commandstream
+					// pVisual->pPipelineState->PrecomputeCommandStream();
+					// memcpy(pVisual->precomputedCommandStream, pVisual->pPipelineState->PrecomputedCommandStream, sizeof(pVisual->precomputedCommandStream));
+					// pVisual->precomputedCommandStreamSize = pVisual->pPipelineState->PrecomputedCommandStreamSize;
 				}
 
 				inst += m_VisualInstanceCache[i][j].instanceDataPerSubIdx.size();

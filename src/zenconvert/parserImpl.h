@@ -34,6 +34,7 @@ namespace ZenConvert
 		};
 
 		ParserImpl(ZenParser* parser);
+		virtual ~ParserImpl(){}
 
 		/**
 		 * @brief Read the implementation specific header and stores it in the parsers main-header struct

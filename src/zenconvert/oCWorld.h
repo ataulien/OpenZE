@@ -26,6 +26,10 @@ namespace ZenConvert
 
 				return;
 			}
+
+			static int i=0;
+			i++;
+
 			// Read vob data, followed by the count of the children of this vob
 			zCVobData v = zCVob::readObjectData(parser);
 
@@ -36,6 +40,7 @@ namespace ZenConvert
 			target.push_back(v);
 
 			// Read children
+			target.back().childVobs.reserve(numChildren);
 			for(uint32_t i = 0; i < numChildren; i++)
 			{
 				readVobTree(parser, target.back().childVobs);
@@ -66,11 +71,14 @@ namespace ZenConvert
 				}
 				else if(header.name == "VobTree")
 				{
+					//parser.skipChunk();
 					zCVobData mainVobTree;
 					uint32_t numChildren;
-
+                    
 					// Read how many vobs this one has as child
 					parser.getImpl()->readEntry("", &numChildren, sizeof(numChildren), ZenConvert::ParserImpl::ZVT_INT);
+                    
+					info.rootVobs.reserve(numChildren);
 
 					// Read children
 					for(uint32_t i = 0; i < numChildren; i++)

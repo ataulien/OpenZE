@@ -76,7 +76,13 @@ namespace Renderer
 
 			return nullptr;
 		}
+
+		/**
+		 * @brief returns the currently stored visuals
+		 */
+		const std::vector<Visual*>& getVisuals(){return m_RegisteredVisuals; }
 	private:
+
 		/**
 		 * @brief Visuals by their hashes
 		 */

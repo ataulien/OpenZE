@@ -1,6 +1,6 @@
 #include "window.h"
 
-using namespace Utils;
+using namespace Renderer;
 
 /**
 * @brief Creates the window using the given parameters. The window will stay open as long as the object exists

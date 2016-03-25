@@ -1,7 +1,7 @@
 #pragma once
 
 #include "engine.h"
-#include "utils/GLFW_window.h"
+#include "renderer/GLFW_window.h"
 #include "utils/mathlib.h"
 //#include "sound/soundmanager.h"
 
@@ -16,7 +16,7 @@ namespace Engine
     class GameEngine : public Engine
     {
     public:
-        GameEngine(int argc, char *argv[]);
+        GameEngine(int argc, char *argv[], Renderer::Window* window);
         virtual ~GameEngine();
 
         /**
@@ -30,11 +30,14 @@ namespace Engine
          */
         virtual void init() override;
 
+		// TODO: Remove this
+		const Math::float3& getCameraCenter() { return m_CameraCenter; }
+
     private:
         /**
          * @brief Main game window
          */
-        Utils::GLFW_Window m_Window;
+        Renderer::Window* m_Window;
 
         /**
          * @brief m_SoundManager

@@ -8,7 +8,7 @@
 #include <RDevice.h>
 #include <RBuffer.h>
 #include "../visualLoad.h"
-#include "engine/engine.h"
+#include "engine/game/gameengine.h"
 #include "engine/components/visual.h"
 
 using namespace Renderer;
@@ -30,7 +30,7 @@ void Renderer::StaticMeshVisual::createMesh(const ZenConvert::PackedMesh& packed
 	m_Submeshes.resize(packedMesh.subMeshes.size());
 
 	// Copy vertex data to the paged buffer
-	m_pVertexBuffer = m_pRenderSystem->getPagedVertexBuffer<WorldVertex>().AddLogicalBuffer(packedMesh.vertices.data(), packedMesh.vertices.size());
+	m_pVertexBuffer = m_pRenderSystem->getPagedVertexBuffer<WorldVertex>().AddLogicalBuffer(reinterpret_cast<const WorldVertex*>(packedMesh.vertices.data()), packedMesh.vertices.size());
 
 	// Copy material info and indices for each submesh
 	for(size_t i = 0, end = packedMesh.subMeshes.size(); i < end; i++)
@@ -93,6 +93,8 @@ void Renderer::StaticMeshVisual::onLogicalVertexBuffersUpdated(void* userptr)
 */
 void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle>& createdEntities)
 {
+	const bool instanced = true;
+
 	// Create buffers and states for each texture
 	RAPI::RPixelShader* ps = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RPixelShader>("simplePS");
 	RAPI::RVertexShader* vs = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RVertexShader>("simpleVS");
@@ -118,7 +120,7 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 
 	// Create object buffer
 	RAPI::RBuffer* pObjectBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
-	sm.SetConstantBuffer(1, pObjectBuffer, RAPI::ST_VERTEX);
+	//sm.SetConstantBuffer(1, pObjectBuffer, RAPI::ST_VERTEX);
 	sm.SetConstantBuffer(0, RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("PerFrameCB"), RAPI::ST_VERTEX);
 
 	// Initialize object-buffer
@@ -128,8 +130,9 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 	ocb.color = Math::float4(1,1,1,1);
 	pObjectBuffer->Init(&ocb, sizeof(ZenConvert::VobObjectInfo), sizeof(ZenConvert::VobObjectInfo), RAPI::EBindFlags::B_CONSTANTBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
-	// Get global instancing buffer
-	RAPI::RBuffer* instBuffer = RAPI::REngine::ResourceCache->GetCachedObject<RAPI::RBuffer>("MainInstancingBuffer");
+	// Get instancing buffer
+	RAPI::RBuffer* instBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
+	instBuffer->Init(nullptr, sizeof(PerInstanceData), sizeof(PerInstanceData), RAPI::B_VERTEXBUFFER, RAPI::U_DYNAMIC, RAPI::CA_WRITE);
 
 	// Create an entity for each submesh
 	createdEntities.reserve(m_Submeshes.size());
@@ -143,6 +146,7 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 
 		// Make entity
 		Engine::ObjectHandle e = m_pObjectFactory->storage().createEntity();
+		Engine::Entity* entity = m_pObjectFactory->storage().getEntity(e);
 		m_pObjectFactory->storage().addComponent<Engine::Components::Visual>(e);
 
 		// Create visual
@@ -150,9 +154,22 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 
 		if(visual)
 		{
+			visual->pInstanceBuffer = instBuffer;
 			visual->pObjectBuffer = pObjectBuffer;
-			visual->pPipelineState = sm.MakeDrawCallIndexedInstanced(s.indexBuffer->PageNumElements, 0);
-			visual->tmpWorld = Math::Matrix::CreateIdentity();
+			visual->colorMod = Math::float4(1.0f, 1.0f, 1.0f, 1.0f);
+
+			if(instanced)
+				visual->pPipelineState = sm.MakeDrawCallIndexedInstanced(s.indexBuffer->PageNumElements, 0);
+			else
+				visual->pPipelineState = sm.MakeDrawCallIndexed(s.indexBuffer->PageNumElements, s.indexBuffer->PageStart);
+
+			//LogInfo() << "Made Pipeline-State with " << visual->pPipelineState->NumDrawElements << " drawElements!";
+			// Precompute and store the commandstream
+			// visual->pPipelineState->PrecomputeCommandStream();
+			// memcpy(visual->precomputedCommandStream, visual->pPipelineState->PrecomputedCommandStream, sizeof(visual->precomputedCommandStream));
+			// visual->precomputedCommandStreamSize = visual->pPipelineState->PrecomputedCommandStreamSize;
+
+			entity->setWorldTransform(Math::Matrix::CreateIdentity());
 			visual->visualId = m_Id;
 			visual->visualSubId = i;
 		}
@@ -163,4 +180,6 @@ void Renderer::StaticMeshVisual::createEntities(std::vector<Engine::ObjectHandle
 
 		i++;
 	}
+
+	m_NumEntities++;
 }

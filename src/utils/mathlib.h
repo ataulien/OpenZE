@@ -12,7 +12,6 @@ namespace Math
       return exp < 1 ? result : ipow(base * base, exp / 2, (exp % 2) ? result * base : result);
     }
 
-
     /**
      * @brief Converson of degrees to radians
      */
@@ -121,6 +120,35 @@ namespace Math
             glm::vec4 _glmt_vector;
         };
 
+		/**
+		 * @brief Converts the given ABGR8-Color to float4
+		 */
+		void fromABGR8(uint32_t argb)
+		{
+			unsigned char a = argb >> 24;
+			unsigned char b = (argb >> 16) & 0xFF;
+			unsigned char g = (argb >> 8) & 0xFF;
+			unsigned char r = argb & 0xFF;
+
+			x = r / 255.0f;
+			y = g / 255.0f;
+			z = b / 255.0f;
+			w = a / 255.0f;
+		}
+
+		/**
+		* @brief Converts the stored color to ARGB8
+		*/
+		uint32_t toABGR8()
+		{
+			unsigned char b[] = { static_cast<unsigned char>(w * 255.0f), 
+				static_cast<unsigned char>(z * 255.0f), 
+				static_cast<unsigned char>(y * 255.0f),
+				static_cast<unsigned char>(x * 255.0f)};
+
+			return *reinterpret_cast<uint32_t*>(b);
+		}
+
 		std::string toString()
 		{
 			std::string out;
@@ -172,7 +200,7 @@ namespace Math
         t_vector<T, S...> operator- () const { return t_vector<T, S...>(-T::x, -T::y); }
 
         //TODO: float = S ;)
-        float length() const { return static_cast<float>(T::_glmt_vector.length()); }
+        float length() const { return glm::length(T::_glmt_vector); }
         float lengthSquared() const { return T::x * T::x + T::y * T::y; }
 
         float dot(const t_vector<T, S...>& v) const { return glm::dot(T::_glmt_vector, v._glmt_vector); }
@@ -395,4 +423,24 @@ namespace Math
     {
         return M1._glmMatrix * M2._glmMatrix;
     }
+
+	/** 
+	* @brief Compute barycentric coordinates (u, v, w) for
+	*		  point p with respect to triangle (a, b, c)
+	*		  (Transcribed from Christer Ericson's Real-Time Collision Detection)
+	*/
+
+	static void barycentric(const float3& p, const float3& a, const float3& b, const float3& c, float &u, float &v, float &w)
+	{
+		float3 v0 = b - a, v1 = c - a, v2 = p - a;
+		float d00 = v0.dot(v0);
+		float d01 = v0.dot(v1);
+		float d11 = v1.dot(v1);
+		float d20 = v2.dot(v0);
+		float d21 = v2.dot(v1);
+		float denom = d00 * d11 - d01 * d01;
+		v = (d11 * d20 - d01 * d21) / denom;
+		w = (d00 * d21 - d01 * d20) / denom;
+		u = 1.0f - v - w;
+	}
 }

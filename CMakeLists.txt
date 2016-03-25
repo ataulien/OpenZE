@@ -8,6 +8,8 @@ option(OPENZE_D3D11 "Enable D3D11-Build" OFF)
 option(OPENZE_OPENAL "Enable OpenAL-Build" OFF)
 
 if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CRT_SECURE_NO_WARNINGS /EHsc /MP")
+
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set(ZE_BUILD_FLAGS "/D_CRT_SECURE_NO_WARNINGS /DNOMINMAX /MD /MP /EHsc")
     set(ZE_DEBUG_BUILD_FLAGS "")
@@ -35,6 +37,7 @@ include_directories(lib/bullet/src)
 include_directories(lib/glfw/include)
 include_directories(lib/rapi/renderer/include)
 include_directories(lib/rapi/include)
+include_directories(lib/libsquish)
 
 if(OPENZE_OPENAL)
     include_directories(${OPENAL_INCLUDE_DIR})
@@ -67,6 +70,7 @@ add_subdirectory(lib/glm)
 add_subdirectory(lib/bullet)
 add_subdirectory(lib/rapi)
 add_subdirectory(lib/glfw)
+add_subdirectory(lib/libsquish)
 
 # Folders for external libraries
 foreach(infileName ${BULLET_LIBRARIES})
@@ -136,8 +140,8 @@ endif()
 
 set(GAME_LIBRARIES sound input gui ${OPENAL_LIBRARY} ${GLFW_STATIC_LIBRARIES})
 
-add_executable(convertzen ${ZEN_CONVERT})
-target_link_libraries(convertzen utils vdfs)
+#add_executable(convertzen ${ZEN_CONVERT})
+#target_link_libraries(convertzen utils vdfs)
 
 add_executable(ozerver ${SRC})
 set_target_properties(ozerver PROPERTIES LINKER_LANGUAGE C)

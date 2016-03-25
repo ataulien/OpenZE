@@ -13,9 +13,9 @@ namespace Engine
     {
     public:
         /**
-         * @brief Settings
-         * @param argc
-         * @param argv
+		 * @brief Parses the arguments given on application start
+         * @param argc Parameter from main-function
+         * @param argv Parameter from main-function
          */
         Settings(int argc, char *argv[]);
 

@@ -43,7 +43,7 @@ struct MeshOffsetsSubMesh
 /**
 * @brief Loads the mesh from the given VDF-Archive
 */
-zCProgMeshProto::zCProgMeshProto(const std::string& fileName, VDFS::FileIndex& fileIndex)
+zCProgMeshProto::zCProgMeshProto(const std::string& fileName, const VDFS::FileIndex& fileIndex)
 {
 
 	std::vector<uint8_t> data;
@@ -202,7 +202,7 @@ void zCProgMeshProto::readObjectData(ZenParser& parser)
 /**
  * @brief Packs vertices only
  */
-void ZenConvert::zCProgMeshProto::packVertices(std::vector<Renderer::WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale)
+void ZenConvert::zCProgMeshProto::packVertices(std::vector<WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale)
 {
 	for(size_t s=0;s<m_SubMeshes.size();s++)
 	{
@@ -216,7 +216,7 @@ void ZenConvert::zCProgMeshProto::packVertices(std::vector<Renderer::WorldVertex
 		{
 			zWedge& wedge = sm.m_WedgeList[i];
 
-			Renderer::WorldVertex v;
+			WorldVertex v;
 			v.Position = m_Vertices[wedge.m_VertexIndex] * scale;
 			v.Normal = wedge.m_Normal;
 			v.TexCoord = wedge.m_Texcoord;

@@ -2,6 +2,7 @@
 
 #include <REngine.h>
 #include <RResourceCache.h>
+#include <RPipelineState.h>
 
 #include "components.h"
 #include "utils/mathlib.h"
@@ -20,9 +21,15 @@ namespace Engine
         {
             enum { MASK = C_VISUAL };
 
-            RAPI::RBuffer *pObjectBuffer;
-            RAPI::RPipelineState *pPipelineState;
-			Math::Matrix tmpWorld; // TODO: Put this into some kind of Transform-Component!
+			// Optional buffer attached to an entity, in case instancing is not used
+            RAPI::RBuffer* pObjectBuffer;
+			RAPI::RPipelineState* pPipelineState;
+			RAPI::RBuffer* pInstanceBuffer;
+
+			// Color-modification for this instance
+			// TODO: Put this into a per-instance-buffer
+			Math::float4 colorMod;
+
 			size_t visualId;
 			size_t visualSubId;
 

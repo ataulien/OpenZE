@@ -1,0 +1,1 @@
+adb install -r apk\bin\test-debug.apk 

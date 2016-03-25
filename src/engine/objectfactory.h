@@ -34,10 +34,16 @@ namespace Engine
 
         void test_createPhysicsEntity(const Math::float3& position, const Math::float3& impulse);
 
+		/**
+		 * @brief Returns the storage for all created game entites
+		 */
     	ObjectStorage<COMPONENTS> &storage()        {
             return m_Storage;
         }
 
+		/**
+		 * @brief Destroys all created entities
+		 */
         void cleanUp();
 
     private:

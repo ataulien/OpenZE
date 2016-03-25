@@ -4,10 +4,17 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "renderer/vertextypes.h"
 
 namespace ZenConvert
 {
+	struct WorldVertex
+	{
+		Math::float3 Position;
+		Math::float3 Normal;
+		Math::float2 TexCoord;
+		uint32_t Color;
+	};
+	
 	struct zMAT3
 	{
 		float v[3][3];
@@ -89,7 +96,7 @@ namespace ZenConvert
 
 	};
 
-#pragma pack(push, 1)
+//#pragma pack(push, 1)
 	/**
 	 * @brief Data of zCVob
 	 */
@@ -125,23 +132,9 @@ namespace ZenConvert
 
 		std::vector<zCVobData> childVobs;
 	};
-#pragma pack(pop)
+//#pragma pack(pop)
 
-	/**
-	* @brief Simple generic packed mesh, containing all useful information of a (lod-level of) zCMesh and zCProgMeshProto
-	*/
-	// FIXME: Probably move this to renderer-package
-	struct PackedMesh
-	{
-		struct SubMesh
-		{
-			zCMaterialData material;			
-			std::vector<uint32_t> indices;
-		};
 
-		std::vector<Renderer::WorldVertex> vertices;
-		std::vector<SubMesh> subMeshes;
-	};
 
 	/**
 	* @brief All kinds of information found in a oCWorld
@@ -186,6 +179,62 @@ namespace ZenConvert
 	};
 
 #pragma pack(pop)
+
+	/**
+	* @brief Information about a triangle in the World. Contains whether the triangle 
+	*		  belongs to an outside/inside location, the static lighting colors of the edges,
+	*		  material-information and to which sector this belongs, amongst others
+	*/
+	struct WorldTriangle
+	{
+		/**
+		* @brief Returns whether this triangle is outside or inside
+		*/
+		bool isOutside() const { return !flags.sectorPoly; }
+
+		/**
+		* @brief Returns the interpolated lighting value for the given position on the triangle
+		*/
+		Math::float4 interpolateLighting(const Math::float3& position) const 
+		{
+			float u,v,w;
+			Math::barycentric(position, vertices[0].Position, vertices[1].Position, vertices[2].Position, u, v, w);
+
+			Math::float4 c[3];
+			c[0].fromABGR8(vertices[0].Color);
+			c[1].fromABGR8(vertices[1].Color);
+			c[2].fromABGR8(vertices[2].Color);
+
+			return u * c[0] + v * c[1] + w * c[2];
+		}
+
+		/**
+		* @brief Flags taken from the original ZEN-File
+		*/
+		PolyFlags flags;
+
+		/**
+		* @brief Vertices belonging to this triangle
+		*/
+		WorldVertex vertices[3];
+	};
+
+	/**
+	* @brief Simple generic packed mesh, containing all useful information of a (lod-level of) zCMesh and zCProgMeshProto
+	*/
+	// FIXME: Probably move this to renderer-package
+	struct PackedMesh
+	{
+		struct SubMesh
+		{
+			zCMaterialData material;			
+			std::vector<uint32_t> indices;		
+		};
+
+		std::vector<WorldTriangle> triangles; // Use index / 3 to access these
+		std::vector<WorldVertex> vertices;
+		std::vector<SubMesh> subMeshes;
+	};
 
 #pragma pack(push, 4)
 

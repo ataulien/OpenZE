@@ -16,6 +16,10 @@
 #include <windows.h>
 #endif
 
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
+
 #ifdef _MSC_VER
 #define FUNCTION_SIGNATURE __FUNCSIG__
 #elif defined(__GNUC__)
@@ -97,7 +101,11 @@ namespace Utils
 #endif
 
 			FILE* f;
-			f = fopen(s_LogFile.c_str(), "w");
+#ifdef _MSC_VER
+			fopen_s(&f, s_LogFile.c_str(), "a");
+#else
+			f = fopen(s_LogFile.c_str(), "a");
+#endif
 			fclose(f);
 		}
 
@@ -119,8 +127,11 @@ namespace Utils
 		inline void Flush()
 		{
 			FILE* f;
+#ifdef _MSC_VER
+			fopen_s(&f, s_LogFile.c_str(), "a");
+#else
 			f = fopen(s_LogFile.c_str(), "a");
-
+#endif
 			// Append log-data to file
 			if(f)
 			{
@@ -129,15 +140,16 @@ namespace Utils
 				fputs("\n", f);
 
 				fclose(f);
-
-				// Do callback
-				if(s_LogCallback)
-					s_LogCallback(m_Message.str());
 			}
 
 #if defined(WIN32) || defined(_WIN32)
 			OutputDebugString((m_Info.str() + m_Message.str() + "\n").c_str());
+#elif defined(__ANDROID__)
+			__android_log_print(ANDROID_LOG_INFO, "OpenZE", (m_Info.str() + m_Message.str() + "\n").c_str());
 #endif
+			// Do callback
+			if(s_LogCallback)
+				s_LogCallback(m_Info.str() + m_Message.str() + "\n");
 
 			// Pop a messagebox, if wanted
 			switch(m_TypeID)

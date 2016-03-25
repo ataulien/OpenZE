@@ -10,3 +10,6 @@
 [submodule "lib/rapi"]
 	path = lib/rapi
 	url = git@github.com:Degenerated1123/RAPI.git
+[submodule "lib/libsquish"]
+	path = lib/libsquish
+	url = git@github.com:tito/libsquish.git

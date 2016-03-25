@@ -24,6 +24,8 @@ using namespace Engine;
 
 ZenWorld::ZenWorld(::Engine::Engine& engine, const std::string & zenFile, VDFS::FileIndex & vdfs, float scale)
 {
+	m_pEngine = &engine;
+
 	// Load zen from vdfs
 	std::vector<uint8_t> data;
 	vdfs.getFileData(zenFile, data);
@@ -31,16 +33,18 @@ ZenWorld::ZenWorld(::Engine::Engine& engine, const std::string & zenFile, VDFS::
 	// Try to load from disk if this isn't in a vdf-archive
 	if(data.empty())
 	{
-		ZenWorld::ZenWorld(engine, ZenConvert::ZenParser(zenFile), vdfs, scale);
+		ZenConvert::ZenParser parser = ZenConvert::ZenParser(zenFile);
+		loadWorld(engine, parser, vdfs, scale);
 	}
 	else
 	{
 		// Load from memory
-		ZenWorld::ZenWorld(engine, ZenConvert::ZenParser(data.data(), data.size()), vdfs, scale);
+		ZenConvert::ZenParser parser = ZenConvert::ZenParser(data.data(), data.size());
+		loadWorld(engine, parser, vdfs, scale);
 	}
 }
 
-ZenWorld::ZenWorld(::Engine::Engine& engine, ZenConvert::ZenParser& parser, VDFS::FileIndex & vdfs, float scale)
+void ZenWorld::loadWorld(::Engine::Engine& engine, ZenConvert::ZenParser& parser, VDFS::FileIndex & vdfs, float scale)
 {
 	// Load a world
 	ZenConvert::zCMesh* worldMesh = nullptr;
@@ -87,6 +91,9 @@ void ZenWorld::disectWorldMesh(ZenConvert::zCMesh* mesh, ::Engine::Engine& engin
 	// Pack the mesh into an easier format
 	mesh->packMesh(packedMesh, scale);
 
+	// Initialize world-mesh
+	m_WorldMesh.setMeshData(packedMesh);
+
 #ifdef ZE_GAME
 	// Create the visual
 	std::hash<std::string> hash;
@@ -96,8 +103,36 @@ void ZenWorld::disectWorldMesh(ZenConvert::zCMesh* mesh, ::Engine::Engine& engin
 	pVisual->createEntities(handles);
 #endif
 
+	// Create collisionmesh using the first entites collision-component
+	// to get the triangles all lined up into one btTriangleMesh
+	if(!handles.empty())
+	{
+		btTriangleMesh* wm = new btTriangleMesh;
+		for(auto& t : packedMesh.triangles)
+		{
+			auto& v0 = t.vertices[0].Position;
+			auto& v1 = t.vertices[1].Position;
+			auto& v2 = t.vertices[2].Position;
+
+			// Convert to btvector
+			btVector3 v[] = { {v0.x, v0.y, v0.z}, {v1.x, v1.y, v1.z}, {v2.x, v2.y, v2.z} };
+			wm->addTriangle(v[0], v[1], v[2]);
+		}
+
+		Components::Collision* pCc = engine.objectFactory().storage().addComponent<Components::Collision>(handles[0]);
+		Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false));
+		pCc->collisionType = Physics::ECollisionType::CT_WorldMesh;
+		pCc->rigidBody.initPhysics(engine.physicsSystem(), cShape, Math::float3(0.0f, 0.0f, 0.0f));
+		pCc->rigidBody.setRestitution(0.1f);
+		pCc->rigidBody.setFriction(1.0f);
+		cShape.shape()->setUserPointer(pCc);
+	}
+
+	// Force the worldmesh into the physics engine, don't wait for the thread
+	engine.physicsSystem()->updateRigidBodies();
+
 	// Create collisionmeshes for each material
-	for(size_t s=0;s<handles.size();s++)
+	/*for(size_t s=0;s<handles.size();s++)
 	{
 		if(!packedMesh.subMeshes[s].indices.empty())
 		{
@@ -105,24 +140,24 @@ void ZenWorld::disectWorldMesh(ZenConvert::zCMesh* mesh, ::Engine::Engine& engin
 
 			btTriangleMesh* wm = new btTriangleMesh;
 
-			for(size_t i = 0; i < packedMesh.subMeshes[s].indices.size(); i += 3)
+			for(size_t i = 0; i < packedMesh.triangles.size(); i ++)
 			{
-				auto& v0 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i]].Position;
-				auto& v1 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i + 1]].Position;
-				auto& v2 = packedMesh.vertices[packedMesh.subMeshes[s].indices[i + 2]].Position;
+				auto& v0 = packedMesh.triangles[i].Position;
+				auto& v1 = packedMesh.[i + 1]].Position;
+				auto& v2 = packedMesh.[i + 2]].Position;
 
 				// Convert to btvector
 				btVector3 v[] = { {v0.x, v0.y, v0.z}, {v1.x, v1.y, v1.z}, {v2.x, v2.y, v2.z} };
 				wm->addTriangle(v[0], v[1], v[2]);
 			}
 
-			Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false));
+			Physics::CollisionShape cShape(new btBvhTriangleMeshShape(wm, false), Physics::ECollisionType::CT_WorldMesh);
 			pCc->rigidBody.initPhysics(engine.physicsSystem(), cShape, Math::float3(0.0f, 0.0f, 0.0f));
 			pCc->rigidBody.setRestitution(0.1f);
 			pCc->rigidBody.setFriction(1.0f);
 		}
-	}
-}
+	}*/
+} 
 
 /**
 * @brief Creates entities for the loaded oCWorld
@@ -140,9 +175,34 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 			// TODO: Put this into an other function
 			if(v.visual.find(".3DS") != std::string::npos && v.visual.find(".3DS") != 0) // TODO: Don't find twice
 			{
+				// Get full world-matrix
 				Math::Matrix worldMatrix = v.rotationMatrix3x3.toMatrix(v.position * scale);
-				float brightness = 1.0f;
+				Math::float4 f4Lighting = Math::float4(1.0f, 1.0f, 1.0f ,1.0f);
 				
+				// Calculate center of bbox as the startingpoint for tracing the ground-poly
+				Math::float3 gpRayStart = (v.bbox[0] * 0.5f + v.bbox[1] * 0.5f) * scale;
+
+				// Get ground polygon and interpolate lighting
+				Physics::RayTestResult r = engine.physicsSystem()->rayTest(gpRayStart, gpRayStart + Math::float3(0,-2000,0), Physics::CT_WorldMesh);
+				if(r.hitTriangleIndex == UINT_MAX)
+				{
+					// Try one more time from further above
+					// FIXME: There are still some vobs not getting their groundpoly...
+					gpRayStart.y = v.bbox[1].y;
+					r = engine.physicsSystem()->rayTest(gpRayStart, gpRayStart + Math::float3(0,-2000,0), Physics::CT_WorldMesh);
+				}
+
+				if(r.hitTriangleIndex != UINT_MAX)
+				{
+					f4Lighting = m_WorldMesh.getTriangleList()[r.hitTriangleIndex].interpolateLighting(r.hitPosition);
+				}
+				else
+				{
+					// Didn't hit ANYTHING. Just give them some static value.
+					const float fallbackLighting = 0.5f;
+					f4Lighting = Math::float4(fallbackLighting,fallbackLighting,fallbackLighting, 1.0f);
+				}
+
 				std::hash<std::string> hash;
 				size_t visualHash = hash(v.visual);
 				Renderer::Visual* pVisual = engine.renderSystemPtr()->getVisualByHash(visualHash);
@@ -178,20 +238,23 @@ void ZenWorld::parseWorldObjects(const ZenConvert::oCWorldData& data, ::Engine::
 
 				ZenConvert::VobObjectInfo ocb;
 				ocb.worldMatrix = worldMatrix;
-				ocb.color = Math::float4(brightness, brightness, brightness, 1.0f);
+				ocb.color = f4Lighting;
 	
 				// Create entities for each material
 				RAPI::RBuffer* pObjectBuffer = nullptr;
 				for(auto& h : handles)
 				{
+					Entity* entity = engine.objectFactory().storage().getEntity(h);
 					Components::Visual* pVisComp = engine.objectFactory().storage().getComponent<Components::Visual>(h);
 					if(!pObjectBuffer)
 					{					
 						pObjectBuffer = pVisComp->pObjectBuffer;
-						pObjectBuffer->UpdateData(&ocb);
+						//pObjectBuffer->UpdateData(&ocb);
 					}
 
-					pVisComp->tmpWorld = worldMatrix;
+					pVisComp->colorMod = f4Lighting;
+
+					entity->setWorldTransform(worldMatrix);
 				}
 				
 #endif
@@ -210,4 +273,39 @@ void ZenWorld::render(const Math::Matrix& viewProj)
 		RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(reinterpret_cast<float*>(&p)), 1.0f, RAPI::RFloat4(1,0,0,1));
 	}
 #endif
+}
+
+/**
+ * Creates the visual for the given file. Uses one from cache if it already exists
+ */
+Renderer::Visual * ZenWorld::loadVisual(const std::string & visual, float scale)
+{
+	std::hash<std::string> hash;
+	size_t visualHash = hash(visual);
+	Renderer::Visual* pVisual = m_pEngine->renderSystemPtr()->getVisualByHash(visualHash);
+
+	if(!pVisual)
+	{
+		// Strip .3DS-Part
+		std::string vname = visual.substr(0, visual.find(".3DS"));
+		// Try to find the mesh of this
+		if(!m_pEngine->vdfsFileIndex().getFileByName(vname + ".MRM", nullptr)) // Try progmesh-proto
+		{
+			return nullptr; // Not found
+		}
+
+		// Found it, load the mesh-information
+		ZenConvert::zCProgMeshProto mesh(vname + ".MRM", m_pEngine->vdfsFileIndex());
+
+		// Create some entities using this visual
+		ZenConvert::PackedMesh packedMesh;
+
+		// Pack the mesh into an easier format
+		mesh.packMesh(packedMesh, scale);
+
+		// Create the visual
+		pVisual = m_pEngine->renderSystemPtr()->createVisual(hash(visual), packedMesh);								
+	}
+
+	return pVisual;
 }

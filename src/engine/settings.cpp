@@ -36,5 +36,5 @@ Engine::Settings::Settings(int argc, char *argv[])
 }
 
 std::unordered_set<std::string> Engine::Settings::s_AvailableArguments =
-{
+{ ""
 };

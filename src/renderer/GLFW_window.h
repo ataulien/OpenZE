@@ -3,7 +3,7 @@
 
 struct GLFWwindow;
 
-namespace Utils
+namespace Renderer
 {
 	/**
 	* @brief Small utility to create and handle windows platform independently
@@ -44,12 +44,12 @@ namespace Utils
 		/**
 		* @brief Gets the current keystate
 		*/
-        virtual bool getKeyPressed(EKey key) override {return m_KeyPresses[key];}
+        virtual bool getKeyPressed(Utils::EKey key) override {return m_KeyPresses[key];}
 
 		/**
 		 * @brief Semi-Private function to set a key.
 		 */
-		void setKeyPressed(EKey key, bool value){m_KeyPresses[key] = value;}
+		void setKeyPressed(Utils::EKey key, bool value){m_KeyPresses[key] = value;}
 
 		/**
 		 * @brief Switches to fullscreen/windowed
@@ -70,7 +70,7 @@ namespace Utils
 		/**
 		 * @brief state of all keys
 		 */
-		bool m_KeyPresses[KEY_LAST];
+		bool m_KeyPresses[Utils::KEY_LAST];
 
         /**
          * @brief indicates if a menu is opened

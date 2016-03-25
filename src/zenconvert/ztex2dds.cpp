@@ -8,6 +8,8 @@
 #include <algorithm>
 #include "utils/logger.h"
 #include <string.h>
+#include "ztex2dds.h"
+#include <squish.h>
 
 #define ZTEX2DDS_ERROR_NONE   0 /* No Error                  */
 #define ZTEX2DDS_ERROR_ARGS   1 /* Invalid Params / Syntax   */
@@ -405,6 +407,59 @@ namespace ZenConvert
 		delete[] Buffer;
 
 		return ZTEX2DDS_ERROR_NONE;
+	}
+
+	uint32_t ComputeSizeInBytes(int mip, int resolutionX, int resolutionY, bool dxt1)
+	{
+		int px = (int)std::max(1.0f, (float)floor(resolutionX / pow(2.0f, mip)));
+		int py = (int)std::max(1.0f, (float)floor(resolutionY / pow(2.0f, mip)));
+		//int px = TextureSize.x;
+		//int py = TextureSize.y;
+
+		// compute the storage requirements
+		int blockcount = ( ( px + 3 )/4 ) * ( ( py + 3 )/4 );
+		int blocksize = dxt1 ? 8 : 16;
+		return blockcount*blocksize;	
+	}
+
+	/**
+	 * @brief Convert dds to RGBA8
+	 */
+	void convertDDSToRGBA8(const std::vector<uint8_t>& ddsData, std::vector<uint8_t>& rgba8Data, int mip)
+	{
+		size_t seek=0;
+		seek += sizeof(uint32_t); // Skip magic number
+		const DDSURFACEDESC2* desc = reinterpret_cast<const DDSURFACEDESC2*>(&ddsData[seek]);
+		seek += sizeof(DDSURFACEDESC2);
+
+		mip = std::min((int)mip, (int)desc->dwMipMapCount);
+
+		int dxtlvl = squish::kDxt1;
+		switch(desc->ddpfPixelFormat.dwFourCC)
+		{
+		case MAKEFOURCC('D', 'X', 'T', '1'):
+			dxtlvl = squish::kDxt1;
+			break;
+
+		case MAKEFOURCC('D', 'X', 'T', '3'):
+			dxtlvl = squish::kDxt3;
+			break;
+
+		case MAKEFOURCC('D', 'X', 'T', '5'):
+			dxtlvl = squish::kDxt5;
+			break;
+		}
+
+		for(int i = 0; i < mip; i++)
+		{
+			seek += ComputeSizeInBytes(i, desc->dwWidth, desc->dwHeight, dxtlvl == squish::kDxt1);
+		}
+
+		int px = (int)std::max(1.0f, (float)floor(desc->dwWidth / pow(2.0f, mip)));
+		int py = (int)std::max(1.0f, (float)floor(desc->dwHeight / pow(2.0f, mip)));
+		rgba8Data.resize(px * py* sizeof(uint32_t));
+
+		squish::DecompressImage(rgba8Data.data(), px, py, &ddsData[seek], dxtlvl);
 	}
 }
 /* THE END */

@@ -11,8 +11,14 @@
 #include <RBuffer.h>
 #include "engine/components/visual.h"
 #include "zenconvert/zTypes.h"
+#include "renderer/vertextypes.h"
+#include "zenconvert/ztex.h"
 
-const std::string DEFAULT_TEXTURE = "DEFAULT_TEXTURE-C.TEX";
+const std::string DEFAULT_TEXTURE = "DEFAULT_TEXTURE.TEX";
+
+#ifdef __ANDROID__
+#define UNPACK_DDS
+#endif
 
 /**
 * @brief Loads a texture from the given VDF-Index
@@ -50,11 +56,22 @@ RAPI::RTexture* Renderer::loadTexture(const std::string& _name, const VDFS::File
 
 	// Convert to actual dds
 	std::vector<uint8_t> ddsData;
+	std::vector<uint8_t> rgba8data;
 	ZenConvert::convertZTEX2DDS(textureData, ddsData);
 
-	// Upload texture
 	tx = RAPI::REngine::ResourceCache->CreateResource<RAPI::RTexture>();
+
+#ifdef UNPACK_DDS
+	ZenConvert::convertDDSToRGBA8(ddsData, rgba8data, 2);
+
+	ZenConvert::DDSURFACEDESC2* desc = reinterpret_cast<ZenConvert::DDSURFACEDESC2*>(ddsData.data() + 4);
+	
+	// Upload texture
+	
+	tx->CreateTexture(rgba8data.data(), rgba8data.size(), RAPI::RInt2(desc->dwWidth/4,desc->dwHeight/4), 1, RAPI::TF_R8G8B8A8);
+#else
 	tx->CreateTexture(ddsData.data(), ddsData.size(), RAPI::RInt2(0,0), 0, RAPI::TF_FORMAT_UNKNOWN_DXT);
+#endif
 
 	// Add to cache as the inputname
 	RAPI::REngine::ResourceCache->AddToCache(name, tx);
@@ -109,9 +126,9 @@ void Renderer::createVisualsFor(RenderSystem& system, const ZenConvert::PackedMe
 		std::vector<WorldVertex> vxs;
 		for(size_t i = 0; i < s.indices.size(); i += 3)
 		{
-			vxs.push_back(packedMesh.vertices[s.indices[i]]);
-			vxs.push_back(packedMesh.vertices[s.indices[i+1]]);
-			vxs.push_back(packedMesh.vertices[s.indices[i+2]]);
+			vxs.push_back(*reinterpret_cast<const WorldVertex*>(&packedMesh.vertices[s.indices[i]]));
+			vxs.push_back(*reinterpret_cast<const WorldVertex*>(&packedMesh.vertices[s.indices[i+1]]));
+			vxs.push_back(*reinterpret_cast<const WorldVertex*>(&packedMesh.vertices[s.indices[i+2]]));
 		}
 
 		RAPI::RBuffer* b = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
@@ -122,15 +139,16 @@ void Renderer::createVisualsFor(RenderSystem& system, const ZenConvert::PackedMe
 
 		// Make entities
 		Engine::ObjectHandle e = handles[eIdx];
-		factory.storage().addComponent<Engine::Components::Visual>(e);
+		
 
-		Engine::Components::Visual* visual = factory.storage().getComponent<Engine::Components::Visual>(e);
+		Engine::Entity* entity = factory.storage().getEntity(e);
+		Engine::Components::Visual* visual = factory.storage().addComponent<Engine::Components::Visual>(e);
 
 		if(visual)
 		{
 			visual->pObjectBuffer = pObjectBuffer;
 			visual->pPipelineState = sm.MakeDrawCall(vxs.size());
-			visual->tmpWorld = Math::Matrix::CreateIdentity();
+			entity->setWorldTransform(Math::Matrix::CreateIdentity());
 		}
 
 		eIdx++;

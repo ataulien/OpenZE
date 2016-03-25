@@ -1,4 +1,6 @@
 #include "physics.h"
+#include "collisionshape.h"
+#include "components/collision.h"
 
 Physics::Physics::Physics(float gravity) :
     m_Dispatcher(&m_CollisionConfiguration),
@@ -39,7 +41,7 @@ btDiscreteDynamicsWorld *Physics::Physics::world()
 * @brief Shoots a simple trace through the physics-world
 * @return Distance to the hit-surface
 */
-Math::float3 Physics::Physics::rayTest(const Math::float3& start, const Math::float3& end)
+Physics::RayTestResult Physics::Physics::rayTest(const Math::float3& start, const Math::float3& end, ECollisionType filterType)
 {
 	struct FilteredRayResultCallback : public btCollisionWorld::RayResultCallback
 	{
@@ -47,6 +49,19 @@ Math::float3 Physics::Physics::rayTest(const Math::float3& start, const Math::fl
 		virtual	btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult,bool normalInWorldSpace)
 		{
 			const btRigidBody* rb = btRigidBody::upcast(rayResult.m_collisionObject);
+
+			if(rb->getCollisionShape()->getUserPointer())
+			{
+				// Userpointer is always set to our own CollisionShape
+				Engine::Components::Collision* s = reinterpret_cast<Engine::Components::Collision*>(rb->getCollisionShape()->getUserPointer());
+
+				// TODO: There is some filtering functionality in bullet. Maybe use that instead?
+				if((s->collisionType & m_filterType) == 0)
+					return 0;
+
+				m_hitCollisionType = s->collisionType;
+			}
+
 			if(rb)	
 				return addSingleResult_close(rayResult, normalInWorldSpace);	
 
@@ -58,6 +73,9 @@ Math::float3 Physics::Physics::rayTest(const Math::float3& start, const Math::fl
 
 		btVector3	m_hitNormalWorld;
 		btVector3	m_hitPointWorld;
+		uint32_t	m_hitTriangleIndex;
+		ECollisionType m_hitCollisionType;
+		ECollisionType m_filterType;
 
 		virtual	btScalar	addSingleResult_close(btCollisionWorld::LocalRayResult& rayResult,bool normalInWorldSpace)
 		{
@@ -76,6 +94,7 @@ Math::float3 Physics::Physics::rayTest(const Math::float3& start, const Math::fl
 			}
 			m_hitPointWorld.setInterpolate3(m_rayFromWorld,m_rayToWorld,rayResult.m_hitFraction);
 
+			m_hitTriangleIndex = rayResult.m_localShapeInfo->m_triangleIndex;
 
 			return rayResult.m_hitFraction;
 		}
@@ -86,10 +105,17 @@ Math::float3 Physics::Physics::rayTest(const Math::float3& start, const Math::fl
 	r.m_rayFromWorld = btVector3(start.x, start.y, start.z);
 	r.m_rayToWorld = btVector3(end.x, end.y, end.z);
 	r.m_hitPointWorld = r.m_rayFromWorld;
+	r.m_filterType = filterType;
+	r.m_hitTriangleIndex = UINT_MAX;
 
 	btVector3 from = {start.x, start.y, start.z};
 	btVector3 to = {end.x, end.y, end.z};
 	m_DynamicsWorld.rayTest(from, to, r);
 
-	return Math::float3(r.m_hitPointWorld.x(),r.m_hitPointWorld.y(),r.m_hitPointWorld.z());
+	RayTestResult result;
+	result.hitFlags = r.m_hitCollisionType;
+	result.hitPosition = Math::float3(r.m_hitPointWorld.x(),r.m_hitPointWorld.y(),r.m_hitPointWorld.z());
+	result.hitTriangleIndex = r.m_hitTriangleIndex;
+
+	return result; //Math::float3(r.m_hitPointWorld.x(),r.m_hitPointWorld.y(),r.m_hitPointWorld.z());
 }

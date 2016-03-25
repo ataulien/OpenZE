@@ -5,9 +5,28 @@
 
 #include "utils/queue.h"
 #include "utils/mathlib.h"
+#include "collisionshape.h"
 
 namespace Physics
 {
+	struct RayTestResult
+	{
+		/** 
+		 * @brief Position of where the ray hit
+		 */
+		Math::float3 hitPosition;
+
+		/**
+		 * @brief Index of the trianlge the ray has potentially hit
+		 */
+		uint32_t hitTriangleIndex;
+
+		/**
+		 * @brief Userflags set in the hit rigidbody
+		 */
+		uint32_t hitFlags;
+	};
+
     class Physics
     {
         friend class RigidBody;
@@ -33,9 +52,10 @@ namespace Physics
 
 		/**
 		 * @brief Shoots a simple trace through the physics-world
-		 * @return Hitpoint
+		 * @param Flags to allow to be traced. All objects with none of the given flags set will be ignored.
+		 * @return Information about the hitpoint
 		 */
-		Math::float3 rayTest(const Math::float3& start, const Math::float3& end);
+		RayTestResult rayTest(const Math::float3& start, const Math::float3& end, ECollisionType filterType = CT_Any);
 
         btDiscreteDynamicsWorld *world();
     private:

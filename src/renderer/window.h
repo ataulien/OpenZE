@@ -1,9 +1,10 @@
 #pragma once
 #include <string>
 #include <functional>
-#include "keys.h"
+#include "utils/keys.h"
+#include "utils/mathlib.h"
 
-namespace Utils
+namespace Renderer
 {
 
 	/**
@@ -54,7 +55,7 @@ namespace Utils
 			struct
 			{
 				EKeyAction action;
-				EKey key; // virtual key
+				Utils::EKey key; // virtual key
 				int scancode; // System specific key scancode
 				int mods; // GLFW-like bitfield for key-flags
 
@@ -97,16 +98,21 @@ namespace Utils
 		/**
 		 * @brief Gets the current keystate
 		 */
-        virtual bool getKeyPressed(EKey key){(void)key; return false;}
+        virtual bool getKeyPressed(Utils::EKey key){(void)key; return false;}
+
+		/**
+		 * @brief Returns a virtual thumbstick-position
+		 */
+		virtual Math::float2 getVirtualThumbstickDirection(int idx){return Math::float2(0.0f,0.0f);}
 
 		/**
 		* @brief Switches to fullscreen/windowed
 		*/
-		virtual void switchMode(bool fullscreen) = 0;
+		virtual void switchMode(bool fullscreen){};
 
 		/** 
 		 * @brief Returns whether the window is in fullscreen-mode
 		 */
-		virtual bool isFullscreen() = 0;
+		virtual bool isFullscreen(){return false;};
     };
 }

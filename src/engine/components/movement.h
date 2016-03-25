@@ -6,6 +6,9 @@ namespace Engine
 {
     namespace Components
     {
+		/**
+		 * @brief Controllable movement for the corresponding entity
+		 */
         struct Movement
         {
             enum { MASK = C_MOVEMENT };
