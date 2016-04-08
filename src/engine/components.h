@@ -1,9 +1,9 @@
 #pragma once
 
 #ifdef ZE_GAME
-#define COMPONENTS Components::Collision, Components::Movement, Components::Visual
+#define COMPONENTS Components::Collision, Components::Movement, Components::Visual, Components::AnimationController
 #else
-#define COMPONENTS Components::Collision, Components::Movement
+#define COMPONENTS Components::Collision, Components::Movement, Components::AnimationController
 #endif
 
 namespace Engine
@@ -19,5 +19,6 @@ namespace Engine
         C_VISUAL = 1 << 2,
         C_MOVEMENT = 1 << 3,
 		C_WORLDOBJECT = 1 << 4,
+		C_ANIM_CONTROLLER = 1 << 5,
     };
 }

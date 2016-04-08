@@ -75,13 +75,15 @@ namespace ZenConvert
 		/**
 		* @brief Creates packed submesh-data
 		*/
-		void packMesh(PackedMesh& mesh, float scale = 1.0f);
-	private:
+		void packMesh(PackedMesh& mesh, float scale = 1.0f) const;
 
 		/**
-		 * @brief Packs vertices only
-		 */
-		void packVertices(std::vector<WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale = 1.0f);
+		* @brief Packs vertices only
+		*/
+		void packVertices(std::vector<WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale = 1.0f) const;
+
+	private:
+
 
 		/**
 		 * @brief vector of vertex-positions for this mesh

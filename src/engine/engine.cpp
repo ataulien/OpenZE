@@ -56,9 +56,19 @@ void Engine::Engine::mainLoop()
     {
         Utils::Timer<double> timer;
         std::chrono::duration<double> delta = std::chrono::duration<double>::zero();
+		double acc = 0.0;
         while(isRunning)
         {
-            delta = timer.update();
+			timer.update();
+			acc += timer.getAvgDelta().count();
+			if(acc < 1.0 / 60.0)
+			{			
+				std::this_thread::sleep_for(std::chrono::nanoseconds(static_cast<long>((1.0 / 60.0) * 1000000000.0)));
+				continue;
+			}
+
+			acc = 0.0;
+
             m_PhysicsSystem.updateRigidBodies();
             // Let bullet do it's own fixed timestamp
             updatePhysics(delta);

@@ -188,6 +188,8 @@ void zCProgMeshProto::readObjectData(ZenParser& parser)
 
 				}
 			}
+
+			parser.setSeek(chunkEnd);
 			break;
 
 		case MSID_PROGMESH_END:
@@ -202,19 +204,19 @@ void zCProgMeshProto::readObjectData(ZenParser& parser)
 /**
  * @brief Packs vertices only
  */
-void ZenConvert::zCProgMeshProto::packVertices(std::vector<WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale)
+void ZenConvert::zCProgMeshProto::packVertices(std::vector<WorldVertex>& vxs, std::vector<uint32_t>& ixs, uint32_t indexStart, std::vector<uint32_t>& submeshIndexStarts, float scale) const
 {
 	for(size_t s=0;s<m_SubMeshes.size();s++)
 	{
 
-		SubMesh& sm = m_SubMeshes[s];
+		const SubMesh& sm = m_SubMeshes[s];
 
 		unsigned int meshVxStart = vxs.size();
 
 		// Get data
 		for(size_t i=0;i<sm.m_WedgeList.size();i++)
 		{
-			zWedge& wedge = sm.m_WedgeList[i];
+			const zWedge& wedge = sm.m_WedgeList[i];
 
 			WorldVertex v;
 			v.Position = m_Vertices[wedge.m_VertexIndex] * scale;
@@ -245,7 +247,7 @@ void ZenConvert::zCProgMeshProto::packVertices(std::vector<WorldVertex>& vxs, st
 /**
 * @brief Creates packed submesh-data
 */
-void zCProgMeshProto::packMesh(PackedMesh& mesh, float scale)
+void zCProgMeshProto::packMesh(PackedMesh& mesh, float scale) const 
 {
 	std::vector<uint32_t> submeshIndexStarts;
 	std::vector<uint32_t> indices;

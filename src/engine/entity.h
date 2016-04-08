@@ -31,6 +31,13 @@ namespace Engine
 		void setWorldTransform(const Math::Matrix& h) { m_WorldTransform = h;}
 		const Math::Matrix& getWorldTransform() const { return m_WorldTransform; }
 
+		/**
+		 * Attachments
+		 */
+		void addAttachment(ObjectHandle handle) { m_Attachments.insert(handle); }
+		void removeAttachment(ObjectHandle handle) { m_Attachments.erase(handle); }
+		const std::set<ObjectHandle>& getAttachments() { return m_Attachments; }
+
 	protected:
 		/**
 		 * @brief Handle for access to the components stored along this entity
@@ -46,6 +53,11 @@ namespace Engine
 		 * @brief World-Transform of this entity
 		 */
 		Math::Matrix m_WorldTransform;
+
+		/**
+		 * @brief List of entities attached to this one in any way
+		 */
+		std::set<ObjectHandle> m_Attachments;
     };
 }
 

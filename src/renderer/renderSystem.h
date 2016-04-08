@@ -17,6 +17,8 @@ namespace ZenConvert
 namespace Renderer
 {
 	class Visual;
+	class SkeletalMeshVisual;
+	class StaticMeshVisual;
 	class RenderSystem
 	{
 	public:
@@ -26,7 +28,7 @@ namespace Renderer
 		/**
 		 * @brief Renders a frame
 		 */
-		void renderFrame();
+		void renderFrame(float deltaTime);
 
 		/**
 		 * @brief Returns a paged buffer of the given type, if one was created.
@@ -47,7 +49,8 @@ namespace Renderer
 		/**
 		 * @brief Creates a visual for the given type in the target function overload
 		 */
-		Visual* createVisual(size_t hash, const ZenConvert::PackedMesh& packedMesh);
+		StaticMeshVisual* createVisual(size_t hash, const ZenConvert::PackedMesh& packedMesh);
+		SkeletalMeshVisual* createVisual(size_t hash, const ZenConvert::PackedSkeletalMesh& packedMesh);
 
 		/**
 		 * @brief Returns the visual matching the given hash
@@ -101,7 +104,7 @@ namespace Renderer
 		 *		  into smaller logical buffers, helping circumvent switching the buffers many 
 		 *		  times while rendering
 		 */
-		PagedBuffer<RAPI::B_VERTEXBUFFER>::PBTuple<WorldVertex> m_PagedVertexBuffers;
+		PagedBuffer<RAPI::B_VERTEXBUFFER>::PBTuple<WorldVertex, SkeletalVertex> m_PagedVertexBuffers;
 		PagedBuffer<RAPI::B_INDEXBUFFER>::PBTuple<uint32_t> m_PagedIndexBuffers;
 
 		/**

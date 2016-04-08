@@ -444,8 +444,8 @@ std::string ZenParser::readLine(bool skip)
 	}
 
 	// Skip trailing \n\r\0
-	if(m_Header.fileType == FT_BINARY)
-		m_Seek++;
+	//if(m_Header.fileType == FT_BINARY)
+	m_Seek++;
 
 	if(skip)
 		skipSpaces();

@@ -49,8 +49,12 @@ namespace Engine
 		WorldMesh& getWorldMesh(){ return m_WorldMesh; }
 
 		/**
-		 * @brief Updates the ground-polygon information for the given entity
+		 * @brief Spawns a simple vob
 		 */
+		std::vector<ObjectHandle> spawnVob(const Math::Matrix& worldMatrix, const std::string& visual, const Math::float3* bbox);
+
+		// testing
+		ObjectHandle getPlayer(){return m_PlayerObject;}
 	private:
 
 		/**
@@ -74,5 +78,13 @@ namespace Engine
 		 * @brief Representation of the main-worldmesh
 		 */
 		WorldMesh m_WorldMesh;
+
+		/**
+		 * @brief global scaling factor
+		 */
+		float m_WorldScale;
+
+		// Testing
+		ObjectHandle m_PlayerObject;
 	};
 }

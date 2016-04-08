@@ -25,11 +25,16 @@
 #include "zenWorld.h"
 #include "renderer/renderSystem.h"
 #include <thread>
+#include "animHandler.h"
+#include "shaders.h"
 
 #ifdef RAPI_USE_GLFW
 #include <GLFW/glfw3.h>
 #include "renderer/GLFW_window.h"
 #endif
+
+#include "zenconvert/zCModelAni.h"
+#include "zenconvert/zCModelMeshLib.h"
 
 #ifdef RAPI_USE_GLES3
 #include "renderer/EGL_window.h"
@@ -43,190 +48,6 @@ const std::string BASE_DIR = "";
 
 #define RENDER_MASK (::Engine::C_VISUAL)
 
-#ifdef RND_GL
-static const char* ninst_vertex_shader =
-#ifdef RAPI_USE_GLES3
-"#version 300 es\n"
-#else
-"#version 420\n"
-#endif
-"layout (std140) uniform buffer0\n"
-"{ \n "
-"	mat4 PF_ViewProj;\n "
-"}; \n "
-"layout (std140) uniform buffer1\n"
-"{ \n "
-"	mat4 PI_World;\n "
-"   vec4 PI_Color;\n "	
-"}; \n "
-"\n "
-"\n "
-"layout (location = 0) in vec3 vp;	   \n"
-"layout (location = 1) in vec3 vnorm;   \n"
-"layout (location = 2) in vec2 vuv;	   \n"
-"layout (location = 3) in vec4 vcolor;  \n"
-"out vec3 f_nrm;\n"
-"out vec2 f_uv;\n"
-"out vec4 f_color;\n"
-"void main () {\n"
-"	gl_Position = PF_ViewProj * PI_World * vec4(vp, 1.0);\n"
-"	f_nrm = vnorm;"
-"	f_uv = vuv;"
-"	f_color = vcolor * PI_Color;"
-"}\n";
-
-static const char* test_vertex_shader =
-"#version 300 es																							   \n"
-"layout (std140) uniform buffer0																			   \n"
-"{ 																											   \n"
-"	vec4 PF_ViewProj[4];																					   \n"
-" }; 																										   \n"
-"																											   \n"
-"																											   \n"
-"in vec3 vp;																								   \n"
-"in vec3 vnorm;																								   \n"
-"in vec2 vuv;																								   \n"
-"in vec4 vcolor;																							   \n"
-"out vec4 f_color;																							   \n"
-"																											   \n"
-"mat4 matFromVec(vec4 v1, vec4 v2, vec4 v3, vec4 v4) {														   \n"
-"	return mat4(v1[0], 	v1[1], 	v1[2], 	v1[3],																   \n"
-"		v2[0], 	v2[1], 	v2[2], 	v2[3],																		   \n"
-"		v3[0], 	v3[1], 	v3[2], 	v3[3],																		   \n"
-"		v4[0], 	v4[1], 	v4[2], 	v4[3]);																		   \n"
-"}																											   \n"
-"																											   \n"
-"mat4 transpose(mat4 m){																					   \n"
-"	return mat4(																							   \n"
-"		m[0][0],m[1][0],m[2][0],m[3][0],																	   \n"
-"		m[0][1],m[1][1],m[2][1],m[3][1],																	   \n"
-"		m[0][2],m[1][2],m[2][2],m[3][2],																	   \n"
-"		m[0][3],m[1][3],m[2][3],m[3][3]																		   \n"
-"		);																									   \n"
-"}																											   \n"
-"																											   \n"
-"void main () {																								   \n"
-"	gl_Position = vec4(vp, 1.0);  \n"
-"	f_color = vcolor;}																						   \n";
-
-static const char* vertex_shader =
-#ifdef RAPI_USE_GLES3
-"#version 300 es\n"
-#else
-"#version 420\n"
-#endif
-"layout (std140) uniform buffer0\n"
-"{ \n "
-"	mat4 PF_ViewProj;\n "
-"}; \n "
-"\n "
-"\n "
-"layout (location = 0) in vec3 vp;\n"
-"layout (location = 1) in vec3 vnorm;\n"
-"layout (location = 2) in vec2 vuv;\n"
-"layout (location = 3) in vec4 vcolor;\n"
-"layout (location = 4) in vec4 instanceColor;\n"
-"layout (location = 5) in mat4 instanceWorld;\n"
-"out vec3 f_nrm;\n"
-"out vec2 f_uv;\n"
-"out vec4 f_color;\n"
-"void main () {\n"
-"	gl_Position = PF_ViewProj * instanceWorld * vec4(vp, 1.0);\n"
-"	f_nrm = mat3(instanceWorld) * vnorm;"
-"	f_uv = vuv;"
-"	f_color = vcolor * instanceColor;"
-"}\n";
-
-static const char* fragment_shader =
-#ifdef RAPI_USE_GLES3
-"#version 300 es\n"
-#else
-"#version 420\n"
-#endif
-"uniform sampler2D texture0;\n"
-"in vec3 f_nrm;\n"
-"in vec2 f_uv;\n"
-"in vec4 f_color;\n"
-"out vec4 frag_colour;\n"
-"void main () {\n"
-"  vec4 tx = texture(texture0, f_uv);\n"
-"  if(tx.a < 0.5) discard;\n"
-"  vec4 color = mix(f_color, f_color * 1.5, min(1.0, max(0.0,dot(normalize(f_nrm), normalize(vec3(0.333,0.666,0.333))))));\n"
-" frag_colour = tx * color;\n"
-//"  frag_colour = vec4(tx.rgb,1) * color;"
-"}";
-
-static const char* ntex_fragment_shader =
-#ifdef RAPI_USE_GLES3
-"#version 300 es\n"
-#else
-"#version 420\n"
-#endif
-"out vec4 frag_colour;"
-"uniform sampler2D texture0;"
-"in vec3 f_nrm;\n"
-"in vec2 f_uv;\n"
-"in vec4 f_color;\n"
-"void main () {"
-"  vec4 color = mix(f_color * 0.5, f_color, 1.5 * min(1.0, max(0.0,dot(normalize(f_nrm), normalize(vec3(0.333,0.666,0.333))))));"
-" frag_colour = color;"
-//"  frag_colour = vec4(tx.rgb,1) * color;"
-"}";
-#else
-const char* vertex_shader =
-
-
-"cbuffer cb : register(b0)"
-"{"
-"Matrix PF_ViewProj;"
-"};"
-
-"cbuffer cb : register(b1)"
-"{"
-"Matrix V_WorldMatrix;"
-"float4 V_Color;"
-"};"
-
-"struct VS_INPUT"
-"{"
-"	float3 vp : POSITION;"
-"	float3 normal : NORMAL;"
-"	float2 texCoord : TEXCOORD;"
-"	float4 color : COLOR;"
-"   Matrix instanceWorld : INSTANCE_WORLD;"
-"	float4 instanceColor : INSTANCE_COLOR;"
-"};"
-"struct VS_OUTPUT"
-"{"
-"	float3 normal : TEXCOORD0;"
-"	float2 texCoord : TEXCOORD1;"
-"	float4 color : TEXCOORD2;"
-"	float4 position : SV_POSITION;"
-"};"
-"VS_OUTPUT VSMain (VS_INPUT input) {"
-"  VS_OUTPUT output = (VS_OUTPUT)0;"
-"  output.position = mul(mul(PF_ViewProj, input.instanceWorld), float4(input.vp, 1.0));"
-"  output.normal = mul((float3x3)input.instanceWorld, input.normal);"
-"  output.color = input.color * input.instanceColor;"
-"  output.texCoord = input.texCoord;"
-"  return output;"
-"}";
-
-const char* fragment_shader =
-"struct VS_OUTPUT"
-"{"
-"	float3 normal : TEXCOORD0;"
-"	float2 texCoord : TEXCOORD1;"
-"	float4 color : TEXCOORD2;"
-"};"
-"Texture2D	TX_Texture0 : register( t0 );"
-"SamplerState SS_Linear : register( s0 );"
-"float4 PSMain (VS_OUTPUT input) : SV_TARGET {"
-"  float4 tx = TX_Texture0.Sample(SS_Linear, frac(input.texCoord));"
-"  clip(tx.a - 0.5f);"
-"  return input.color * float4(tx.rgb, 1.0);"
-"}";
-#endif
 
 RAPI::RTexture* loadVDFTexture(const std::string& file)
 {
@@ -507,13 +328,6 @@ bool Engine::GameEngine::render(float alpha)
 		s_TitleUpdateMod = 0.0;
 	}
 
-	// Grab window-events
-	// TODO: Do this in an update-function, not the render-one!
-	float MOVEMENT_SPEED = 30.0f * (m_Window->getKeyPressed(Utils::EKey::KEY_LEFT_SHIFT) ? 2.0f : 1.0f) * (m_IsFlying ? 1.0f : 0.25f);
-	const float ZOOM_SPEED = 40.0f;
-	const float TURN_SPEED = Math::DegToRad(70);
-	float movement = MOVEMENT_SPEED * m_MainLoopTimer.getAvgDelta().count();
-	float turn = TURN_SPEED * m_MainLoopTimer.getAvgDelta().count();
 	m_Window->pollEvent([&](Renderer::Window::Event ev)
 	{
 		switch(ev.EventType)
@@ -553,50 +367,98 @@ bool Engine::GameEngine::render(float alpha)
 		}
 	});
 
+	// Grab window-events
+	// TODO: Do this in an update-function, not the render-one!
+	float MOVEMENT_SPEED = 30.0f * (m_Window->getKeyPressed(Utils::EKey::KEY_LEFT_SHIFT) ? 2.0f : 1.0f) * (m_IsFlying ? 1.0f : 0.25f);
+	const float ZOOM_SPEED = 40.0f;
+	const float TURN_SPEED = Math::DegToRad(70);
+	float movement = MOVEMENT_SPEED * m_MainLoopTimer.getAvgDelta().count();
+	float turn = TURN_SPEED * m_MainLoopTimer.getAvgDelta().count();
+
 	// Thumbstick movement
 	Math::float2 thumbs[2] = { m_Window->getVirtualThumbstickDirection(0), m_Window->getVirtualThumbstickDirection(1) };
-	m_CameraCenter += -1.3f * thumbs[0].x * (Math::float3::cross(Math::float3(0, 1, 0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement);
-	m_CameraCenter += 1.3f * thumbs[0].y * (Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement);
+	//m_CameraCenter += -1.3f * thumbs[0].x * (Math::float3::cross(Math::float3(0, 1, 0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement);
+	//m_CameraCenter += 1.3f * thumbs[0].y * (Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement);
+
+	//POINT mp; GetCursorPos(&mp); ScreenToClient((HWND)m_Window->getNativeHandle(), &mp);
+	//RECT r; GetClientRect((HWND)m_Window->getNativeHandle(), &r);
+	//Math::float2 relMP = Math::float2((r.right / 2.0f) - mp.x, (r.bottom / 2.0f) - mp.y).normalize();
+	//thumbs[0] = relMP;
+
+	int dirPressed = 0;
+
+	// Map directions to keys
+	if(thumbs[0] != Math::float2(0, 0))
+	{
+		if(thumbs[0].dot(Math::float2(0.0f, 1.0f)) > 0.5f)
+			dirPressed = Utils::KEY_S;
+		else if(thumbs[0].dot(Math::float2(0.0f, -1.0f)) > 0.5f)
+			dirPressed = Utils::KEY_W;
+		else if(thumbs[0].dot(Math::float2(-1.0f, 0.0f)) > 0.5f)
+			dirPressed = Utils::KEY_A;
+		else if(thumbs[0].dot(Math::float2(1.0f, 0.0f)) > 0.5f)
+			dirPressed = Utils::KEY_D;
+	}
 
 	m_CameraAngle += 1.4f * turn * thumbs[1].x;
 
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_LEFT))
+	if(m_Window->getKeyPressed(Utils::EKey::KEY_LEFT) || (m_IsFlying ? false : m_Window->getKeyPressed(Utils::EKey::KEY_Q)))
 		m_CameraAngle -= turn;
 
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_RIGHT))
+	if(m_Window->getKeyPressed(Utils::EKey::KEY_RIGHT) || (m_IsFlying ? false : m_Window->getKeyPressed(Utils::EKey::KEY_E)))
 		m_CameraAngle += turn;
 
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_UP))
-		m_CameraZoom -= m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_DOWN))
-		m_CameraZoom += m_MainLoopTimer.getAvgDelta().count() / ZOOM_SPEED;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_W))
-		m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_A))
-		m_CameraCenter += Math::float3::cross(Math::float3(0, 1, 0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_S))
-		m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_D))
-		m_CameraCenter -= Math::float3::cross(Math::float3(0, 1, 0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_Q))
-		m_CameraCenter.y += movement * 0.5f;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_Z))
-		m_CameraCenter.y -= movement * 0.5f;
-
-	if(m_Window->getKeyPressed(Utils::EKey::KEY_SPACE))
+	// If walking, query the current animations speed
+	if(!m_IsFlying)
 	{
-		Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
-		Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
-		for(int i = 0; i < 20; ++i)
-			m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+		Entity* e = objectFactory().storage().getEntity(m_TestWorld->getPlayer());
+		Components::AnimationController* pAnim = objectFactory().storage().getComponent<Components::AnimationController>(m_TestWorld->getPlayer());
+		Components::Visual* pVisual = objectFactory().storage().getComponent<Components::Visual>(m_TestWorld->getPlayer());
+
+		// Replace with the current animations velocity
+		float speedMod = (m_Window->getKeyPressed(Utils::EKey::KEY_LEFT_SHIFT) ? 2.0f : 1.0f);
+		Math::Matrix velRotation = Math::Matrix::CreateRotationY(m_CameraAngle);
+		m_CameraCenter += velRotation * pAnim->animHandler.getRootNodeVelocity() * m_MainLoopTimer.getAvgDelta().count() * speedMod;
+
+		// Update player lighting
+		Physics::RayTestResult r = physicsSystem()->rayTest(m_CameraCenter + Math::float3(0.0f,3.0f,0.0f), m_CameraCenter + Math::float3(0,-2000,0), Physics::CT_WorldMesh);
+
+		if(r.hitTriangleIndex != UINT_MAX)
+		{
+			pVisual->colorMod = m_TestWorld->getWorldMesh().getTriangleList()[r.hitTriangleIndex].interpolateLighting(r.hitPosition);
+		}
 	}
+	else
+	{
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_W) || m_Window->getKeyPressed(Utils::EKey::KEY_UP))
+			m_CameraCenter += Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_A))
+			m_CameraCenter -= Math::float3::cross(Math::float3(0, 1, 0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
+
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_S) || m_Window->getKeyPressed(Utils::EKey::KEY_DOWN))
+			m_CameraCenter -= Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * movement;
+
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_D))
+			m_CameraCenter += Math::float3::cross(Math::float3(0, 1, 0), Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle))).normalize() * movement;
+
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_Q))
+			m_CameraCenter.y += movement * 0.5f;
+
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_Z))
+			m_CameraCenter.y -= movement * 0.5f;
+
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_SPACE))
+		{
+			Math::float3 d1 = Math::float3(sinf(m_CameraAngle), 0.0f, cosf(m_CameraAngle)).normalize();
+			Math::float3 d2 = Math::float3(sinf(m_CameraAngle), 0.4f, cosf(m_CameraAngle)).normalize();
+			for(int i = 0; i < 20; ++i)
+				m_Factory.test_createPhysicsEntity(m_CameraCenter - d1 * 3.0f, d2 * -15000.0f);
+		}
+
+	}
+
+	Math::Matrix view;
 
 	// Try to put camera on the ground if not flying
 	if(!m_IsFlying)
@@ -605,19 +467,50 @@ bool Engine::GameEngine::render(float alpha)
 
 		if(result.hitPosition != m_CameraCenter)
 		{
-			m_CameraCenter.y = result.hitPosition.y + 1.7f;
+			m_CameraCenter.y = result.hitPosition.y + 1.7f * 0.5f;
 		}
-	}
 
-	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter, m_CameraCenter + Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)), Math::float3(0, 1, 0));
+		const float distance = 3.0f;
+		const float height = 2.0f;
+		const float targetHeight = 0.5f;
+		Math::float3 eye = m_CameraCenter - Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)) * distance + Math::float3(0.0f, height, 0.0f);
+		Math::float3 target = m_CameraCenter + Math::float3(0.0f, targetHeight, 0.0f);
+
+		view = Math::Matrix::CreateLookAt(eye, 
+			target, Math::float3(0, 1, 0));
+
+		Entity* e = objectFactory().storage().getEntity(m_TestWorld->getPlayer());
+		Components::AnimationController* pAnim = objectFactory().storage().getComponent<Components::AnimationController>(m_TestWorld->getPlayer());
+
+		Math::Matrix playerWorld = Math::Matrix::CreateTranslation(m_CameraCenter) * Math::Matrix::CreateRotationY(m_CameraAngle);
+		e->setWorldTransform(playerWorld);
+
+		
+		if(m_Window->getKeyPressed(Utils::EKey::KEY_A) || dirPressed == Utils::EKey::KEY_A)
+			pAnim->animHandler.PlayAnimation("T_RUNSTRAFEL");
+		else if(m_Window->getKeyPressed(Utils::EKey::KEY_D) || dirPressed == Utils::EKey::KEY_D)
+			pAnim->animHandler.PlayAnimation("T_RUNSTRAFER");
+		else if(m_Window->getKeyPressed(Utils::EKey::KEY_W) || dirPressed == Utils::EKey::KEY_W)
+			pAnim->animHandler.PlayAnimation("S_RUNL");
+		else if(m_Window->getKeyPressed(Utils::EKey::KEY_S) || dirPressed == Utils::EKey::KEY_S)
+			pAnim->animHandler.PlayAnimation("T_JUMPB");
+		else 
+			pAnim->animHandler.PlayAnimation("S_LGUARD");
+	}
+	if(m_IsFlying)
+	{
+		view = Math::Matrix::CreateLookAt(m_CameraCenter, m_CameraCenter + Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)), Math::float3(0, 1, 0));
+	}
+		
+	
 	//view = Math::Matrix::CreateLookAt(Math::float3(sinf(m_CameraAngle) * 10, 0, cosf(m_CameraAngle) * 10), Math::float3(0,0,0), Math::float3(0, 1, 0));
 
 	RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
 
 #ifdef RND_GL
-	Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(45.0f, res.x, res.y, 0.1f, 10000.0f);
+	Math::Matrix projection = Math::Matrix::CreatePerspectiveGL(Math::DegToRad(85.0f), res.x, res.y, 0.1f, 10000.0f);
 #else
-	Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(45.0f, res.x, res.y, 0.1f, 10000.0f);
+	Math::Matrix projection = Math::Matrix::CreatePerspectiveDX(Math::DegToRad(85.0f), res.x, res.y, 0.1f, 10000.0f);
 #endif
 
 	
@@ -627,15 +520,83 @@ bool Engine::GameEngine::render(float alpha)
 
 	m_pCameraBuffer->UpdateData(&viewProj);
 
-	RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(0, 0, 0), 25.0f);
-	RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(10, 0, 0), 25.0f);
-	RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(0, 0, 0), 25.0f);
-	RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(10, 0, 10), 25.0f);
+	//RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(0, 0, 0), 25.0f);
+	//RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(10, 0, 0), 25.0f);
+	//RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(0, 0, 0), 25.0f);
+	//RAPI::RTools::LineRenderer.AddPointLocator(RAPI::RFloat3(10, 0, 10), 25.0f);
 
+	/*static ZenConvert::zCModelMeshLib lib("HUMANS.MDH", m_VdfsFileIndex);
+	static ZenConvert::zCModelAni ani("HUMANS-S_RUNL.MAN", m_VdfsFileIndex);
+	static std::vector<Math::Matrix> aniMatricesLocal(lib.getNodes().size());
+	static std::vector<Math::Matrix> objToWorld(lib.getNodes().size());
+
+	if(lib.getNodeChecksum() != ani.getModelAniHeader().nodeChecksum)
+		LogWarn() << "Different checksums!";
+
+	static int frame = 0;
+
+	static double s_AnimUpdateMod = 0;
+	s_AnimUpdateMod += m_MainLoopTimer.getAvgDelta().count();
+
+	if(s_AnimUpdateMod > 1.0f / ani.getModelAniHeader().fpsRate)
+	{
+		frame = (frame + 1) % ani.getModelAniHeader().numFrames;
+		s_AnimUpdateMod = 0;
+	}
+
+	for(size_t i = 0; i < lib.getNodes().size(); i++)
+	{
+		aniMatricesLocal[i] = lib.getNodes()[i].transformLocal;
+	}
+
+	Math::float3 aniTrans(0,0,-30);
+
+	for(size_t i = 0; i < ani.getNodeIndexList().size(); i++)
+	{
+		Math::Matrix trans;
+
+		auto& sample = ani.getAniSamples()[frame * ani.getNodeIndexList().size() + i];
+
+		uint32_t n = ani.getNodeIndexList()[i];
+		trans = Math::Matrix::CreateFromQuaternion(sample.rotation);
+		trans.Translation(sample.position);
+
+		aniMatricesLocal[n] = trans;
+	}
+
+	for(size_t i = 0; i < lib.getNodes().size(); i++)
+	{
+		//if(i==0)
+		//	aniMatricesLocal[i] = Math::Matrix::CreateIdentity();
+
+		if(lib.getNodes()[i].parentValid())
+			objToWorld[i] = objToWorld[lib.getNodes()[i].parentIndex] * aniMatricesLocal[i];
+		else 
+			objToWorld[i] = aniMatricesLocal[i];
+	}
+
+	for(size_t i = 0; i < lib.getNodes().size(); i++)
+	{
+		const ZenConvert::ModelNode& n  = lib.getNodes()[i];
+
+		Math::float3 p2 = (objToWorld[i].Translation() * 0.01f + aniTrans);
+
+		RAPI::RTools::LineRenderer.AddPointLocator(p2.v, 0.04f);
+
+		if(n.parentValid())
+		{
+			Math::float3 p1 = (objToWorld[n.parentIndex].Translation() * 0.01f + aniTrans);
+			
+
+			RAPI::RTools::LineRenderer.AddLine(RAPI::LineVertex(p1.v, { 1.0f,1.0f,1.0f,1.0f }),
+				RAPI::LineVertex(p2.v, { 1.0f,1.0f,1.0f,1.0f }));
+		}
+	}*/
+	
 	//Math::Matrix viewProj = projection * view;
 	RAPI::RTools::LineRenderer.Flush(reinterpret_cast<float*>(&viewProj));
 
-	m_pRenderSystem->renderFrame();
+	m_pRenderSystem->renderFrame(m_MainLoopTimer.getAvgDelta().count());
 
 	return retVal;
 }
@@ -682,7 +643,7 @@ void Engine::GameEngine::init()
 	RAPI::RStateMachine& sm = RAPI::REngine::RenderingDevice->GetStateMachine();
 
 	RAPI::RVertexShader* vs = RAPI::RTools::LoadShaderFromString<RAPI::RVertexShader>(vertex_shader, "simpleVS");
-	RAPI::RInputLayout* inputLayout = RAPI::RTools::CreateInputLayoutFor<Renderer::WorldVertexInstanced>(vs);
+	RAPI::RVertexShader* vs_skel = RAPI::RTools::LoadShaderFromString<RAPI::RVertexShader>(vertex_shader_skeletal, "skeletalVS");
 
 	// Clear with a sky-blue color
 	RAPI::REngine::RenderingDevice->SetMainClearValues(RAPI::RFloat4(0.0f, 0.53f, 1.0f, 0.0f));
@@ -690,6 +651,7 @@ void Engine::GameEngine::init()
 	// Create camera-buffer // TODO: Make class for this
 	m_pCameraBuffer = RAPI::REngine::ResourceCache->CreateResource<RAPI::RBuffer>();
 	
+
 	Math::Matrix view = Math::Matrix::CreateLookAt(m_CameraCenter, m_CameraCenter + Math::float3(sinf(m_CameraAngle), 0, cosf(m_CameraAngle)), Math::float3(0, 1, 0));
 
 	RAPI::RInt2 res = RAPI::REngine::RenderingDevice->GetOutputResolution();
@@ -706,6 +668,11 @@ void Engine::GameEngine::init()
 
 	m_pRenderSystem = new Renderer::RenderSystem(*this);
 
+	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Anims.vdf");
+	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Anims_Addon.vdf");
+
+	//ZenConvert::zCModelAni ani("HUMANS-S_RUN.MAN", m_VdfsFileIndex);
+	
 	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Worlds.vdf");
 	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Worlds_Addon.vdf");
 	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Textures.vdf");
@@ -713,7 +680,7 @@ void Engine::GameEngine::init()
 	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Meshes_Addon.vdf");
 	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Textures_Addon.vdf");
 	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/OpenZE.vdf");
-	//m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Anthera.mod");
+	m_VdfsFileIndex.loadVDF(BASE_DIR + "vdf/Anthera.mod");
 
 	//m_TestWorld = new ZenWorld(*this, "anthera_final1.zen", m_VdfsFileIndex);
 #ifndef NEW_WORLD

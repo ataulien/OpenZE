@@ -1,12 +1,16 @@
 #pragma once
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <gtc/quaternion.hpp>
 #include <string.h>
 #include <iostream>
 #include <string>
 
 namespace Math
 {    
+	static const float PI = glm::pi<float>();
+
+
     constexpr int64_t ipow(int64_t base, int exp, int64_t result = 1)
     {
       return exp < 1 ? result : ipow(base * base, exp / 2, (exp % 2) ? result * base : result);
@@ -97,13 +101,13 @@ namespace Math
     struct t_float4
     {
         t_float4(){}
-        t_float4(float x, float y, float z, float w)
-        {
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            this->w = w;
-        }
+		t_float4(float x, float y, float z, float w)
+		{
+			this->x = x;
+			this->y = y;
+			this->z = z;
+			this->w = w;
+		}
 
         union
         {
@@ -306,6 +310,7 @@ namespace Math
         Matrix& operator*= (float s) { _glmMatrix *= s; return *this; }
         Matrix& operator/= (float s) { _glmMatrix *= s; return *this; }
 
+
         // Properties
         float3 Up() const { return float3( _21, _22, _23); }
         void Up( const float3& v ) { _21 = v.x; _22 = v.y; _23 = v.z; }
@@ -378,10 +383,26 @@ namespace Math
 
         static Matrix CreateOrthographic( float left, float right, float bottom, float top ) {return Matrix(glm::ortho(left, right, bottom, top)); }
 
-        static Matrix CreateLookAt( const float3& position, const float3& target, const float3& up ) {return Matrix(glm::lookAt(position._glmt_vector, target._glmt_vector, up._glmt_vector)); }
+        static Matrix CreateLookAt( const float3& position, const float3& target, const float3& up ) {return Matrix(glm::lookAtLH(position._glmt_vector, target._glmt_vector, up._glmt_vector)); }
 
         // TODO: Implement this
-        static Matrix CreateFromQuaternion( const float4& quat );
+		static Matrix CreateFromQuaternion(const float4& quat)
+		{
+			Matrix m = Matrix::CreateIdentity();
+			
+			m.v[0].x = quat.w*quat.w + quat.x*quat.x - quat.y*quat.y - quat.z*quat.z;
+			m.v[0].y = 2.0f*(quat.x*quat.y + quat.w*quat.z);
+			m.v[0].z = 2.0f*(quat.x*quat.z - quat.w*quat.y);		
+			m.v[1].x = 2.0f*(quat.x*quat.y - quat.w*quat.z);
+			m.v[1].y = quat.w*quat.w - quat.x*quat.x + quat.y*quat.y - quat.z*quat.z;
+			m.v[1].z = 2.0f*(quat.y*quat.z + quat.w*quat.x);														
+			m.v[2].x = 2.0f*(quat.x*quat.z + quat.w*quat.y);
+			m.v[2].y = 2.0f*(quat.y*quat.z - quat.w*quat.x);													
+			m.v[2].z = quat.w*quat.w - quat.x*quat.x - quat.y*quat.y + quat.z*quat.z;
+
+			return m.Transpose();
+			//return glm::mat4_cast(glm::quat(quat.x, quat.y, quat.z, quat.w));
+		}
 
         union
         {
@@ -393,6 +414,7 @@ namespace Math
                 float _41, _42, _43, _44;
             };
 			float m[4][4];
+			float4 v[4];
 			float mv[16];
             glm::mat4x4 _glmMatrix;
         };
@@ -416,6 +438,24 @@ namespace Math
 
 		friend std::ostream& operator<< (std::ostream &out, Matrix &v);
     };
+
+	static float4 operator* (const Matrix& m, const float4& v)
+	{
+		float4 r;
+		r._glmt_vector = m._glmMatrix * v._glmt_vector;
+		return r;
+	}
+
+	/**
+	 * @brief Shortcut to full mat4-vec3 transformation
+	 */
+	static float3 operator* (const Matrix& m, const float3& v)
+	{
+		float4 r;
+		r._glmt_vector = m._glmMatrix * float4(v.x, v.y, v.z, 1.0f)._glmt_vector;
+		return float3(r.x, r.y, r.z);
+	}
+
 
     std::ostream& operator<< (std::ostream &out, Matrix &m);
 

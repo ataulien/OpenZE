@@ -7,12 +7,27 @@
 
 namespace ZenConvert
 {
+	/**
+	 * @brief Maximum amount of nodes a skeletal mesh can render
+	 */
+	const size_t MAX_NUM_SKELETAL_NODES = 96;
+
 	struct WorldVertex
 	{
 		Math::float3 Position;
 		Math::float3 Normal;
 		Math::float2 TexCoord;
 		uint32_t Color;
+	};
+
+	struct SkeletalVertex
+	{
+		Math::float3 Normal;
+		Math::float2 TexCoord;
+		uint32_t Color;
+		Math::float3 LocalPositions[4];
+		unsigned char BoneIndices[4];
+		float Weights[4];
 	};
 	
 	struct zMAT3
@@ -236,11 +251,30 @@ namespace ZenConvert
 		std::vector<SubMesh> subMeshes;
 	};
 
+	struct PackedSkeletalMesh
+	{
+		struct SubMesh
+		{
+			zCMaterialData material;			
+			std::vector<uint32_t> indices;		
+		};
+
+		std::vector<SkeletalVertex> vertices;
+		std::vector<SubMesh> subMeshes;
+	};
+
 #pragma pack(push, 4)
 
 	struct VobObjectInfo
 	{
 		Math::Matrix worldMatrix;
+		Math::float4 color;
+	};
+
+	struct SkeletalMeshInstanceInfo
+	{
+		Math::Matrix worldMatrix;
+		Math::Matrix nodeTransforms[MAX_NUM_SKELETAL_NODES];
 		Math::float4 color;
 	};
 
@@ -281,5 +315,65 @@ namespace ZenConvert
 	struct zEdge 
 	{
 		uint16_t m_Wedges[2];
-	};													
+	};		
+
+#pragma pack(push, 4)
+	struct zTNodeWedgeNormal 
+	{
+		Math::float3	m_Normal;
+		int				m_NodeIndex;
+	};
+
+	struct zTLODParams 
+	{
+		float m_LodStrength;
+		float m_ZDisplace2;	
+		float m_MorphPercent;	
+		int32_t   m_MinNumVertices;	
+	};
+
+#pragma pack(pop)
+
+#pragma pack (push, 1)
+	class zCModelNodeInst 
+	{
+	public:
+
+	};
+
+	struct zTMdl_AniSample 
+	{
+		uint16_t	rotation[3]; // 16bit quantized euler angles
+		uint16_t	position[3]; // 16bit quantized float3
+	};
+#pragma pack (pop)
+
+#pragma pack (push, 1)
+	struct zTWeightEntry 
+	{
+		// Weight and position of the vertex.
+		// This vertexposition is in the local space of the joint-Matrix!
+		float weight;
+		Math::float3 localVertexPosition;
+
+		// Nodeindex this belongs to
+		unsigned char nodeIndex;
+	};
+#pragma pack (pop)
+
+	enum zTMdl_AniEventType 
+	{
+		zMDL_EVENT_TAG,
+		zMDL_EVENT_SOUND,				
+		zMDL_EVENT_SOUND_GRND,			
+		zMDL_EVENT_ANIBATCH,
+		zMDL_EVENT_SWAPMESH,			
+		zMDL_EVENT_HEADING,				
+		zMDL_EVENT_PFX,
+		zMDL_EVENT_PFX_GRND,
+		zMDL_EVENT_PFX_STOP,
+		zMDL_EVENT_SETMESH,
+		zMDL_EVENT_MM_STARTANI,
+		zMDL_EVENT_CAM_TREMOR,			
+	};
 }

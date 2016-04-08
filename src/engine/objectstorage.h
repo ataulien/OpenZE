@@ -14,6 +14,7 @@
 
 #include "components/collision.h"
 #include "components/movement.h"
+#include "components/animationController.h"
 
 namespace Engine
 {

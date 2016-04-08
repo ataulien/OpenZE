@@ -1,5 +1,6 @@
 #include "renderSystem.h"
 #include "visuals/staticMeshVisual.h"
+#include "visuals/skeletalMeshVisual.h"
 #include "engine/game/gameengine.h"
 #include "utils/tuple.h"
 #include <RPipelineState.h>
@@ -28,8 +29,10 @@ RenderSystem::~RenderSystem()
 	Utils::for_each_in_tuple(m_PagedIndexBuffers.types, [](auto t){delete t;});
 }
 
-void Renderer::RenderSystem::renderFrame()
+void Renderer::RenderSystem::renderFrame(float deltaTime)
 {
+	ZenConvert::SkeletalMeshInstanceInfo tmpSkelInstance;
+
 	// Draw frame
 	RAPI::REngine::RenderingDevice->OnFrameStart();
 	RAPI::RRenderQueueID queueID = RAPI::REngine::RenderingDevice->AcquireRenderQueue(true, "Main Queue");
@@ -43,10 +46,32 @@ void Renderer::RenderSystem::renderFrame()
 		//for(uint32_t i = 0, end = 5; i < end; ++i)
 	{
 		Engine::Entity &entity = entities[i];
-		if((entity.getComponentMask() & Engine::C_VISUAL) != Engine::C_VISUAL)
+
+		if((entity.getComponentMask() & Engine::C_VISUAL) == 0)
 			continue;
 
 		Engine::Components::Visual *pVisual = m_pEngine->objectFactory().storage().getComponent<Engine::Components::Visual>(entity.getHandle());
+
+		if((entity.getComponentMask() & Engine::C_ANIM_CONTROLLER) != 0)
+		{
+			if(pVisual->visualSubId == 0)
+			{
+				Engine::Components::AnimationController* pAnim = m_pEngine->objectFactory().storage().getComponent<Engine::Components::AnimationController>(entity.getHandle());
+				pAnim->animHandler.UpdateAnimations(deltaTime);
+				//pAnim->animHandler.DebugDrawSkeleton(entity.getWorldTransform());
+
+				// Copy everything to the temporary skeletal instance
+				pAnim->animHandler.UpdateSkeletalMeshInfo(tmpSkelInstance);
+				tmpSkelInstance.color = pVisual->colorMod;
+				tmpSkelInstance.worldMatrix = entity.getWorldTransform();
+				pVisual->pObjectBuffer->UpdateData(&tmpSkelInstance);
+			}
+
+			RAPI::REngine::RenderingDevice->QueuePipelineState(pVisual->pPipelineState, queueID);
+
+			continue;
+		}
+
 
 		if(entity.getWorldTransform().Translation() != Math::float3(0,0,0) && (m_pEngine->getCameraCenter() - entity.getWorldTransform().Translation()).lengthSquared() > 50.0f * 50.0f)
 			continue;
@@ -120,14 +145,14 @@ void Renderer::RenderSystem::renderFrame()
 }
 
 /**
- * @brief Creates a visual for the given type in the target function overload
- */
-Visual* RenderSystem::createVisual(size_t hash, const ZenConvert::PackedMesh& packedMesh)
+* @brief Creates a visual for the given type in the target function overload
+*/
+StaticMeshVisual* RenderSystem::createVisual(size_t hash, const ZenConvert::PackedMesh& packedMesh)
 {
 	// Check if this was already loaded
-	Visual* pCached = getVisualByHash(hash);
+	Visual* pCached = getVisualByHash(hash); // FIXME: This should be typesafe!
 	if(pCached)
-		return pCached;
+		return reinterpret_cast<StaticMeshVisual*>(pCached); 
 
 	// Create a static mesh visual for this
 	StaticMeshVisual* pVisual = new StaticMeshVisual(*this, m_pEngine->objectFactory());
@@ -138,6 +163,27 @@ Visual* RenderSystem::createVisual(size_t hash, const ZenConvert::PackedMesh& pa
 
 	return pVisual;
 }
+
+/**
+* @brief Creates a visual for the given type in the target function overload
+*/
+SkeletalMeshVisual* RenderSystem::createVisual(size_t hash, const ZenConvert::PackedSkeletalMesh& packedMesh)
+{
+	// Check if this was already loaded
+	Visual* pCached = getVisualByHash(hash); // FIXME: This should be typesafe!
+	if(pCached)
+		return reinterpret_cast<SkeletalMeshVisual*>(pCached); ;
+
+	// Create a static mesh visual for this
+	SkeletalMeshVisual* pVisual = new SkeletalMeshVisual(*this, m_pEngine->objectFactory());
+	m_VisualStorage.addVisual(hash, pVisual); // Let the storage free the memory for now
+											  // TODO: Handle unloading of visuals
+
+	pVisual->createMesh(packedMesh);
+
+	return pVisual;
+}
+
 
 /**
  * @brief Returns the visual matching the given hash
