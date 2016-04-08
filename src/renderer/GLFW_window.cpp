@@ -8,7 +8,7 @@
 
 #include <RDevice.h>
 #include <GLFW/glfw3.h>
-#include "logger.h"
+#include "utils/logger.h"
 #include <string.h>
 
 #ifdef WIN32
